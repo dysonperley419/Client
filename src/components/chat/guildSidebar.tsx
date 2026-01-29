@@ -90,7 +90,7 @@ const GuildSidebar = ({
       <img
         src={customAvatarUrl || ''}
         alt='User Avatar'
-        className='guild-user-avatar'
+        className='guild-icon'
         onError={() => {
           rollover();
         }}
@@ -116,12 +116,8 @@ const GuildSidebar = ({
             </div>
           )}
           <Link to='/channels/@me' className='home-btn-link'>
-            <div className='icon-container shadow-container'>
-              <img
-                className={`guild-icon ${isHomeSelected ? 'active' : ''} home-icon-inner`}
-                src={imgFlickerLogo}
-                alt='Home'
-              />
+            <div className={`icon-container shadow-container ${isHomeSelected ? 'active' : ''}`}>
+              <img className={`guild-icon home-icon-inner`} src={imgFlickerLogo} alt='Home' />
             </div>
           </Link>
         </button>
@@ -148,20 +144,18 @@ const GuildSidebar = ({
                 <div className='selected-gradient' />
               </div>
             )}
-            <div className='icon-container'>
+            <div
+              className={`icon-container shadow-container ${selectedGuildId === guild.id ? 'active' : ''}`}
+            >
               {guild.icon ? (
                 <img
-                  className={`guild-icon ${selectedGuildId === guild.id ? 'active' : ''}`}
+                  className='guild-icon'
                   src={`${localStorage.getItem('selectedCdnUrl') ?? ''}/icons/${guild.id}/${guild.icon}.png`}
                   alt={guild.name}
                   onError={handleImgError}
                 />
               ) : (
-                <div
-                  className={`guild-icon ${selectedGuildId === guild.id ? 'active' : ''} no-icon`}
-                >
-                  {guild.name.charAt(0)}
-                </div>
+                <div className={`guild-icon no-icon`}>{guild.name.charAt(0)}</div>
               )}
             </div>
           </button>
@@ -176,10 +170,7 @@ const GuildSidebar = ({
         >
           <div className='icon-container'>
             <div className={`guild-icon no-icon add-icon`}>
-              <span
-                className='material-symbols-rounded'
-                style={{ fontSize: '24px', color: '#23a559' }}
-              >
+              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                 add
               </span>
             </div>
@@ -195,25 +186,18 @@ const GuildSidebar = ({
             const rect = e.currentTarget.getBoundingClientRect();
             openPopup('CURRENT_USER_PROFILE', {
               x: 12,
-              y: rect.bottom - 440,
+              y: rect.bottom - 400,
             });
           }}
         >
-          {isUserPopupOpen && (
-            <div className='selected-indicator-bg'>
-              <div className='selected-gradient' />
-            </div>
-          )}
-          <div className='icon-container'>
-            <div className='guild-icon no-icon user-icon-container'>
-              <div className='guild-user-avatar-wrapper'>
-                <UserAvatar />
-              </div>
-              <div className='user-status-indicator'>
-                <div className='status-indicator-wrapper'>
-                  <div className='status-dot-large online'></div>
-                </div>
-              </div>
+          <div
+            className={`icon-container user-icon-container shadow-container ${isUserPopupOpen ? 'active' : ''}`}
+          >
+            <UserAvatar />
+          </div>
+          <div className='user-status-indicator'>
+            <div className='status-indicator-wrapper'>
+              <div className='status-dot-large online'></div>
             </div>
           </div>
         </button>

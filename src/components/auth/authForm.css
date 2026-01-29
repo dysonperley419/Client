@@ -139,7 +139,7 @@
     0 0 15px rgb(167 139 250 / 20%),
     0 0 40px rgb(167 139 250 / 10%),
     inset 0 0 4px rgb(167 139 250 / 20%);
-  border: 1.5px dashed var(--accent-primary);
+  outline: 1.5px dashed var(--accent-primary);
 }
 
 .register-form .form-header {
@@ -160,7 +160,6 @@
 .register-form input,
 .register-form select {
   background: var(--bg-input);
-  border: 1px solid var(--border-color);
   padding: 12px;
   border-radius: 6px;
   color: white;
@@ -224,7 +223,7 @@
   justify-content: center;
   align-items: center;
   transition: all 0.2s ease;
-  border: 1px solid var(--accent-primary);
+  outline: 1px solid var(--accent-primary);
   position: absolute;
   right: -29px;
   top: 35%;

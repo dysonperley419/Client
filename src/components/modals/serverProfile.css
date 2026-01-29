@@ -3,7 +3,7 @@
   background: var(--bg-alt);
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--accent-primary);
+  outline: 1px solid var(--accent-primary);
   box-shadow: 0 20px 40px rgb(0 0 0 / 40%);
   animation: modal-appear 0.2s ease-out;
 }

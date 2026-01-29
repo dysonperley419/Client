@@ -34,7 +34,7 @@
 
 .friends-search-bar {
   background-color: #1e1f22;
-  border: 1px solid rgb(187 154 247 / 20%);
+  outline: 1px solid rgb(187 154 247 / 20%);
   border-radius: 4px;
   padding: 8px 10px;
   display: flex;
@@ -45,7 +45,6 @@
 .friends-search-bar input {
   flex: 1;
   background: transparent;
-  border: none;
   outline: none;
   color: var(--text-bright);
   font-size: 14px;
@@ -113,7 +112,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 2px solid var(--bg-panel);
+  outline: 2px solid var(--bg-panel);
 }
 
 .status-dot.online {
@@ -167,7 +166,7 @@
 
 .icon-action-btn {
   background: var(--bg-alt);
-  border: 1px solid var(--border-color);
+  outline: 1px solid var(--border-color);
   border-radius: 50%;
   width: 32px;
   height: 32px;

@@ -25,14 +25,10 @@
 }
 
 /* Prevent the width headache and besides it aligns with Figma */
-html {
-  box-sizing: border-box;
-}
-
 *,
 *::before,
 *::after {
-  box-sizing: inherit;
+  box-sizing: border-box;
 }
 
 * {
@@ -123,7 +119,7 @@ body {
   font-weight: 800;
   letter-spacing: 2px;
   color: var(--accent-primary);
-  border: 1px solid rgb(187 154 247 / 20%);
+  outline: 1px solid rgb(187 154 247 / 20%);
   padding: 5px;
 }
 
@@ -140,7 +136,7 @@ body {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgb(255 255 255 / 10%); /* Var */
+  outline: 4px solid rgb(255 255 255 / 10%); /* Var */
   border-left-color: var(--accent-primary);
   border-radius: 50%;
   margin: 20px auto;
@@ -153,36 +149,11 @@ body {
   }
 }
 
-.guild-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  margin-bottom: 8px;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  background: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  color: var(--accent-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgb(0 0 0 / 20%); /* Var */
-}
-
-.guild-icon:hover {
-  border-radius: 30%;
-  transform: translateY(-2px);
-  background-color: var(--accent-primary);
-  color: var(--bg-main);
-  box-shadow: 0 6px 15px rgb(187 154 247 / 40%); /* Var */
-  border-style: solid;
-}
-
 .separator {
   width: 32px;
   height: 2px;
   background: var(--border-color);
-  border: none;
+  outline: none;
   margin: 4px 0 30px;
   border-radius: 1px;
 }
@@ -226,7 +197,7 @@ body,
 ::-webkit-scrollbar-thumb {
   background: var(--accent-primary);
   border-radius: 10px;
-  border: 2px solid var(--bg-dark-alt);
+  outline: 2px solid var(--bg-dark-alt);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -260,7 +231,7 @@ body,
   margin: 8px;
   padding: 8px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
+  outline: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -335,7 +306,7 @@ button {
   background: inherit;
   transform: none;
   color: inherit;
-  border: none;
+  outline: none;
 }
 
 .disabled-btn {
@@ -391,7 +362,7 @@ button {
   display: flex;
   align-items: center;
   background-color: #1e1f22;
-  border: 1px solid rgb(187 154 247 / 20%);
+  outline: 1px solid rgb(187 154 247 / 20%);
   border-radius: 8px;
   padding: 5px 10px;
   gap: 5px;
@@ -399,7 +370,6 @@ button {
 
 .search-bar input {
   background: none;
-  border: none;
   color: var(--text-muted);
   font-size: 14px;
   outline: none;
@@ -420,7 +390,7 @@ button {
 
 .header button {
   background: transparent;
-  border: none;
+  outline: none;
   cursor: pointer;
   color: var(--text-muted);
   font-weight: 600;
@@ -449,7 +419,7 @@ button {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 1px solid var(--bg-header-alt);
+  outline: 1px solid var(--bg-header-alt);
 }
 
 .user-section .status-dot-large {
@@ -467,7 +437,7 @@ button {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1px solid var(--bg-header-alt);
+  outline: 1px solid var(--bg-header-alt);
 }
 
 .online {

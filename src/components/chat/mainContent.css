@@ -9,7 +9,7 @@
 
 .icon-btn {
   background: none;
-  border: none;
+  outline: none;
   cursor: pointer;
   padding: 5px;
   display: flex;
@@ -80,7 +80,7 @@
   border-radius: 50%;
   margin-right: 16px;
   cursor: pointer;
-  border: 1px solid rgb(187 154 247 / 20%);
+  outline: 1px solid rgb(187 154 247 / 20%);
 }
 
 .message-details {
@@ -135,7 +135,7 @@
   padding: 10px;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgb(187 154 247 / 20%);
+  outline: 1px solid rgb(187 154 247 / 20%);
 }
 
 .attachment-item,
@@ -173,7 +173,7 @@
   right: 4px;
   background: rgb(0 0 0 / 50%);
   color: white;
-  border: none;
+  outline: none;
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -193,7 +193,7 @@
 
 .add-media-btn {
   background: none;
-  border: none;
+  outline: none;
   cursor: pointer;
   padding: 0;
   color: var(--text-muted);
@@ -216,7 +216,6 @@
 .input-wrapper input[type='text'] {
   flex: 1;
   background: transparent;
-  border: none;
   color: #949ba4;
   font-size: 14px;
   font-weight: 500;
@@ -232,7 +231,7 @@
 
 .input-icon-btn {
   background: none;
-  border: none;
+  outline: none;
   cursor: pointer;
   padding: 0;
   display: flex;

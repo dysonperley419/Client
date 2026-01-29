@@ -75,7 +75,12 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
           </div>
 
           <div className='divider-container'>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--bg-modifier-accent)' }} />
+            <hr
+              style={{
+                height: '1px',
+                boxShadow: '0 -1px 0 0 var(--bg-modifier-accent)',
+              }}
+            />
           </div>
 
           <div className='sidebar-group'>
@@ -83,7 +88,12 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
           </div>
 
           <div className='divider-container'>
-            <hr style={{ border: 'none', borderTop: '1px solid var(--bg-modifier-accent)' }} />
+            <hr
+              style={{
+                height: '1px',
+                boxShadow: '0 -1px 0 0 var(--bg-modifier-accent)',
+              }}
+            />
           </div>
 
           <div className='version-info'>
