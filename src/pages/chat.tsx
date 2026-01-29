@@ -10,6 +10,7 @@ import ChannelSidebar from '../components/chat/channelSidebar';
 import { FriendsList } from '../components/chat/friendsList';
 import GuildSidebar from '../components/chat/guildSidebar';
 import MainContent from '../components/chat/mainContent';
+import NoTextChannels from '../components/chat/noTextChannels';
 import Settings from '../components/chat/settings';
 import { useGateway } from '../context/gatewayContext';
 import LoadingScreen from './loading';
@@ -167,7 +168,7 @@ const ChatApp = (): JSX.Element => {
               onRequestDelete={handleManualRemoveFriend}
             />
           ) : (
-            <div className='empty-chat-state' />
+            <NoTextChannels />
           )}
         </div>
       )}
