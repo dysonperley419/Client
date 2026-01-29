@@ -108,12 +108,10 @@ export const FriendsList = ({
 
   return (
     <main className='friends-container'>
-      <header className='friends-header'>
-        <div className='header-content-left'>
-          <div className='friends-icon-container'>
-            <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-              group
-            </span>
+      <header className='header'>
+        <div className='header-left'>
+          <div className='header-icon'>
+            <span className='material-symbols-rounded'>group</span>
           </div>
           <span className='header-title'>Friends</span>
           <div className='vertical-divider'></div>
@@ -149,9 +147,9 @@ export const FriendsList = ({
           >
             Blocked
           </button>
-          <button className='add-friend-btn'>Add Friend</button>
         </div>
-        <div className='header-content-right'>
+        <div className='header-right'>
+          <button className='add-friend-btn'>Add Friend</button>
           <button className='icon-btn'>
             <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
               edit_square

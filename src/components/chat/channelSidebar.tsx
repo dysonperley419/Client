@@ -95,13 +95,16 @@ const ChannelSidebar = ({
   return (
     <div id='channels-column'>
       <div className='sidebar-header-guild'>
-        <div className='header-bg'>
-          {bannerUrl && <img src={bannerUrl} alt='' className='header-image' />}
-          <div className='header-gradient'></div>
+        <div className='sidebar-header-bg'>
+          {bannerUrl && <img src={bannerUrl} alt='' className='sidebar-header-image' />}
+          <div className='sidebar-header-gradient'></div>
         </div>
-        <div className='header-content'>
+        <div className='sidebar-header-content'>
           <span className='guild-name'>{selectedGuild.name}</span>
-          <span className='material-symbols-rounded header-arrow' style={{ fontSize: '24px' }}>
+          <span
+            className='material-symbols-rounded sidebar-header-arrow'
+            style={{ fontSize: '24px' }}
+          >
             expand_more
           </span>
         </div>

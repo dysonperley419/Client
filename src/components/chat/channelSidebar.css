@@ -57,25 +57,25 @@
   flex-shrink: 0;
 }
 
-.header-bg {
+.sidebar-header-bg {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.header-image {
+.sidebar-header-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.header-gradient {
+.sidebar-header-gradient {
   position: absolute;
   inset: 0;
   background-image: linear-gradient(-0.03deg, rgb(0 0 0 / 0%) 0%, rgb(0 0 0 / 20%) 99.9%);
 }
 
-.header-content {
+.sidebar-header-content {
   position: relative;
   width: 100%;
   display: flex;
@@ -92,7 +92,7 @@
   text-shadow: 0 1px 2px rgb(0 0 0 / 50%);
 }
 
-.header-arrow {
+.sidebar-header-arrow {
   width: 20px;
   height: 20px;
 }

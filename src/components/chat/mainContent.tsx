@@ -419,8 +419,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
   return (
     <main className='chat-main'>
-      <header className='chat-header'>
-        <div className='chat-header-left'>
+      <header className='header'>
+        <div className='header-left'>
           <div className='header-icon'>
             <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
               tag
@@ -431,7 +431,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
             <span className='header-topic'> | {selectedChannel.topic}</span>
           )}
         </div>
-        <div className='chat-header-right'>
+        <div className='header-right'>
           <button className='icon-btn'>
             <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
               forum
