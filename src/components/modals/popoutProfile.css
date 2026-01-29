@@ -149,7 +149,6 @@
   resize: none;
   padding: 8px;
   min-height: 40px;
-  outline: none;
   outline: 1px solid var(--border-color);
   border-radius: 8px;
   box-sizing: border-box;

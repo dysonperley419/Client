@@ -50,6 +50,7 @@ button,
 textarea,
 select {
   font: inherit;
+  border: none;
 }
 
 p,
@@ -372,7 +373,6 @@ button {
   background: none;
   color: var(--text-muted);
   font-size: 14px;
-  outline: none;
   width: 140px;
 }
 
