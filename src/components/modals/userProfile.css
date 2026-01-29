@@ -47,29 +47,6 @@
   background-color: var(--bg-alt);
 }
 
-.status-indicator-wrapper {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 24px;
-  height: 24px;
-  background-color: var(--bg-alt);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.status-dot-large {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-}
-
-.status-dot-large.online {
-  background-color: var(--bg-online);
-}
-
 .profile-info {
   padding: 0 16px 16px;
 }

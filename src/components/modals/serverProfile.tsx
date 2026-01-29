@@ -42,7 +42,7 @@ export const ServerProfileModal = ({ member }: { member: Member }): JSX.Element 
       <div className='profile-modal-header' style={{ backgroundImage: bannerUrl }}>
         <div className='profile-modal-avatar-wrapper'>
           <MemberAvatar member={member} />
-          <div className={`modal-status-dot ${status}`} />
+          <div className={`status-dot-large ${status}`} />
         </div>
       </div>
 

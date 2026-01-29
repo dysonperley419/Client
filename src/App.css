@@ -441,3 +441,104 @@ button {
   background-color: rgb(78 80 88 / 60%);
   color: white;
 }
+
+.status-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--bg-header-alt);
+}
+
+.user-section .status-dot-large {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
+.popout-header .status-dot-large,
+.user-profile-modal .status-dot-large,
+.profile-modal-header .status-dot-large {
+  position: absolute;
+  bottom: 8px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--bg-header-alt);
+}
+
+.online {
+  background-color: var(--bg-online);
+}
+
+.idle {
+  background-color: var(--bg-idle);
+}
+
+.dnd {
+  background-color: var(--bg-dnd);
+}
+
+.offline {
+  background-color: var(--bg-offline);
+}
+
+.typing-indicator-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 10px;
+  padding: 2px 5px;
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+}
+
+.typing-indicator-dots .dot {
+  width: 4px;
+  height: 4px;
+  background-color: #dbdee1;
+  border-radius: 50%;
+  display: inline-block;
+  animation: typing-fade 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator-dots .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-indicator-dots .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing-fade {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.3;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.status-indicator-wrapper {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  background-color: var(--bg-alt);
+  border-radius: 50%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

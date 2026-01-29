@@ -45,16 +45,6 @@
   object-fit: cover;
 }
 
-.modal-status-dot {
-  position: absolute;
-  bottom: 10px;
-  right: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 4px solid var(--bg-alt);
-}
-
 .profile-modal-body {
   padding: 60px 20px 20px;
   display: flex;

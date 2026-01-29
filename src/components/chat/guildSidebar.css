@@ -177,10 +177,11 @@
 
 .user-status-indicator {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 20px;
-  height: 20px;
+  bottom: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  display: flex;
 }
 
 .user-status-indicator span {
