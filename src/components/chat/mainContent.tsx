@@ -432,29 +432,31 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
           )}
         </div>
         <div className='header-right'>
-          <button className='icon-btn'>
-            <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-              forum
-            </span>
-          </button>
-          <button className='icon-btn'>
-            <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-              notifications
-            </span>
-          </button>
-          <button className='icon-btn'>
-            <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-              push_pin
-            </span>
-          </button>
-          <button className='icon-btn'>
-            <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-              group
-            </span>
-          </button>
-          <div className='search-bar'>
-            <input type='text' placeholder='Search' />
-            <span className='material-symbols-rounded search-icon'>search</span>
+          <div className='header-right-left'>
+            <button className='icon-btn'>
+              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                forum
+              </span>
+            </button>
+            <button className='icon-btn'>
+              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                notifications
+              </span>
+            </button>
+            <button className='icon-btn'>
+              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                push_pin
+              </span>
+            </button>
+            <button className='icon-btn'>
+              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                group
+              </span>
+            </button>
+            <div className='search-bar'>
+              <input type='text' placeholder='Search' />
+              <span className='material-symbols-rounded search-icon'>search</span>
+            </div>
           </div>
           <div className='vertical-divider'></div>
           <button className='icon-btn'>

@@ -264,11 +264,10 @@ body,
 
 .user-info .name {
   color: var(--text-bright);
-  font-weight: 600;
 }
 
-.header-base {
-  color: var(--accent-primary);
+.members-column-header-base {
+  color: var(--text-bright);
   padding: 20px;
   border-bottom: 1px solid rgb(187 154 247 / 20%); /* Var */
   display: flex;
@@ -339,13 +338,19 @@ button {
   gap: 15px;
 }
 
+.header-right-left {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+}
+
 .header-icon {
   width: 24px;
   height: 24px;
 }
 
 .header-title {
-  color: #fff;
+  color: var(--text-bright);
   font-weight: 700;
   font-size: 20px;
   white-space: nowrap;
@@ -395,11 +400,14 @@ button {
   color: var(--text-muted);
   font-weight: 600;
   font-size: 14px;
-  padding: 4px 8px;
   border-radius: 4px;
   transition:
     background-color 0.2s,
     color 0.2s;
+}
+
+.header button:not(.icon-btn) {
+  padding: 4px 8px;
 }
 
 .header button:hover {

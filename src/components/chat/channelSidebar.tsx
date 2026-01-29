@@ -39,7 +39,7 @@ const ChannelSidebar = ({
                 group
               </span>
             </div>
-            <span className='channel-name'>Friends</span>
+            <span className='sidebar-text'>Friends</span>
           </button>
 
           <div className='dm-section'>
@@ -72,12 +72,12 @@ const ChannelSidebar = ({
         onSelectChannel(channel);
       }}
     >
-      <div className='channel-icon'>
+      <div className='sidebar-icon'>
         <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
           {channel.type === 2 ? 'volume_up' : 'tag'}
         </span>
       </div>
-      <span className='channel-name'>{channel.name}</span>
+      <span className='sidebar-text'>{channel.name}</span>
     </button>
   );
 

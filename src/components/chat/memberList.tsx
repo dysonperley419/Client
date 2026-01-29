@@ -156,7 +156,7 @@ const MemberList = ({
   if (!listData) {
     return (
       <aside className='members-column'>
-        <header className='header-base'>Loading members...</header>
+        <header className='members-column-header-base'>Loading members...</header>
       </aside>
     );
   }
@@ -165,7 +165,7 @@ const MemberList = ({
 
   return (
     <aside className='members-column'>
-      <header className='header-base'>Members ({listData.member_count})</header>
+      <header className='members-column-header-base'>Members ({listData.member_count})</header>
       <div className='scroller' onScroll={handleScroll}>
         {items.map((item: GuildMemberListOperationItem, index: number) => {
           if (item.group && item.group.count > 0) {

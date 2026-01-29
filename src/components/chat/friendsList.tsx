@@ -149,12 +149,14 @@ export const FriendsList = ({
           </button>
         </div>
         <div className='header-right'>
-          <button className='add-friend-btn'>Add Friend</button>
-          <button className='icon-btn'>
-            <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-              edit_square
-            </span>
-          </button>
+          <div className='header-right-left'>
+            <button className='add-friend-btn'>Add Friend</button>
+            <button className='icon-btn'>
+              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                edit_square
+              </span>
+            </button>
+          </div>
           <div className='vertical-divider'></div>
           <button className='icon-btn'>
             <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>

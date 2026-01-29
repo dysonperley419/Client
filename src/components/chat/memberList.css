@@ -23,7 +23,7 @@
 
 .role-title {
   padding: 10px 0 10px 10px;
-  color: var(--accent-primary);
+  color: var(--text-bright);
   text-transform: uppercase;
   font-size: 14px;
   font-weight: 600;

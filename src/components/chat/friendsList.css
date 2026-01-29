@@ -193,7 +193,7 @@
 .active-now-header {
   font-size: 20px;
   font-weight: 700;
-  color: white;
+  color: var(--text-bright);
   margin-bottom: 20px;
 }
 
