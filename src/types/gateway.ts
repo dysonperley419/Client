@@ -89,7 +89,10 @@ export const TypingStartSchema = z.object({
   channel_id: z.string(),
   guild_id: z.string().nullish(),
   user_id: z.string(),
-  timestamp: z.int(),
+  timestamp: z.preprocess((val) => {
+    const coerced = Number(val);
+    return isNaN(coerced) ? undefined : coerced;
+  }, z.int()),
   member: MemberSchema.nullish(),
 });
 
