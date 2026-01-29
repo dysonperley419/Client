@@ -92,7 +92,7 @@ export const TypingStartSchema = z.object({
   timestamp: z.preprocess((val) => {
     const coerced = Number(val);
     return isNaN(coerced) ? undefined : coerced;
-  }, z.int()),
+  }, z.int().nullish()),
   member: MemberSchema.nullish(),
 });
 
