@@ -299,7 +299,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                           src={attachment.url}
                           controls
                           className='chat-video'
-                          style={{ maxWidth: attachment.width ?? '100%' }}
+                          style={{ width: '50%' }}
                         >
                           <track kind='captions' />
                         </video>
@@ -310,7 +310,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                             alt={attachment.filename}
                             className='chat-image'
                             style={{
-                              width: attachment.width ?? 'auto',
+                              width: '50%',
                               height: 'auto',
                               maxHeight: 400,
                             }}
@@ -342,7 +342,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       }
 
       return (
-        <div key={msg.id} className='message-sub'>
+        <div key={msg.id} className='message-details message-sub'>
           {msgContent}
         </div>
       );

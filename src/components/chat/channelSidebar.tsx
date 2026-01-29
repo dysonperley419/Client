@@ -5,18 +5,16 @@ import { type JSX, useState } from 'react';
 import type { Channel } from '@/types/channel';
 import type { Guild } from '@/types/guilds';
 
-import CurrentUser from './currentUser';
+import VoiceActivityControls from './voiceActivityControls';
 
 const ChannelSidebar = ({
   selectedGuild,
   selectedChannel,
   onSelectChannel,
-  onSettingsClicked,
 }: {
   selectedGuild?: Guild | null;
   selectedChannel?: Channel | null;
   onSelectChannel: (channel: Channel | null) => void;
-  onSettingsClicked: () => void;
 }): JSX.Element => {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
@@ -31,7 +29,7 @@ const ChannelSidebar = ({
 
         <div className='scroller'>
           <button
-            className={`friends-button ${!selectedChannel ? 'active' : ''}`}
+            className={`sidebar-btn ${!selectedChannel ? 'active' : ''}`}
             onClick={() => {
               onSelectChannel(null);
             }}
@@ -56,7 +54,7 @@ const ChannelSidebar = ({
             <div className='dm-list'></div>
           </div>
         </div>
-        <CurrentUser onSettingsClicked={onSettingsClicked} />
+        <VoiceActivityControls />
       </div>
     );
   }
@@ -69,7 +67,7 @@ const ChannelSidebar = ({
   const renderChannel = (channel: Channel) => (
     <button
       key={channel.id}
-      className={`channel-item ${selectedChannel?.id === channel.id ? 'active' : ''} ${channel.type === 2 ? 'not-selectable' : ''}`}
+      className={`sidebar-btn ${selectedChannel?.id === channel.id ? 'active' : ''} ${channel.type === 2 ? 'not-selectable' : ''}`}
       onClick={() => {
         onSelectChannel(channel);
       }}
@@ -148,7 +146,7 @@ const ChannelSidebar = ({
         ))}
       </div>
 
-      <CurrentUser onSettingsClicked={onSettingsClicked} />
+      <VoiceActivityControls />
     </div>
   );
 };

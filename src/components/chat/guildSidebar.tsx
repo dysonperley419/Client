@@ -3,6 +3,7 @@ import './guildSidebar.css';
 import { type JSX } from 'react';
 import { Link } from 'react-router-dom';
 
+import imgFlickerLogo from '@/assets/flickerLogo.png';
 import type { Guild } from '@/types/guilds';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
@@ -103,22 +104,24 @@ const GuildSidebar = ({
     e.currentTarget.style.display = 'none';
   };
 
+  const isHomeSelected = !selectedGuildId;
+
   return (
     <div id='guilds-column'>
       <div className='home-section'>
-        <button className='guild-icon-wrapper home-wrapper'>
-          {!selectedGuildId && (
+        <button className={`guild-icon-wrapper home-wrapper ${isHomeSelected ? 'selected' : ''}`}>
+          {isHomeSelected && (
             <div className='selected-indicator-bg'>
               <div className='selected-gradient' />
             </div>
           )}
           <Link to='/channels/@me' className='home-btn-link'>
             <div className='icon-container shadow-container'>
-              <div className='guild-icon home-icon'>
-                <span className='material-symbols-rounded' style={{ fontSize: '28px' }}>
-                  home
-                </span>
-              </div>
+              <img
+                className={`guild-icon ${isHomeSelected ? 'active' : ''} home-icon-inner`}
+                src={imgFlickerLogo}
+                alt='Home'
+              />
             </div>
           </Link>
         </button>

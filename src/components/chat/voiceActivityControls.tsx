@@ -1,8 +1,8 @@
-import './currentUser.css';
+import './voiceActivityControls.css';
 
 import { type JSX, useState } from 'react';
 
-const CurrentUser = ({ onSettingsClicked }: { onSettingsClicked: () => void }): JSX.Element => {
+const VoiceActivityControls = (): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOpen = () => {
@@ -29,7 +29,7 @@ const CurrentUser = ({ onSettingsClicked }: { onSettingsClicked: () => void }): 
 
       <div className='slide-wrapper'>
         <div
-          className='trigger-tab'
+          className='trigger-tab-wrapper'
           onClick={(e) => {
             e.stopPropagation();
             toggleOpen();
@@ -42,10 +42,12 @@ const CurrentUser = ({ onSettingsClicked }: { onSettingsClicked: () => void }): 
           tabIndex={0}
           aria-label='Toggle volume controls'
         >
-          <div className='trigger-icon'>
-            <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-              expand_more
-            </span>
+          <div className='trigger-tab'>
+            <div className='trigger-icon'>
+              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                expand_more
+              </span>
+            </div>
           </div>
         </div>
 
@@ -60,7 +62,7 @@ const CurrentUser = ({ onSettingsClicked }: { onSettingsClicked: () => void }): 
               headset_mic
             </span>
           </button>
-          <button className='control-btn' onClick={onSettingsClicked}>
+          <button className='control-btn'>
             <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
               mic_off
             </span>
@@ -71,4 +73,4 @@ const CurrentUser = ({ onSettingsClicked }: { onSettingsClicked: () => void }): 
   );
 };
 
-export default CurrentUser;
+export default VoiceActivityControls;

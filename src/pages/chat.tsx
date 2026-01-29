@@ -156,9 +156,6 @@ const ChatApp = (): JSX.Element => {
             selectedGuild={selectedGuild}
             selectedChannel={selectedChannel}
             onSelectChannel={handleSelectChannel}
-            onSettingsClicked={() => {
-              setShowSettings(true);
-            }}
           />
 
           {selectedChannel && selectedGuild ? (

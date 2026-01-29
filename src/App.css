@@ -24,6 +24,48 @@
   --shadow-main: rgb(0 0 0 / 30%);
 }
 
+/* Prevent the width headache and besides it aligns with Figma */
+html {
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -206,22 +248,9 @@ body,
   padding: 15px;
   overflow-y: auto;
   height: 100%;
-}
-
-#channels-column {
-  background-color: var(--bg-sidebar);
-  flex-direction: column;
-  width: 240px;
-  min-width: 240px;
-  max-width: 320px;
   display: flex;
-  overflow: hidden;
-}
-
-#channels-column .scroller {
-  flex: 1;
-  overflow: hidden auto;
-  min-height: 0;
+  flex-direction: column;
+  width: 100%;
 }
 
 .user-settings-panel {

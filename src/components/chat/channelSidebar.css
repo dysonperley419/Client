@@ -11,6 +11,13 @@
   flex-direction: column;
 }
 
+#channels-column .scroller {
+  flex: 1;
+  overflow: hidden auto;
+  min-height: 0;
+  padding: 0;
+}
+
 .sidebar-header-search {
   background-color: var(--bg-sidebar-secondary);
   border-bottom: 1px solid rgb(187 154 247 / 20%);
@@ -90,43 +97,6 @@
   height: 20px;
 }
 
-#channels-column .scroller {
-  flex: 1;
-  overflow: hidden auto;
-  min-height: 0;
-  padding: 0;
-}
-
-.channel-item {
-  width: 100%;
-  border-radius: 0;
-  transition: 0.2s all;
-  cursor: pointer;
-  margin-bottom: 0;
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: start;
-  gap: 8px;
-  color: var(--text-muted);
-  background: transparent;
-  border: none;
-  position: relative;
-}
-
-.channel-item:hover {
-  background-color: rgb(78 80 88 / 30%);
-  color: var(--text-bright);
-}
-
-.channel-item.active {
-  background-color: rgb(138 131 166 / 60%);
-  border-left: 2px solid var(--accent-primary);
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  color: white;
-}
-
 .channel-icon {
   width: 20px;
   height: 20px;
@@ -147,12 +117,21 @@
 }
 
 .category-wrapper {
+  display: flex;
+  flex-direction: column;
   margin-top: 18px;
+  width: 100%;
+}
+
+.category-children {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .category-header {
   width: 100%;
-  padding: 0 16px;
+  padding: 0 10px;
   height: 24px;
   display: flex;
   align-items: center;
@@ -189,28 +168,38 @@
   height: 100%;
 }
 
-.friends-button {
+.sidebar-btn {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 10px 16px;
-  width: 100%;
+  gap: 4px;
+  padding: 8px 10px;
   background: transparent;
   border: none;
   cursor: pointer;
   color: var(--text-muted);
   font-weight: 600;
   font-size: 16px;
-  margin-top: 10px;
+  margin: 10px 10px 0;
   justify-content: flex-start;
+  border-radius: 8px;
+  transition:
+    margin-right ease 0.2s,
+    background-color 0.2s,
+    border-radius ease 0.2s;
 }
 
-.friends-button.active {
+.sidebar-btn:hover:not(.active) {
+  background-color: rgb(78 80 88 / 30%);
+  color: var(--text-bright);
+}
+
+.sidebar-btn.active {
   background-color: rgb(138 131 166 / 60%);
   border-left: 2px solid var(--accent-primary);
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   color: white;
+  margin-right: 0;
 }
 
 .icon-wrapper {
