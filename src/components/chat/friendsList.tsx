@@ -272,13 +272,15 @@ export const FriendsList = ({
           </div>
         </div>
         <div className='active-now-column'>
-          <h3 className='active-now-header'>Active now</h3>
-          <div className='active-now-empty'>
-            <h4>Hello? Is anybody on?</h4>
-            <p>
-              Well, I guess nobody is on. If someone starts an activity, those activities will be
-              shown here!
-            </p>
+          <div className='scroller'>
+            <h3 className='active-now-header'>Active now</h3>
+            <div className='active-now-empty'>
+              <h4>Hello? Is anybody on?</h4>
+              <p>
+                Well, I guess nobody is on. If someone starts an activity, those activities will be
+                shown here!
+              </p>
+            </div>
           </div>
         </div>
       </div>

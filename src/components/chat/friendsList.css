@@ -188,8 +188,7 @@
 
 .active-now-column {
   width: 360px;
-  background-color: var(--bg-panel);
-  padding: 20px;
+  background-color: var(--bg-sidebar-secondary);
   flex-shrink: 0;
 }
 
@@ -202,7 +201,7 @@
 
 .active-now-empty {
   text-align: center;
-  padding: 40px 20px;
+  padding: 20px;
   background-color: var(--bg-alt);
   border-radius: 8px;
 }
