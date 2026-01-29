@@ -27,7 +27,7 @@
   box-shadow: 0 8px 16px rgb(0 0 0 / 20%);
   animation: modal-pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   background: var(--bg-alt);
-  outline: 1px dashed color-mix(in srgb, var(--accent-primary), transparent 20%);
+  outline: 1px solid color-mix(in srgb, var(--accent-primary), transparent 20%);
   background-clip: padding-box;
   pointer-events: auto;
 }

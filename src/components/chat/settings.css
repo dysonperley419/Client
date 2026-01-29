@@ -222,7 +222,7 @@
 .close-circle {
   width: 46px;
   height: 46px;
-  outline: 1px dashed #bb9af7;
+  outline: 1px solid #bb9af7;
   border-radius: 50%;
   display: flex;
   align-items: center;
