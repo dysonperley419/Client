@@ -21,7 +21,8 @@
 }
 
 .profile-modal-header {
-  height: 120px;
+  width: auto;
+  aspect-ratio: 680/240;
   background-color: var(--bg-header);
   background-size: cover;
   background-position: center;

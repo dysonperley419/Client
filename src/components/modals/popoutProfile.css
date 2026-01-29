@@ -8,8 +8,8 @@
 }
 
 .popout-banner {
-  height: 100px;
   width: 100%;
+  aspect-ratio: 680/240;
   background-size: cover;
   background-position: center;
 }
