@@ -109,14 +109,18 @@ const GuildSidebar = ({
   return (
     <div id='guilds-column'>
       <div className='home-section'>
-        <button className={`guild-icon-wrapper home-wrapper ${isHomeSelected ? 'selected' : ''}`}>
-          {isHomeSelected && (
+        <button
+          className={`guild-icon-wrapper home-wrapper ${isHomeSelected && !isUserPopupOpen ? 'selected' : ''}`}
+        >
+          {isHomeSelected && !isUserPopupOpen && (
             <div className='selected-indicator-bg'>
               <div className='selected-gradient' />
             </div>
           )}
           <Link to='/channels/@me' className='home-btn-link'>
-            <div className={`icon-container shadow-container ${isHomeSelected ? 'active' : ''}`}>
+            <div
+              className={`icon-container shadow-container ${isHomeSelected && !isUserPopupOpen ? 'active' : ''}`}
+            >
               <img className={`guild-icon home-icon-inner`} src={imgFlickerLogo} alt='Home' />
             </div>
           </Link>
@@ -130,7 +134,7 @@ const GuildSidebar = ({
       <div className='server-section'>
         {guilds.map((guild: Guild) => (
           <button
-            className={`guild-icon-wrapper ${selectedGuildId === guild.id ? 'selected' : ''}`}
+            className={`guild-icon-wrapper ${selectedGuildId === guild.id && !isUserPopupOpen ? 'selected' : ''}`}
             key={guild.id}
             onClick={() => {
               onSelectGuild(guild);
@@ -139,13 +143,13 @@ const GuildSidebar = ({
               handleRightClick(e, guild);
             }}
           >
-            {selectedGuildId === guild.id && (
+            {selectedGuildId === guild.id && !isUserPopupOpen && (
               <div className='selected-indicator-bg'>
                 <div className='selected-gradient' />
               </div>
             )}
             <div
-              className={`icon-container shadow-container ${selectedGuildId === guild.id ? 'active' : ''}`}
+              className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''}`}
             >
               {guild.icon ? (
                 <img
