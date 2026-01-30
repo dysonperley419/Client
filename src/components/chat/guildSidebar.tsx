@@ -22,7 +22,7 @@ const GuildSidebar = ({
   selectedGuildId?: string | null;
   onSelectGuild: (guild: Guild) => void;
 }): JSX.Element => {
-  const { user, sessions, presences } = useGateway();
+  const { user, sessions, presences, relationships } = useGateway();
   const { openModal } = useModal();
   const { openContextMenu } = useContextMenu();
   const { openPopup, popupType } = usePopup();
@@ -108,6 +108,11 @@ const GuildSidebar = ({
   const status =
     sessions[0]?.status ?? (user?.id ? presences[user.id]?.status : undefined) ?? 'offline';
 
+  const onlineFriendsCount = relationships.filter((r) => {
+    const friendStatus = presences[r.id]?.status ?? 'offline';
+    return r.type === 1 && friendStatus !== 'offline' && friendStatus !== 'invisible';
+  }).length;
+
   return (
     <div id='guilds-column'>
       <div className='home-section'>
@@ -128,7 +133,7 @@ const GuildSidebar = ({
           </Link>
         </button>
         <div className='online-stats'>
-          <span className='stat-text'>1 ONLINE</span>
+          <span className='stat-text'>{onlineFriendsCount} ONLINE</span>
           <div className='stat-line' />
         </div>
       </div>
