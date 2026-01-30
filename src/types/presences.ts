@@ -7,22 +7,6 @@ export const StatusEnumSchema = z.union([
   z.undefined(),
 ]);
 
-export const PlatformEnum = z.enum([
-  'desktop',
-  'mobile',
-  'web',
-  'embedded',
-  'vr',
-  'xbox',
-  'samsung',
-  'ios',
-  'android',
-  'ps4',
-  'ps5',
-  'meta_quest',
-  'unknown',
-]);
-
 export const ActivityTypeEnum = z.enum({
   PLAYING: 0,
   STREAMING: 1,
@@ -72,7 +56,7 @@ export const ActivitySchema = z.object({
   created_at: z.coerce.number().int(),
   url: z.string().nullish(),
   session_id: z.string().nullish(),
-  platform: PlatformEnum.nullish(),
+  platform: z.string().nullish(),
   application_id: z.string().nullish(),
   state: z.string().nullish(),
   details: z.string().nullish(),
@@ -118,7 +102,7 @@ export const SessionSchema = z.object({
   status: StatusEnumSchema,
   activities: z.array(ActivitySchema).nullish(),
   client_info: z.object({
-    client: PlatformEnum,
+    client: z.string(),
     os: z.string(),
     version: z.coerce.number().int(),
   }),
