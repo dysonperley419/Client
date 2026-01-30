@@ -36,8 +36,7 @@
   position: relative;
   min-width: 0;
   background-color: #1f2335;
-  border-left: 1px solid rgb(187 154 247 / 20%);
-  border-right: 1px solid rgb(187 154 247 / 20%);
+  box-shadow: var(--gray-outline-left), var(--gray-outline-right);
 }
 
 .messages-scroller {
@@ -148,8 +147,8 @@
   gap: 10px;
   padding: 10px;
   overflow-x: auto;
-  border-bottom: 1px solid var(--bg-modifier-accent);
   margin-bottom: 10px;
+  box-shadow: var(--modifier-accent-outline-bottom);
 }
 
 .attachment-container {

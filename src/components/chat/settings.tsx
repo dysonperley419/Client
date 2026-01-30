@@ -78,7 +78,7 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
             <hr
               style={{
                 height: '1px',
-                boxShadow: '0 -1px 0 0 var(--bg-modifier-accent)',
+                boxShadow: 'var(--modifier-accent-outline-top)',
               }}
             />
           </div>
@@ -91,7 +91,7 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
             <hr
               style={{
                 height: '1px',
-                boxShadow: '0 -1px 0 0 var(--bg-modifier-accent)',
+                boxShadow: 'var(--modifier-accent-outline-top)',
               }}
             />
           </div>

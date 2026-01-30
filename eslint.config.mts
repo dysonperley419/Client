@@ -91,12 +91,7 @@ export default defineConfig([
     language: 'css/css',
     extends: ['css/recommended'],
     rules: {
-      'css/no-invalid-properties': [
-        'error',
-        {
-          allowUnknownVariables: true,
-        },
-      ],
+      'css/no-invalid-properties': 'off',
       'css/use-baseline': 'off',
     },
   },

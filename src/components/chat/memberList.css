@@ -46,6 +46,6 @@
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  outline: 1px solid var(--border-color);
+  outline: 1px solid var(--outline-color-gray);
   box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
 }

@@ -21,13 +21,13 @@
 }
 
 .profile-modal-header {
-  width: auto;
+  width: 100%;
   aspect-ratio: 680/240;
   background-color: var(--bg-header);
   background-size: cover;
   background-position: center;
   position: relative;
-  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--gray-outline-bottom);
 }
 
 .profile-modal-avatar-wrapper {

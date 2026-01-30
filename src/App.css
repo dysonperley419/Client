@@ -10,7 +10,7 @@
   --text-alt: #b5bac1;
   --text-bright: #c0caf5;
   --bg-bright: #e5e4d9;
-  --border-color: rgb(187 154 247 / 20%);
+  --outline-color-gray: rgb(187 154 247 / 20%);
   --bg-dark-alt: #1a1b26;
   --bg-alt: #323449;
   --bg-input: #1a1b26;
@@ -19,9 +19,16 @@
   --bg-idle: #f0b232;
   --bg-dnd: #f23f43;
   --bg-offline: #80848e;
+  --bg-modifier-accent: var(--bg-alt); /* what is a bg-modifier-accent anyway? */
   --text-muted: #949ba4;
   --text-dim: #565f89;
   --shadow-main: rgb(0 0 0 / 30%);
+  --gray-outline-top: inset 0 1px 0 0 var(--outline-color-gray);
+  --gray-outline-left: inset 1px 0 0 0 var(--outline-color-gray);
+  --gray-outline-right: inset -1px 0 0 0 var(--outline-color-gray);
+  --gray-outline-bottom: inset 0 -1px 0 0 var(--outline-color-gray);
+  --modifier-accent-outline-top: inset 0 1px 0 0 var(--bg-modifier-accent);
+  --modifier-accent-outline-bottom: inset 0 -1px 0 0 var(--bg-modifier-accent);
 }
 
 /* Prevent the width headache and besides it aligns with Figma */
@@ -155,7 +162,7 @@ body {
 .separator {
   width: 32px;
   height: 2px;
-  background: var(--border-color);
+  background: var(--outline-color-gray);
   outline: none;
   margin: 4px 0 30px;
   border-radius: 1px;
@@ -185,7 +192,7 @@ body,
   overflow-y: auto;
   background-color: var(--bg-sidebar);
   width: 100px;
-  border-right: 1px solid rgb(187 154 247 / 20%);
+  box-shadow: var(--gray-outline-right);
 }
 
 ::-webkit-scrollbar {
@@ -234,19 +241,11 @@ body,
   margin: 8px;
   padding: 8px;
   border-radius: 8px;
-  outline: 1px solid var(--border-color);
+  outline: 1px solid var(--outline-color-gray);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-}
-
-.chat-main {
-  flex: 1;
-  background-color: var(--bg-panel);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 .members-column {
@@ -271,7 +270,7 @@ body,
 .members-column-header-base {
   color: var(--text-bright);
   padding: 20px;
-  border-bottom: 1px solid rgb(187 154 247 / 20%); /* Var */
+  box-shadow: var(--gray-outline-bottom);
   display: flex;
   justify-content: space-between;
 }
@@ -281,7 +280,6 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
   cursor: pointer;
   font: inherit;
 }
@@ -319,13 +317,13 @@ button {
 .header {
   height: 58px;
   background-color: var(--bg-main);
-  border-bottom: 1px solid rgb(187 154 247 / 20%);
   padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
   z-index: 2;
+  box-shadow: var(--gray-outline-bottom), var(--gray-outline-left);
 }
 
 .header-left {

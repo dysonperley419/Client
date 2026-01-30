@@ -80,8 +80,8 @@
 
 .popout-separator {
   outline: none;
-  border-top: 1px solid var(--border-color);
   margin: 4px 0;
+  box-shadow: var(--gray-outline-top);
 }
 
 .roles-container {
@@ -94,7 +94,7 @@
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
-  outline: 1px solid var(--border-color);
+  outline: 1px solid var(--outline-color-gray);
   color: var(--text-main);
   background: var(--bg-panel);
   display: flex;
@@ -139,7 +139,7 @@
   justify-content: center;
   border-radius: 4px;
   color: var(--text-main);
-  outline: 1px solid var(--border-color);
+  outline: 1px solid var(--outline-color-gray);
 }
 
 .note-input {
@@ -149,9 +149,8 @@
   resize: none;
   padding: 8px;
   min-height: 40px;
-  outline: 1px solid var(--border-color);
+  outline: 1px solid var(--outline-color-gray);
   border-radius: 8px;
-  box-sizing: border-box;
 }
 
 .note-input:focus {

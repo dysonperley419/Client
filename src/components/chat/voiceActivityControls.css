@@ -59,14 +59,13 @@
   outline: 1px solid rgb(187 154 247 / 20%);
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  padding: 4px 20px;
+  padding: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: -1px;
   height: 20px;
-  box-sizing: content-box;
   margin-left: 30px;
 }
 
@@ -96,8 +95,7 @@
   align-items: center;
   gap: 20px;
   padding: 0 25px;
-  border-top: 1px solid rgb(187 154 247 / 20%);
-  box-sizing: border-box;
+  box-shadow: var(--gray-outline-top);
 }
 
 .control-btn {

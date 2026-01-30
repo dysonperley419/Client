@@ -158,7 +158,7 @@
   border-radius: 50%;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   background: var(--bg-panel);
-  outline: 1px solid var(--border-color);
+  outline: 1px solid var(--outline-color-gray);
   color: var(--accent-primary);
   display: flex;
   align-items: center;

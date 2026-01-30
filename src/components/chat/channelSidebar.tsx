@@ -21,7 +21,7 @@ const ChannelSidebar = ({
   if (!selectedGuild) {
     return (
       <div id='channels-column'>
-        <div className='sidebar-header-search'>
+        <div className='sidebar-header'>
           <div className='search-bar-fake'>
             <span className='search-text'>Find or start a conversation</span>
           </div>
@@ -94,10 +94,10 @@ const ChannelSidebar = ({
 
   return (
     <div id='channels-column'>
-      <div className='sidebar-header-guild'>
-        <div className='sidebar-header-bg'>
-          {bannerUrl && <img src={bannerUrl} alt='' className='sidebar-header-image' />}
-          <div className='sidebar-header-gradient'></div>
+      <div className='sidebar-header sidebar-header-banner'>
+        <div className='sidebar-header-banner-bg'>
+          {bannerUrl && <img src={bannerUrl} alt='' className='sidebar-header-banner-image' />}
+          <div className='sidebar-header-banner-gradient'></div>
         </div>
         <div className='sidebar-header-content'>
           <span className='guild-name'>{selectedGuild.name}</span>
