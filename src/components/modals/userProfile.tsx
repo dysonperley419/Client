@@ -117,12 +117,9 @@ export const UserProfileModal = (): JSX.Element => {
             <p className='action-text'>Set a custom status</p>
           </div>
           <div className='action-status-icon'>
-            <span
-              className='material-symbols-rounded'
-              style={{ fontSize: '16px', color: '#23a559' }}
-            >
-              circle
-            </span>
+            <div className='status-indicator-wrapper'>
+              <div className={`status-dot ${status}`} />
+            </div>
           </div>
           <div className='icon-btn-small'>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>

@@ -167,15 +167,9 @@
 }
 
 .action-status-icon {
-  width: 14px;
-  height: 14px;
-  opacity: 0.6;
-}
-
-.action-status-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  display: flex;
+  width: 18px;
+  height: 18px;
 }
 
 .divider {
