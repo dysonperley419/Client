@@ -134,7 +134,7 @@ export const JoinServerModal = (): JSX.Element => {
             setInvite(e.target.value);
           }}
           style={{
-            marginTop: '20px',
+            marginTop: '10px',
           }}
         />
       </div>

@@ -87,6 +87,16 @@ export const UserProfileModal = (): JSX.Element => {
             <span className='discriminator'>
               {user?.username ?? 'User'}#{user?.discriminator.padStart(4, '0')}
             </span>
+            {user?.bot && (
+              <span
+                className='bot-tag'
+                style={{
+                  bottom: '3px',
+                }}
+              >
+                Bot
+              </span>
+            )}
           </div>
           <div className='icon-btn-small'>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>

@@ -287,13 +287,27 @@ button {
 .primary-btn {
   background: var(--accent-primary);
   color: #16161e;
-  padding: 12px;
+  padding: 10px;
   border-radius: 6px;
   font-weight: bold;
   width: 100%;
   transition:
     transform 0.1s,
     background 0.2s;
+}
+
+.bot-tag {
+  text-transform: uppercase;
+  background: var(--text-dim);
+  padding-left: 2px;
+  border: 1px solid var(--accent-primary);
+  border-radius: 6px;
+  padding-right: 2px;
+  margin-left: 5px;
+  color: var(--bg-bright);
+  font-size: 12px;
+  position: relative;
+  bottom: 0;
 }
 
 .primary-btn:hover {
@@ -469,8 +483,8 @@ button {
 .popout-header .status-dot-large,
 .profile-modal-header .status-dot-large {
   position: absolute;
-  bottom: 8px;
-  right: 5px;
+  bottom: 0;
+  right: 0;
   width: 20px;
   height: 20px;
   border-radius: 50%;

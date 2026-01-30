@@ -113,6 +113,7 @@ const MemberListItem = ({
           >
             {member.user.username}
           </span>
+          {member.user.bot && <span className='bot-tag'>Bot</span>}
         </div>
       </div>
     </button>

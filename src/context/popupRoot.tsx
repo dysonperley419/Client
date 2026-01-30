@@ -16,10 +16,24 @@ export const PopupRoot = () => {
       case 'USER_PROFILE_POPOUT': {
         const data = popupData as PopupDataMap['USER_PROFILE_POPOUT'];
 
+        const popout_height = 450;
+        const popout_width = 300;
+
+        let fixedX = data.x;
+        let fixedY = data.y;
+
+        if (data.y + popout_height > window.innerHeight) {
+          fixedY = window.innerHeight - popout_height + 110; //leeway from bottom of the member list
+        }
+
+        if (data.x + popout_width > window.innerWidth) {
+          fixedX = data.x - popout_width;
+        }
+
         return (
           <div
             className='popup-wrapper'
-            style={{ top: data.y, left: data.x, position: 'fixed' }}
+            style={{ top: Math.max(10, fixedY), left: fixedX, position: 'fixed' }}
             role='dialog'
             tabIndex={-1}
           >

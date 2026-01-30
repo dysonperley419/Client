@@ -6,7 +6,6 @@
 
 .join-server-modal p {
   color: #b5bac1;
-  font-size: 14px;
   text-align: center;
 }
 
@@ -22,8 +21,8 @@
 .join-btn {
   background-color: var(--bg-offline);
   color: white;
-  padding: 10px 24px;
-  border-radius: 3px;
+  padding: 10px;
+  border-radius: 6px;
   outline: none;
   cursor: pointer;
 }
@@ -33,6 +32,8 @@
   padding: 10px;
   border-radius: 3px;
   color: var(--text-muted);
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .join-server-modal ul li {

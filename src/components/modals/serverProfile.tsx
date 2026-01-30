@@ -42,7 +42,12 @@ export const ServerProfileModal = ({ member }: { member: Member }): JSX.Element 
       <div className='profile-modal-header' style={{ backgroundImage: bannerUrl }}>
         <div className='profile-modal-avatar-wrapper'>
           <MemberAvatar member={member} />
-          <div className={`status-dot-large ${status}`} />
+          <div
+            className={`status-dot-large ${status}`}
+            style={{
+              right: '5px',
+            }}
+          />
         </div>
       </div>
 
@@ -51,6 +56,16 @@ export const ServerProfileModal = ({ member }: { member: Member }): JSX.Element 
           <div className='modal-user-info'>
             <span className='modal-username'>{member.user.username}</span>
             <span className='modal-discriminator'>#{member.user.discriminator}</span>
+            {member.user.bot && (
+              <span
+                className='bot-tag'
+                style={{
+                  bottom: '3px',
+                }}
+              >
+                Bot
+              </span>
+            )}
           </div>
           {member.user.pronouns && <span className='modal-pronouns'>{member.user.pronouns}</span>}
         </div>

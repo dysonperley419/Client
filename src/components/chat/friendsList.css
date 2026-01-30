@@ -11,6 +11,7 @@
   color: var(--bg-sidebar);
   font-weight: 600;
   margin-left: 10px;
+  border: 1px solid var(--bg-alt);
 }
 
 .add-friend-btn:hover {
@@ -97,7 +98,6 @@
 }
 
 .friend-item-row .avatar-img {
-  width: 100%;
   height: 100%;
   border-radius: 50%;
   object-fit: cover;

@@ -105,6 +105,7 @@ export const PopoutProfile = ({ member, roles }: PopoutProfileProps): JSX.Elemen
           <div className='user-details-centered'>
             <span className='username'>{member.user.global_name ?? member.user.username}</span>
             <span className='discriminator'>#{member.user.discriminator}</span>
+            {member.user.bot && <span className='bot-tag'>Bot</span>}
           </div>
           {member.user.pronouns && (
             <div className='pronouns-row'>
@@ -142,6 +143,8 @@ export const PopoutProfile = ({ member, roles }: PopoutProfileProps): JSX.Elemen
                   className='role-pill role-emphasis-border'
                   style={{
                     borderColor: color,
+                    outlineColor: color,
+                    background: `${color}22`,
                   }}
                 >
                   <span className='role-removal-btn'>×</span> {role.name}
