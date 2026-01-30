@@ -53,9 +53,17 @@ const MemberListItem = ({
     e.preventDefault();
     e.stopPropagation();
 
+    const MENU_WIDTH = 180;
+    let x = e.clientX;
+    const y = e.clientY;
+
+    if (x + MENU_WIDTH > window.innerWidth) {
+      x = x - MENU_WIDTH;
+    }
+
     openContextMenu(
-      e.clientX,
-      e.clientY,
+      x,
+      y,
       <div className='context-menu-out guild-context-menu'>
         <div className='button'>Profile</div>
         <div className='button'>Message</div>
