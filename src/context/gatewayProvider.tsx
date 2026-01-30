@@ -99,16 +99,65 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         case 'GUILD_MEMBER_LIST_UPDATE': {
           const parsed = GuildMemberListUpdateSchema.parse(data);
           setMemberLists((prev) => {
+            /*
+              One thing deviated from Discord's implementation is to handle "Partial Sync" states.
+              Spacebar's OP14 is broken. First solution was to consider was that items that are not that as
+              a "Partial Sync" state where items are less than claimed range and members are less than member_count.
+              But turns out Spacebar returns the same members.
+
+              Still, I think this "Partial Sync" situation can be handy someday. And besides, OP14 is supposed to fetch
+              items until it fills the range or members are all fetched. So this would not be an issue at all.
+
+              The loop will break until either the items are the same length as range's, or that returned items are already fetched.
+
+              This is a rare situation but will handle any reimplementations that have buggy OP14s.
+            */
             const guildId = parsed.guild_id;
             const existing = prev?.[guildId];
-            const currentItems = existing?.id === parsed.id ? [...existing.items] : [];
+            const isSameId = existing?.id === parsed.id;
+            const currentItems = isSameId ? [...existing.items] : [];
+            let isPartial = isSameId ? (existing.partial ?? false) : false;
 
             for (const op of parsed.ops) {
               switch (op.op) {
                 case 'SYNC': {
                   const [start, end] = op.range;
-                  const deleteCount = end - start + 1;
-                  currentItems.splice(start, deleteCount, ...op.items);
+                  const rangeLength = end - start + 1;
+
+                  const fetchedLength = op.items.length;
+                  const memberCount = parsed.member_count ?? existing?.member_count ?? 0;
+
+                  const oldItemsSlice = currentItems.slice(start, start + fetchedLength);
+
+                  currentItems.splice(start, rangeLength, ...op.items);
+
+                  const currentMemberCount = currentItems.filter((item) => item.member).length;
+
+                  if (fetchedLength < rangeLength && currentMemberCount < memberCount) {
+                    if (isPartial) {
+                      const isSame =
+                        oldItemsSlice.length === op.items.length &&
+                        oldItemsSlice.every((item, index) => {
+                          const newItem = op.items[index];
+                          if (!newItem) return false;
+                          if (item.group && newItem.group)
+                            return item.group.id === newItem.group.id;
+                          if (item.member && newItem.member)
+                            return item.member.user.id === newItem.member.user.id;
+                          return false;
+                        });
+
+                      if (isSame) {
+                        isPartial = false;
+                      } else {
+                        isPartial = true;
+                      }
+                    } else {
+                      isPartial = true;
+                    }
+                  } else {
+                    isPartial = false;
+                  }
                   break;
                 }
                 case 'INSERT': {
@@ -140,6 +189,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
                 items: currentItems,
                 groups: parsed.groups,
                 member_count: parsed.member_count ?? existing?.member_count ?? 0,
+                partial: isPartial,
               },
             };
           });

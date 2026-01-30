@@ -10,6 +10,7 @@ export interface GuildMemberListState {
   items: GuildMemberListOperationItem[];
   groups: GuildMemberListGroup[];
   member_count: number;
+  partial?: boolean;
 }
 
 export interface GatewayContextSchema {
