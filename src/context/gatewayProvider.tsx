@@ -38,8 +38,10 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     {},
   );
   const [typingUsers, setTypingUsers] = useState<Record<string, Record<string, number>>>({});
+  const subscribedChannels = useRef<Record<string, string>>({});
 
   const requestMembers = useCallback((guildId: string, channelId: string, ranges = [[0, 99]]) => {
+    subscribedChannels.current[guildId] = channelId;
     if (socket.current?.readyState === WebSocket.OPEN) {
       socket.current.send(
         JSON.stringify({
@@ -53,14 +55,143 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     }
   }, []);
 
+  const handleDispatch = useCallback(
+    (type: string, data: unknown) => {
+      switch (type) {
+        case 'READY': {
+          const parsed = ReadyEventSchema.parse(data);
+          setUser(parsed.user);
+          setRelationships(parsed.relationships);
+          setUserSettings(parsed.user_settings);
+          setGuilds(parsed.guilds);
+          setSessions(parsed.sessions ?? []);
+          setIsReady(true);
+          break;
+        }
+
+        case 'SESSIONS_REPLACE': {
+          const parsed = SessionListSchema.parse(data);
+          setSessions(parsed);
+          break;
+        }
+
+        case 'MESSAGE_CREATE': {
+          const parsed = MessageCreateSchema.parse(data);
+          window.dispatchEvent(new CustomEvent('gateway_message', { detail: parsed }));
+
+          setTypingUsers((prev) => {
+            const channelTyping = { ...prev[parsed.channel_id] };
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Yeah I know and this is completely needed, just shut up about it.
+            const { [parsed.author.id ?? '']: _, ...remainingTyping } = channelTyping;
+            return { ...prev, [parsed.channel_id]: remainingTyping };
+          });
+          break;
+        }
+
+        case 'GUILD_CREATE':
+          window.dispatchEvent(new CustomEvent('gateway_guild_create', { detail: data }));
+          break;
+        case 'GUILD_DELETE':
+          window.dispatchEvent(new CustomEvent('gateway_guild_delete', { detail: data }));
+          break;
+
+        case 'GUILD_MEMBER_LIST_UPDATE': {
+          const parsed = GuildMemberListUpdateSchema.parse(data);
+          setMemberLists((prev) => {
+            const guildId = parsed.guild_id;
+            const existing = prev?.[guildId];
+            const currentItems = existing?.id === parsed.id ? [...existing.items] : [];
+
+            for (const op of parsed.ops) {
+              switch (op.op) {
+                case 'SYNC': {
+                  const [start, end] = op.range;
+                  const deleteCount = end - start + 1;
+                  currentItems.splice(start, deleteCount, ...op.items);
+                  break;
+                }
+                case 'INSERT': {
+                  currentItems.splice(op.index, 0, op.item);
+                  break;
+                }
+                case 'UPDATE': {
+                  currentItems[op.index] = op.item;
+                  break;
+                }
+                case 'DELETE': {
+                  currentItems.splice(op.index, 1);
+                  break;
+                }
+                case 'INVALIDATE': {
+                  const channelId = subscribedChannels.current[guildId];
+                  if (channelId) {
+                    requestMembers(guildId, channelId, [op.range]);
+                  }
+                  break;
+                }
+              }
+            }
+
+            return {
+              ...prev,
+              [guildId]: {
+                id: parsed.id,
+                items: currentItems,
+                groups: parsed.groups,
+                member_count: parsed.member_count ?? existing?.member_count ?? 0,
+              },
+            };
+          });
+          break;
+        }
+
+        case 'TYPING_START': {
+          const parsed = TypingStartSchema.parse(data);
+          setTypingUsers((prev) => ({
+            ...prev,
+            [parsed.channel_id]: {
+              ...(prev[parsed.channel_id] ?? {}),
+              [parsed.user_id]: Date.now(),
+            },
+          }));
+          break;
+        }
+
+        case 'PRESENCE_UPDATE': {
+          const parsed = PresenceUpdateSchema.parse(data);
+          const userId = parsed.user.id;
+          if (userId) {
+            setPresences((prev) => ({ ...prev, [userId]: parsed }));
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    },
+    [requestMembers],
+  );
+
+  const startHeartbeat = useCallback((interval: number, ws: WebSocket) => {
+    return window.setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ op: 1, d: null }));
+      }
+    }, interval);
+  }, []);
+
   const connect = useCallback(() => {
     const token = localStorage.getItem('Authorization') ?? '';
     const gatewayUrl = localStorage.getItem('selectedGatewayUrl');
 
     if (gatewayUrl && gatewayUrl.length > 0) {
-      socket.current = new WebSocket(gatewayUrl);
+      const ws = new WebSocket(gatewayUrl);
+      socket.current = ws;
+      let heartbeatId: number | undefined;
 
-      socket.current.onopen = () => {
+      ws.onopen = () => {
         const identifyPayload = {
           op: 2,
           d: {
@@ -69,10 +200,10 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
             properties: { os: 'Windows', browser: 'Chrome' },
           },
         };
-        socket.current?.send(JSON.stringify(identifyPayload));
+        ws.send(JSON.stringify(identifyPayload));
       };
 
-      socket.current.onmessage = (event: MessageEvent<string>) => {
+      ws.onmessage = (event: MessageEvent<string>) => {
         const payload = GatewayPayloadSchema.parse(JSON.parse(event.data));
         const { op, t, d } = payload;
 
@@ -81,121 +212,27 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
             handleDispatch(t ?? '', d);
             break;
           case 10:
-            startHeartbeat(HelloSchema.parse(d).heartbeat_interval);
+            heartbeatId = startHeartbeat(HelloSchema.parse(d).heartbeat_interval, ws);
             break;
         }
       };
+
+      return () => {
+        if (heartbeatId) clearInterval(heartbeatId);
+        ws.close();
+      };
     }
-    /*
-        Discord clients determine that typing has stopped somewhat heuristically. If a message is sent, or if there has been no activity for 5 to 10 seconds, typing is assumed to have stopped.
-        */
-  }, []);
 
-  const handleDispatch = (type: string, data: unknown) => {
-    switch (type) {
-      case 'READY': {
-        const parsed = ReadyEventSchema.parse(data);
-        setUser(parsed.user);
-        setRelationships(parsed.relationships);
-        setUserSettings(parsed.user_settings);
-        setGuilds(parsed.guilds);
-        setSessions(parsed.sessions ?? []);
-        setIsReady(true);
-        break;
-      }
-
-      case 'SESSIONS_REPLACE': {
-        const parsed = SessionListSchema.parse(data);
-        setSessions(parsed);
-        break;
-      }
-
-      case 'MESSAGE_CREATE': {
-        const parsed = MessageCreateSchema.parse(data);
-        window.dispatchEvent(new CustomEvent('gateway_message', { detail: parsed }));
-
-        setTypingUsers((prev) => {
-          const channelTyping = { ...prev[parsed.channel_id] };
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Idk how to not remove the _ while making linter happy lol
-          const { [parsed.author.id ?? '']: _, ...remainingTyping } = channelTyping;
-          return { ...prev, [parsed.channel_id]: remainingTyping };
-        });
-        break;
-      }
-
-      case 'GUILD_CREATE':
-        window.dispatchEvent(new CustomEvent('gateway_guild_create', { detail: data }));
-        break;
-      case 'GUILD_DELETE':
-        window.dispatchEvent(new CustomEvent('gateway_guild_delete', { detail: data }));
-        break;
-
-      case 'GUILD_MEMBER_LIST_UPDATE': {
-        const parsed = GuildMemberListUpdateSchema.parse(data);
-        setMemberLists((prev) => {
-          const existing = prev?.[parsed.guild_id] ?? {
-            ops: [],
-            member_count: 0,
-            groups: [],
-          };
-          return {
-            ...prev,
-            [parsed.guild_id]: {
-              ...existing,
-              ...parsed,
-              groups: parsed.groups,
-              member_count: parsed.member_count ?? existing.member_count,
-            },
-          };
-        });
-        break;
-      }
-
-      case 'RELATIONSHIP_ADD':
-        window.dispatchEvent(new CustomEvent('gateway_relationship_add', { detail: data }));
-        break;
-      case 'RELATIONSHIP_REMOVE':
-        window.dispatchEvent(new CustomEvent('gateway_relationship_remove', { detail: data }));
-        break;
-
-      case 'TYPING_START': {
-        const parsed = TypingStartSchema.parse(data);
-        setTypingUsers((prev) => ({
-          ...prev,
-          [parsed.channel_id]: {
-            ...(prev[parsed.channel_id] ?? {}),
-            [parsed.user_id]: Date.now(),
-          },
-        }));
-        break;
-      }
-
-      case 'PRESENCE_UPDATE': {
-        const parsed = PresenceUpdateSchema.parse(data);
-        const userId = parsed.user.id;
-        if (userId) {
-          setPresences((prev) => {
-            return { ...prev, [userId]: parsed };
-          });
-        }
-        break;
-      }
-
-      default:
-        break;
-    }
-  };
-
-  const startHeartbeat = (interval: number) => {
-    setInterval(() => {
-      socket.current?.send(JSON.stringify({ op: 1, d: null }));
-    }, interval);
-  };
+    return () => {
+      /* no-op */
+    };
+  }, [handleDispatch, startHeartbeat]);
 
   useEffect(() => {
-    connect();
-
-    return () => socket.current?.close();
+    const cleanup = connect();
+    return () => {
+      cleanup();
+    };
   }, [connect]);
 
   const gatewayProps: GatewayContextSchema = {

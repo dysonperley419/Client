@@ -385,7 +385,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     const names = typingIds.map((id) => {
       const guildId = selectedChannel.guild_id;
       const listData = memberLists?.[guildId ?? ''];
-      const items = listData?.ops.find((op) => op.op === 'SYNC')?.items ?? [];
+      const items = listData?.items ?? [];
       const memberEntry = items.find((item) => item.member?.user.id === id);
 
       return memberEntry?.member?.user.username ?? 'Someone';

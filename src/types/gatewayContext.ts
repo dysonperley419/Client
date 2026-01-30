@@ -1,9 +1,16 @@
-import type { GuildMemberListUpdate } from './gateway';
+import type { GuildMemberListGroup, GuildMemberListOperationItem } from './gateway';
 import type { Guild } from './guilds';
 import type { Presence, Session } from './presences';
 import type { Relationship } from './relationship';
 import type { User } from './users';
 import type { UserSettings } from './userSettings';
+
+export interface GuildMemberListState {
+  id: string;
+  items: GuildMemberListOperationItem[];
+  groups: GuildMemberListGroup[];
+  member_count: number;
+}
 
 export interface GatewayContextSchema {
   isReady: boolean | null;
@@ -15,5 +22,5 @@ export interface GatewayContextSchema {
   presences: Record<string, Presence>;
   requestMembers?: (guildId: string, channelId: string, ranges?: number[][]) => void;
   typingUsers: Record<string, Record<string, number>>;
-  memberLists?: Record<string, GuildMemberListUpdate>;
+  memberLists?: Record<string, GuildMemberListState>;
 }

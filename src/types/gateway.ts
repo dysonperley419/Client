@@ -7,7 +7,7 @@ import { RelationshipSchema } from './relationship';
 import { UserSchema } from './users';
 import { UserSettingsSchema } from './userSettings';
 
-const GuildMemberListGroupSchema = z.object({
+export const GuildMemberListGroupSchema = z.object({
   id: z.string(),
   count: z.coerce.number().int(),
 });
@@ -112,4 +112,5 @@ export type GuildMemberList = z.infer<typeof GuildMemberListUpdateSchema>;
 export type GuildMemberListUpdate = z.infer<typeof GuildMemberListUpdateSchema>;
 export type GuildMemberListOperation = z.infer<typeof GuildMemberListOperationSchema>;
 export type GuildMemberListOperationItem = z.infer<typeof GuildMemberListOperationItemSchema>;
+export type GuildMemberListGroup = z.infer<typeof GuildMemberListGroupSchema>;
 export type PresenceUpdate = z.infer<typeof PresenceUpdateSchema>;

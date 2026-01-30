@@ -3,7 +3,7 @@ import './memberList.css';
 import { type JSX, useEffect, useState } from 'react';
 
 import type { Channel } from '@/types/channel';
-import type { GuildMemberListOperation, GuildMemberListOperationItem } from '@/types/gateway';
+import type { GuildMemberListOperationItem } from '@/types/gateway';
 import type { Guild, Member, Role } from '@/types/guilds';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
@@ -161,7 +161,7 @@ const MemberList = ({
     );
   }
 
-  const items = listData.ops.find((op: GuildMemberListOperation) => op.op === 'SYNC')?.items ?? [];
+  const items = listData.items;
 
   return (
     <aside className='members-column'>
