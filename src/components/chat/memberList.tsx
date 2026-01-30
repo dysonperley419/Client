@@ -16,10 +16,12 @@ const MemberListItem = ({
   member,
   isTyping,
   roles,
+  color,
 }: {
   member: Member;
   isTyping: boolean;
   roles?: Role[];
+  color?: string;
 }): JSX.Element => {
   const { openContextMenu } = useContextMenu();
   const { openPopup } = usePopup();
@@ -103,7 +105,14 @@ const MemberListItem = ({
           )}
         </div>
         <div className='user-info'>
-          <span className='name'>{member.user.username}</span>
+          <span
+            className='name'
+            style={{
+              color: color,
+            }}
+          >
+            {member.user.username}
+          </span>
         </div>
       </div>
     </button>
@@ -161,6 +170,20 @@ const MemberList = ({
     );
   }
 
+  const getMemberColor = (member: Member, guild?: Guild | null): string | undefined => {
+    if (!guild || member.roles.length === 0) return undefined;
+
+    const memberRoles = guild.roles.filter((r) => member.roles.includes(r.id));
+
+    memberRoles.sort((a, b) => b.position - a.position);
+
+    const colorRole = memberRoles.find((r) => r.color !== 0);
+    if (colorRole) {
+      return `#${colorRole.color.toString(16).padStart(6, '0')}`;
+    }
+    return undefined;
+  };
+
   const items = listData.items;
 
   return (
@@ -180,12 +203,14 @@ const MemberList = ({
 
           if (item.member) {
             const memberWithGuild = { ...item.member, guild_id: selectedGuild?.id };
+            const color = getMemberColor(item.member, selectedGuild);
             return (
               <MemberListItem
                 key={`${item.member.user.id}-${index.toString()}`}
                 member={memberWithGuild}
                 isTyping={!!currentChannelTyping?.[item.member.user.id]}
                 roles={selectedGuild?.roles}
+                color={color}
               />
             );
           }
