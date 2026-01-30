@@ -101,9 +101,11 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           setMemberLists((prev) => {
             /*
               One thing deviated from Discord's implementation is to handle "Partial Sync" states.
-              Spacebar's OP14 is broken. First solution was to consider was that items that are not that as
-              a "Partial Sync" state where items are less than claimed range and members are less than member_count.
-              But turns out Spacebar returns the same members.
+              Spacebar's OP14 is broken. First attempted fix was that it is a "Partial Sync" state problem where 
+              items are less than claimed range and members are less than member_count and that refetching them
+              with updated range (for example: [2,99] if three items are returned) would fetch other items.
+              
+              But turns out Spacebar returns the same items regardless.
 
               Still, I think this "Partial Sync" situation can be handy someday. And besides, OP14 is supposed to fetch
               items until it fills the range or members are all fetched. So this would not be an issue at all.
