@@ -226,6 +226,9 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     return () => {
       /* no-op */
     };
+    /*
+      Discord clients determine that typing has stopped somewhat heuristically. If a message is sent, or if there has been no activity for 5 to 10 seconds, typing is assumed to have stopped.
+    */
   }, [handleDispatch, startHeartbeat]);
 
   useEffect(() => {
