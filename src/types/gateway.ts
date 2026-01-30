@@ -46,6 +46,8 @@ export const GuildMemberListUpdateSchema = z.object({
   ops: z.array(GuildMemberListOperationSchema),
   groups: z.array(GuildMemberListGroupSchema),
   member_count: z.coerce.number().int().nullish(),
+  // Spacebar exclusive,
+  online_count: z.coerce.number().int().nullish(),
 });
 
 export const HelloSchema = z.object({

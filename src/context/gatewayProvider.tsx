@@ -37,8 +37,13 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const [memberLists, setMemberLists] = useState<GatewayContextSchema['memberLists'] | undefined>(
     {},
   );
+  const memberListsRef = useRef(memberLists);
   const [typingUsers, setTypingUsers] = useState<Record<string, Record<string, number>>>({});
   const subscribedChannels = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    memberListsRef.current = memberLists;
+  }, [memberLists]);
 
   const requestMembers = useCallback((guildId: string, channelId: string, ranges = [[0, 99]]) => {
     subscribedChannels.current[guildId] = channelId;
@@ -101,23 +106,14 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           setMemberLists((prev) => {
             /*
               One thing deviated from Discord's implementation is to handle "Partial Sync" states.
-              Spacebar's OP14 is broken. First attempted fix was that it is a "Partial Sync" state problem where 
-              items are less than claimed range and members are less than member_count and that refetching them
-              with updated range (for example: [2,99] if three items are returned) would fetch other items.
-              
-              But turns out Spacebar returns the same items regardless.
-
-              Still, I think this "Partial Sync" situation can be handy someday. And besides, OP14 is supposed to fetch
-              items until it fills the range or members are all fetched. So this would not be an issue at all.
-
-              The loop will break until either the items are the same length as range's, or that returned items are already fetched.
-
-              This is a rare situation but will handle any reimplementations that have buggy OP14s.
+              Spacebar's OP14 is broken. The fact is that it thinks range should be [0, online_member] count which goes
+              against what OP14 should be. So we fetch once a Spacebar instance is detected by this "Partial Sync" state,
+              fetch all online members, and then filter it down to 100 items like standard Discord.
             */
             const guildId = parsed.guild_id;
             const existing = prev?.[guildId];
             const isSameId = existing?.id === parsed.id;
-            const currentItems = isSameId ? [...existing.items] : [];
+            let currentItems = isSameId ? [...existing.items] : [];
             let isPartial = isSameId ? (existing.partial ?? false) : false;
 
             for (const op of parsed.ops) {
@@ -127,36 +123,32 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
                   const rangeLength = end - start + 1;
 
                   const fetchedLength = op.items.length;
-                  const memberCount = parsed.member_count ?? existing?.member_count ?? 0;
-
-                  const oldItemsSlice = currentItems.slice(start, start + fetchedLength);
+                  const onlineMemberCount = parsed.online_count ?? existing?.online_count ?? 0;
 
                   currentItems.splice(start, rangeLength, ...op.items);
 
-                  const currentMemberCount = currentItems.filter((item) => item.member).length;
+                  const isSpacebar =
+                    (fetchedLength < rangeLength && end < onlineMemberCount - 1) ||
+                    fetchedLength > rangeLength;
 
-                  if (fetchedLength < rangeLength && currentMemberCount < memberCount) {
-                    if (isPartial) {
-                      const isSame =
-                        oldItemsSlice.length === op.items.length &&
-                        oldItemsSlice.every((item, index) => {
-                          const newItem = op.items[index];
-                          if (!newItem) return false;
-                          if (item.group && newItem.group)
-                            return item.group.id === newItem.group.id;
-                          if (item.member && newItem.member)
-                            return item.member.user.id === newItem.member.user.id;
-                          return false;
-                        });
-
-                      if (isSame) {
-                        isPartial = false;
-                      } else {
-                        isPartial = true;
-                      }
-                    } else {
+                  if (isSpacebar) {
+                    if (!isPartial) {
                       isPartial = true;
+                      const channelId = subscribedChannels.current[guildId];
+                      if (channelId) {
+                        setTimeout(() => {
+                          requestMembers(guildId, channelId, [[0, onlineMemberCount + 1]]);
+                        }, 0);
+                      }
                     }
+
+                    const filteredItems = currentItems.filter((item) => {
+                      if (item.group?.id === 'offline') return false;
+                      if (item.member?.presence?.status === 'offline') return false;
+                      return true;
+                    });
+
+                    currentItems = filteredItems.slice(0, 100);
                   } else {
                     isPartial = false;
                   }
@@ -190,7 +182,9 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
                 id: parsed.id,
                 items: currentItems,
                 groups: parsed.groups,
-                member_count: parsed.member_count ?? existing?.member_count ?? 0,
+                member_count: isPartial
+                  ? currentItems.length
+                  : (parsed.member_count ?? existing?.member_count ?? 0),
                 partial: isPartial,
               },
             };
@@ -301,6 +295,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     requestMembers,
     typingUsers,
     memberLists,
+    memberListsRef,
   };
 
   return <GatewayContext value={gatewayProps}>{children}</GatewayContext>;

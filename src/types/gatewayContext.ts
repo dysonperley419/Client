@@ -10,6 +10,7 @@ export interface GuildMemberListState {
   items: GuildMemberListOperationItem[];
   groups: GuildMemberListGroup[];
   member_count: number;
+  online_count?: number;
   partial?: boolean;
 }
 
@@ -24,4 +25,5 @@ export interface GatewayContextSchema {
   requestMembers?: (guildId: string, channelId: string, ranges?: number[][]) => void;
   typingUsers: Record<string, Record<string, number>>;
   memberLists?: Record<string, GuildMemberListState>;
+  memberListsRef?: React.RefObject<Record<string, GuildMemberListState> | undefined>;
 }

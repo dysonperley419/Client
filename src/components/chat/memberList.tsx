@@ -1,6 +1,6 @@
 import './memberList.css';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useCallback, useEffect, useState } from 'react';
 
 import type { Channel } from '@/types/channel';
 import type { GuildMemberListOperationItem } from '@/types/gateway';
@@ -126,41 +126,46 @@ const MemberList = ({
   selectedGuild: Guild | null;
   selectedChannel: Channel | null;
 }): JSX.Element => {
-  const { memberLists, requestMembers, typingUsers } = useGateway();
+  const { memberLists, memberListsRef, requestMembers, typingUsers } = useGateway();
   const [rangeIndex, setRangeIndex] = useState(0);
 
   useEffect(() => {
     const guildId = selectedGuild?.id;
     const channelId = selectedChannel?.id;
 
-    if (guildId && channelId && requestMembers) {
-      const hasData = memberLists?.[guildId];
+    if (guildId && channelId && requestMembers && memberListsRef) {
+      const hasData = memberListsRef.current?.[guildId];
 
       if (!hasData) {
         requestMembers(guildId, channelId, [[0, 99]]);
       }
     }
-  }, [selectedGuild?.id, selectedChannel?.id, requestMembers, memberLists]);
+  }, [selectedGuild?.id, selectedChannel?.id, requestMembers, memberListsRef]);
 
-  const currentChannelTyping = typingUsers[selectedChannel?.id ?? ''];
+  const currentChannelTyping = selectedChannel?.id ? typingUsers[selectedChannel.id] : {};
 
-  const listData = memberLists?.[selectedGuild?.id ?? ''];
+  const listData = selectedGuild?.id ? memberLists?.[selectedGuild.id] : undefined;
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 
-    if (scrollHeight - scrollTop <= clientHeight + 100) {
-      const nextRangeStart = (rangeIndex + 1) * 100;
+      if (scrollHeight - scrollTop <= clientHeight + 100) {
+        const nextRangeStart = (rangeIndex + 1) * 100;
 
-      if (nextRangeStart < (listData?.member_count ?? 0)) {
-        setRangeIndex((prev) => prev + 1);
-        requestMembers?.(selectedGuild?.id ?? '', selectedChannel?.id ?? '', [
-          [0, 99],
-          [nextRangeStart, nextRangeStart + 99],
-        ]);
+        if (listData && nextRangeStart < listData.member_count) {
+          setRangeIndex((prev) => prev + 1);
+          if (selectedGuild?.id && selectedChannel?.id) {
+            requestMembers?.(selectedGuild.id, selectedChannel.id, [
+              [0, 99],
+              [nextRangeStart, nextRangeStart + 99],
+            ]);
+          }
+        }
       }
-    }
-  };
+    },
+    [rangeIndex, listData, requestMembers, selectedGuild, selectedChannel],
+  );
 
   if (!listData) {
     return (
@@ -204,11 +209,12 @@ const MemberList = ({
           if (item.member) {
             const memberWithGuild = { ...item.member, guild_id: selectedGuild?.id };
             const color = getMemberColor(item.member, selectedGuild);
+            const memberId = item.member.user.id;
             return (
               <MemberListItem
-                key={`${item.member.user.id}-${index.toString()}`}
+                key={`${memberId}-${index.toString()}`}
                 member={memberWithGuild}
-                isTyping={!!currentChannelTyping?.[item.member.user.id]}
+                isTyping={!!currentChannelTyping?.[memberId]}
                 roles={selectedGuild?.roles}
                 color={color}
               />
@@ -217,6 +223,7 @@ const MemberList = ({
 
           return null;
         })}
+        {listData.partial && <div className='role-title'>Loading...</div>}
       </div>
     </aside>
   );
