@@ -5,11 +5,13 @@ import {
   GuildMemberListUpdateSchema,
   HelloSchema,
   MessageCreateSchema,
+  PresenceUpdateSchema,
   ReadyEventSchema,
   TypingStartSchema,
 } from '@/types/gateway';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
 import type { Guild } from '@/types/guilds';
+import { type Session, SessionListSchema } from '@/types/presences';
 import type { Relationship } from '@/types/relationship';
 import type { User } from '@/types/users';
 import type { UserSettings } from '@/types/userSettings';
@@ -29,6 +31,8 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [presences, setPresences] = useState<GatewayContextSchema['presences']>({});
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [memberLists, setMemberLists] = useState<GatewayContextSchema['memberLists'] | undefined>(
     {},
@@ -95,7 +99,14 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         setRelationships(parsed.relationships);
         setUserSettings(parsed.user_settings);
         setGuilds(parsed.guilds);
+        setSessions(parsed.sessions ?? []);
         setIsReady(true);
+        break;
+      }
+
+      case 'SESSIONS_REPLACE': {
+        const parsed = SessionListSchema.parse(data);
+        setSessions(parsed);
         break;
       }
 
@@ -159,6 +170,17 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         break;
       }
 
+      case 'PRESENCE_UPDATE': {
+        const parsed = PresenceUpdateSchema.parse(data);
+        const userId = parsed.user.id;
+        if (userId) {
+          setPresences((prev) => {
+            return { ...prev, [userId]: parsed };
+          });
+        }
+        break;
+      }
+
       default:
         break;
     }
@@ -182,6 +204,8 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     user,
     relationships,
     user_settings: userSettings,
+    sessions,
+    presences,
     requestMembers,
     typingUsers,
     memberLists,

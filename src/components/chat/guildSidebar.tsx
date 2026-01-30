@@ -22,7 +22,7 @@ const GuildSidebar = ({
   selectedGuildId?: string | null;
   onSelectGuild: (guild: Guild) => void;
 }): JSX.Element => {
-  const { user } = useGateway();
+  const { user, sessions, presences } = useGateway();
   const { openModal } = useModal();
   const { openContextMenu } = useContextMenu();
   const { openPopup, popupType } = usePopup();
@@ -105,6 +105,8 @@ const GuildSidebar = ({
   };
 
   const isHomeSelected = !selectedGuildId;
+  const status =
+    sessions[0]?.status ?? (user?.id ? presences[user.id]?.status : undefined) ?? 'offline';
 
   return (
     <div id='guilds-column'>
@@ -201,7 +203,7 @@ const GuildSidebar = ({
           </div>
           <div className='user-status-indicator'>
             <div className='status-indicator-wrapper'>
-              <div className='status-dot-large online'></div>
+              <div className={`status-dot-large ${status}`}></div>
             </div>
           </div>
         </button>

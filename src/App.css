@@ -430,6 +430,22 @@ button {
   outline: 1px solid var(--bg-header-alt);
 }
 
+.status-dot.online {
+  background-color: var(--bg-online);
+}
+
+.status-dot.idle {
+  background-color: var(--bg-idle);
+}
+
+.status-dot.dnd {
+  background-color: var(--bg-dnd);
+}
+
+.status-dot.offline {
+  display: none;
+}
+
 .user-section .status-dot-large {
   width: 18px;
   height: 18px;
@@ -437,11 +453,17 @@ button {
 }
 
 .popout-header .status-dot-large,
-.user-profile-modal .status-dot-large,
 .profile-modal-header .status-dot-large {
   position: absolute;
   bottom: 8px;
   right: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  outline: 1px solid var(--bg-header-alt);
+}
+
+.user-profile-modal .status-dot-large {
   width: 20px;
   height: 20px;
   border-radius: 50%;

@@ -2,6 +2,7 @@ import * as z from 'zod';
 
 import { GuildSchema, MemberSchema } from './guilds';
 import { MessageSchema } from './messages';
+import { PresenceSchema, SessionSchema } from './presences';
 import { RelationshipSchema } from './relationship';
 import { UserSchema } from './users';
 import { UserSettingsSchema } from './userSettings';
@@ -58,6 +59,7 @@ export const ReadyEventSchema = z.looseObject({
   user_settings: UserSettingsSchema,
   guilds: z.array(GuildSchema),
   relationships: z.array(RelationshipSchema),
+  sessions: z.array(SessionSchema).nullish(),
 });
 
 export const MessageCreateSchema = MessageSchema.extend({
@@ -103,8 +105,11 @@ export const GatewayPayloadSchema = z.object({
   d: z.unknown(),
 });
 
+export const PresenceUpdateSchema = PresenceSchema;
+
 export type GatewayPayload = z.infer<typeof GatewayPayloadSchema>;
 export type GuildMemberList = z.infer<typeof GuildMemberListUpdateSchema>;
 export type GuildMemberListUpdate = z.infer<typeof GuildMemberListUpdateSchema>;
 export type GuildMemberListOperation = z.infer<typeof GuildMemberListOperationSchema>;
 export type GuildMemberListOperationItem = z.infer<typeof GuildMemberListOperationItemSchema>;
+export type PresenceUpdate = z.infer<typeof PresenceUpdateSchema>;

@@ -8,7 +8,7 @@ import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 
 export const UserProfileModal = (): JSX.Element => {
-  const { user } = useGateway();
+  const { user, sessions, presences } = useGateway();
   const { closePopup } = usePopup();
 
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
@@ -46,6 +46,9 @@ export const UserProfileModal = (): JSX.Element => {
     closePopup();
   };
 
+  const status =
+    sessions[0]?.status ?? (user?.id ? presences[user.id]?.status : undefined) ?? 'offline';
+
   return (
     <div className='user-profile-modal'>
       <div className='profile-header'>
@@ -71,7 +74,7 @@ export const UserProfileModal = (): JSX.Element => {
               }}
             />
             <div className='status-indicator-wrapper'>
-              <div className='status-dot-large online' />
+              <div className={`status-dot-large ${status}`} />
             </div>
           </div>
         </div>

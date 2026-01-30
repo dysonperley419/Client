@@ -103,28 +103,6 @@
   object-fit: cover;
 }
 
-.status-dot {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  outline: 2px solid var(--bg-panel);
-}
-
-.status-dot.online {
-  background-color: var(--bg-online);
-}
-
-.status-dot.idle {
-  background-color: var(--bg-idle);
-}
-
-.status-dot.dnd {
-  background-color: var(--bg-dnd);
-}
-
 .friend-text {
   display: flex;
   flex-direction: column;

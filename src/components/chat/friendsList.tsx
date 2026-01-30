@@ -188,7 +188,9 @@ export const FriendsList = ({
                 <div className='friend-info'>
                   <div className='avatar-wrapper'>
                     <FriendAvatar friend={friend} />
-                    {friend.type === 1 && <div className={`status-dot ${friend.status ?? ''}`} />}
+                    {friend.type === 1 && (
+                      <div className={`status-dot ${friend.status ?? 'offline'}`} />
+                    )}
                   </div>
                   <div className='friend-text'>
                     <div className='friend-name-row'>

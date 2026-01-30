@@ -2,13 +2,9 @@ import * as z from 'zod';
 
 import { UserSchema } from './users';
 
-export const StatusEnumSchema = z.enum([
-  'online',
-  'idle',
-  'dnd',
-  'offline',
-  'invisible',
-  'unknown',
+export const StatusEnumSchema = z.union([
+  z.enum(['online', 'idle', 'dnd', 'offline', 'invisible', 'unknown']),
+  z.undefined(),
 ]);
 
 export const PlatformEnum = z.enum([
@@ -120,7 +116,7 @@ export const PresenceSchema = z.object({
 export const SessionSchema = z.object({
   session_id: z.string(),
   status: StatusEnumSchema,
-  activities: z.array(ActivitySchema),
+  activities: z.array(ActivitySchema).nullish(),
   client_info: z.object({
     client: PlatformEnum,
     os: z.string(),
@@ -130,6 +126,10 @@ export const SessionSchema = z.object({
   active: z.boolean().nullish(),
 });
 
+export const SessionListSchema = z.array(SessionSchema);
+
 export type Activity = z.infer<typeof ActivitySchema>;
 export type Presence = z.infer<typeof PresenceSchema>;
 export type StatusEnum = z.infer<typeof StatusEnumSchema>;
+export type Session = z.infer<typeof SessionSchema>;
+export type SessionList = z.infer<typeof SessionListSchema>;
