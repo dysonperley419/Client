@@ -132,7 +132,7 @@ const ChatApp = (): JSX.Element => {
   };
 
   const handleSelectChannel = (channel: Channel | null) => {
-    void navigate(`/channels/${guildId ?? ''}/${channel?.id ?? ''}`);
+    void navigate(`/channels/${guildId ?? '@me'}/${channel?.id ?? ''}`);
   };
 
   return (
