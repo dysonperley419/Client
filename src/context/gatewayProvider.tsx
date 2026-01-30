@@ -123,7 +123,13 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
                   const rangeLength = end - start + 1;
 
                   const fetchedLength = op.items.length;
-                  const onlineMemberCount = parsed.online_count ?? existing?.online_count ?? 0;
+                  let onlineMemberCount = parsed.online_count ?? existing?.online_count ?? 0;
+
+                  // Prevent lag lol
+                  onlineMemberCount =
+                    onlineMemberCount > 100
+                      ? Math.ceil(onlineMemberCount * 0.25)
+                      : onlineMemberCount;
 
                   currentItems.splice(start, rangeLength, ...op.items);
 
