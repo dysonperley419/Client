@@ -106,9 +106,9 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           setMemberLists((prev) => {
             /*
               One thing deviated from Discord's implementation is to handle "Partial Sync" states.
-              Spacebar's OP14 is broken. The fact is that it thinks range should be [0, online_member] count which goes
-              against what OP14 should be. So we fetch once a Spacebar instance is detected by this "Partial Sync" state,
-              fetch all online members, and then filter it down to 100 items like standard Discord.
+              Spacebar's OP14 is broken. The fact is that it thinks range should be [0, online member count] goes
+              against what OP14 should be. So once we determine a Spacebar instance by fetching members once to get this "Partial Sync" behavior,
+              fetch all online members, and then filter it down to 100 items like Discord.
             */
             const guildId = parsed.guild_id;
             const existing = prev?.[guildId];
