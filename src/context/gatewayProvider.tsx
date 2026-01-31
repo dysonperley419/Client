@@ -67,7 +67,6 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
       switch (type) {
         case 'READY': {
-          console.log(data);
           const parsed = ReadyEventSchema.parse(data);
           upsertUsers([parsed.user]);
           upsertUsers(parsed.relationships.map((r) => r.user));
