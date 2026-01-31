@@ -294,6 +294,7 @@ button {
   transition:
     transform 0.1s,
     background 0.2s;
+  box-sizing: border-box;
 }
 
 .bot-tag {

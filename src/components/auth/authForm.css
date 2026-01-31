@@ -172,9 +172,9 @@
 }
 
 .register-form a {
-  color: var(--accent-secondary);
   text-decoration: none;
   font-size: 14px;
+  color: var(--accent-primary);
 }
 
 .register-form a:hover {
