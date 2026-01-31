@@ -12,6 +12,10 @@
   opacity: 0.3;
 }
 
+.member-list-item.offline-member .status-dot {
+  display: none;
+}
+
 .member-list-item.offline-member:hover {
   opacity: 1;
 }

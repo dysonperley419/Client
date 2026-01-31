@@ -81,8 +81,13 @@
 
 .context-menu-out hr {
   background: none;
-  outline: 1px solid var(--bg-panel);
   margin: 0;
+  all: unset;
+  display: block;
+  height: 2px;
+  width: 100%;
+  background-color: var(--outline-color-gray);
+  border-radius: 1px;
 }
 
 .modal-container.modal-container-profile {

@@ -471,10 +471,6 @@ button {
   background-color: var(--bg-dnd);
 }
 
-.status-dot.offline {
-  display: none;
-}
-
 .user-section .status-dot-large {
   width: 18px;
   height: 18px;

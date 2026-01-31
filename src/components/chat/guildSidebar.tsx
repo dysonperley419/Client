@@ -4,6 +4,7 @@ import { type JSX } from 'react';
 import { Link } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
+import { useUserStore } from '@/stores/userstore';
 import type { Guild } from '@/types/guilds';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
@@ -22,6 +23,7 @@ const GuildSidebar = ({
   selectedGuildId?: string | null;
   onSelectGuild: (guild: Guild) => void;
 }): JSX.Element => {
+  const storedUsers = useUserStore((state) => state.users);
   const { user, sessions, presences, relationships } = useGateway();
   const { openModal } = useModal();
   const { openContextMenu } = useContextMenu();
@@ -48,30 +50,44 @@ const GuildSidebar = ({
         {!isOwner && (
           <>
             <hr />
-            <button
-              className='primary-btn button'
+            <div
+              role='button'
+              tabIndex={0}
+              className='button'
               style={{ color: 'var(--bg-dnd)' }}
               onClick={() => {
                 handleLeaveServer(guild.name, guild.id);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleLeaveServer(guild.name, guild.id);
+                }
+              }}
             >
               Leave Server
-            </button>
+            </div>
           </>
         )}
         {isOwner && (
           <>
             <hr />
             <div className='button'>Server Settings</div>
-            <button
-              className='primary-button button'
+            <div
+              role='button'
+              tabIndex={0}
+              className='button'
               style={{ color: 'var(--bg-dnd)' }}
               onClick={() => {
                 handleDeleteServer(guild.name, guild.id);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleDeleteServer(guild.name, guild.id);
+                }
+              }}
             >
               Delete Server
-            </button>
+            </div>
           </>
         )}
       </div>,
@@ -109,7 +125,9 @@ const GuildSidebar = ({
     sessions[0]?.status ?? (user?.id ? presences[user.id]?.status : undefined) ?? 'offline';
 
   const onlineFriendsCount = relationships.filter((r) => {
-    const friendStatus = presences[r.id]?.status ?? 'offline';
+    const liveFriend = storedUsers[r.id];
+    const friendStatus = liveFriend?.presence?.status ?? 'offline';
+
     return r.type === 1 && friendStatus !== 'offline' && friendStatus !== 'invisible';
   }).length;
 

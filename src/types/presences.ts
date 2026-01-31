@@ -3,7 +3,7 @@ import * as z from 'zod';
 import { UserSchema } from './users';
 
 export const StatusEnumSchema = z.union([
-  z.enum(['online', 'idle', 'dnd', 'offline', 'invisible', 'unknown']),
+  z.enum(['online', 'idle', 'dnd', 'offline', 'invisible', 'unknown']), //?? when would it be unknown??
   z.undefined(),
 ]);
 

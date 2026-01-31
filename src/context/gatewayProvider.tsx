@@ -1,5 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
+import { useUserStore } from '@/stores/userstore';
 import {
   GatewayPayloadSchema,
   GuildMemberListUpdateSchema,
@@ -62,9 +63,25 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
   const handleDispatch = useCallback(
     (type: string, data: unknown) => {
+      const { upsertUsers, updatePresence } = useUserStore.getState();
+
       switch (type) {
         case 'READY': {
+          console.log(data);
           const parsed = ReadyEventSchema.parse(data);
+          upsertUsers([parsed.user]);
+          upsertUsers(parsed.relationships.map((r) => r.user));
+          parsed.guilds.forEach((guild: Guild) => {
+            const presencesToProcess = guild.presences ?? [];
+
+            presencesToProcess.forEach((presence) => {
+              const userId = presence.user.id;
+              if (!userId) return;
+
+              upsertUsers([presence.user as User]);
+              updatePresence(userId, presence);
+            });
+          });
           setUser(parsed.user);
           setRelationships(parsed.relationships);
           setUserSettings(parsed.user_settings);
@@ -82,6 +99,8 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
         case 'MESSAGE_CREATE': {
           const parsed = MessageCreateSchema.parse(data);
+          upsertUsers([parsed.author as User]);
+
           window.dispatchEvent(new CustomEvent('gateway_message', { detail: parsed }));
 
           setTypingUsers((prev) => {
@@ -103,6 +122,25 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
         case 'GUILD_MEMBER_LIST_UPDATE': {
           const parsed = GuildMemberListUpdateSchema.parse(data);
+          const usersToStore: User[] = [];
+          parsed.ops.forEach((op) => {
+            if (op.op === 'SYNC') {
+              op.items.forEach((item) => {
+                if (item.member?.user) {
+                  usersToStore.push(item.member.user);
+                }
+              });
+            } else if (op.op === 'INSERT' || op.op === 'UPDATE') {
+              if (op.item.member?.user) {
+                usersToStore.push(op.item.member.user);
+              }
+            }
+          });
+
+          if (usersToStore.length > 0) {
+            upsertUsers(usersToStore);
+          }
+
           setMemberLists((prev) => {
             /*
               One thing deviated from Discord's implementation is to handle "Partial Sync" states.
@@ -214,6 +252,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           const parsed = PresenceUpdateSchema.parse(data);
           const userId = parsed.user.id;
           if (userId) {
+            updatePresence(userId, parsed);
             setPresences((prev) => ({ ...prev, [userId]: parsed }));
           }
           break;

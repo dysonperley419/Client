@@ -2,6 +2,7 @@ import './friendsList.css';
 
 import { type JSX, useState } from 'react';
 
+import { type UserStore, useUserStore } from '@/stores/userstore';
 import type { Relationship } from '@/types/relationship';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
@@ -18,18 +19,22 @@ export const FriendsList = ({
   onRequestUpdate,
   onRequestDelete,
 }: FriendsListProps): JSX.Element => {
+  const storedUsers = useUserStore((state: UserStore) => state.users);
   const [filter, setFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const getFilteredFriends = () => {
     const filtered = friends.filter((friend) => {
+      const livePresence = storedUsers[friend.id];
+      const currentStatus = livePresence?.presence?.status ?? 'offline';
+
       if (searchQuery && !friend.user.username.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
 
       switch (filter) {
         case 'ONLINE':
-          return friend.type === 1;
+          return friend.type === 1 && currentStatus !== 'offline';
         case 'PENDING':
           return friend.type === 3 || friend.type === 4;
         case 'BLOCKED':
@@ -183,96 +188,105 @@ export const FriendsList = ({
             {filter} — {displayFriends.length}
           </div>
           <div className='friends-scroller'>
-            {displayFriends.map((friend) => (
-              <div key={friend.id} className='friend-item-row'>
-                <div className='friend-info'>
-                  <div className='avatar-wrapper'>
-                    <FriendAvatar friend={friend} />
-                    {friend.type === 1 && (
-                      <div className={`status-dot ${friend.status ?? 'offline'}`} />
-                    )}
-                  </div>
-                  <div className='friend-text'>
-                    <div className='friend-name-row'>
-                      <span className='username'>{friend.user.username}</span>
-                      <span className='discriminator'>#{friend.user.discriminator}</span>
+            {displayFriends.map((friend) => {
+              const liveUser = storedUsers[friend.id];
+              const liveStatus = liveUser?.presence?.status ?? 'offline';
+
+              return (
+                <div key={friend.id} className='friend-item-row'>
+                  <div className='friend-info'>
+                    <div className='avatar-wrapper'>
+                      <FriendAvatar friend={friend} />
+                      {friend.type === 1 && <div className={`status-dot ${liveStatus}`} />}
                     </div>
-
-                    {(filter === 'PENDING' || friend.type === 1) && (
-                      <div className='friend-status-row'>
-                        <span className='status-text'>
-                          {filter === 'PENDING'
-                            ? friend.type === 3
-                              ? 'Incoming Friend Request'
-                              : 'Outgoing Friend Request'
-                            : (friend.status ?? 'Offline')}
-                        </span>
+                    <div className='friend-text'>
+                      <div className='friend-name-row'>
+                        <span className='username'>{friend.user.username}</span>
+                        <span className='discriminator'>#{friend.user.discriminator}</span>
                       </div>
-                    )}
+
+                      {(filter === 'PENDING' || friend.type === 1) && (
+                        <div className='friend-status-row'>
+                          <span className='status-text'>
+                            {filter === 'PENDING'
+                              ? friend.type === 3
+                                ? 'Incoming Friend Request'
+                                : 'Outgoing Friend Request'
+                              : liveStatus}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className='friend-actions'>
+                    {(() => {
+                      if (filter === 'PENDING' && friend.type === 3) {
+                        return (
+                          <>
+                            <button
+                              className='action-btn online'
+                              onClick={() => {
+                                void acceptFriendRequest(friend);
+                              }}
+                            >
+                              ACCEPT
+                            </button>
+                            <button
+                              className='action-btn dnd'
+                              onClick={() => {
+                                void declineFriendRequest(friend);
+                              }}
+                            >
+                              DECLINE
+                            </button>
+                          </>
+                        );
+                      }
+
+                      if (filter === 'PENDING' && friend.type === 4) {
+                        return (
+                          <>
+                            <button
+                              className='action-btn dnd'
+                              onClick={() => {
+                                void declineFriendRequest(friend);
+                              }}
+                            >
+                              X
+                            </button>
+                          </>
+                        );
+                      }
+
+                      if (friend.type === 1) {
+                        return (
+                          <>
+                            <button className='icon-action-btn'>
+                              <span
+                                className='material-symbols-rounded'
+                                style={{ fontSize: '20px' }}
+                              >
+                                chat_bubble
+                              </span>
+                            </button>
+                            <button className='icon-action-btn'>
+                              <span
+                                className='material-symbols-rounded'
+                                style={{ fontSize: '20px' }}
+                              >
+                                more_vert
+                              </span>
+                            </button>
+                          </>
+                        );
+                      }
+
+                      return null;
+                    })()}
                   </div>
                 </div>
-                <div className='friend-actions'>
-                  {(() => {
-                    if (filter === 'PENDING' && friend.type === 3) {
-                      return (
-                        <>
-                          <button
-                            className='action-btn online'
-                            onClick={() => {
-                              void acceptFriendRequest(friend);
-                            }}
-                          >
-                            ACCEPT
-                          </button>
-                          <button
-                            className='action-btn dnd'
-                            onClick={() => {
-                              void declineFriendRequest(friend);
-                            }}
-                          >
-                            DECLINE
-                          </button>
-                        </>
-                      );
-                    }
-
-                    if (filter === 'PENDING' && friend.type === 4) {
-                      return (
-                        <>
-                          <button
-                            className='action-btn dnd'
-                            onClick={() => {
-                              void declineFriendRequest(friend);
-                            }}
-                          >
-                            X
-                          </button>
-                        </>
-                      );
-                    }
-
-                    if (friend.type === 1) {
-                      return (
-                        <>
-                          <button className='icon-action-btn'>
-                            <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
-                              chat_bubble
-                            </span>
-                          </button>
-                          <button className='icon-action-btn'>
-                            <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
-                              more_vert
-                            </span>
-                          </button>
-                        </>
-                      );
-                    }
-
-                    return null;
-                  })()}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         <div className='active-now-column'>

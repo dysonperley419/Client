@@ -1,5 +1,7 @@
 import * as z from 'zod';
 
+import { PresenceUpdateSchema } from '@/types/gateway';
+
 import { ChannelSchema } from './channel';
 import { PresenceSchema } from './presences';
 import { UserSchema } from './users';
@@ -29,6 +31,7 @@ export const GuildSchema = z.object({
   owner_id: z.string(),
   roles: z.array(RoleSchema),
   channels: z.array(z.lazy(() => ChannelSchema)),
+  presences: z.lazy(() => z.array(PresenceUpdateSchema)).optional(),
 });
 
 export type Guild = z.infer<typeof GuildSchema>;
