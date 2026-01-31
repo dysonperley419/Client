@@ -2,7 +2,7 @@
   width: 300px;
   background: var(--bg-alt);
   border-radius: 8px;
-  box-shadow: 0 8px 16px rgb(0 0 0 / 30%);
+  box-shadow: var(--shadow-main);
   outline: 1px solid var(--accent-primary);
   overflow: hidden;
 }

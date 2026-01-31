@@ -7,7 +7,7 @@
   flex-direction: column;
   position: relative;
   outline: 1px solid var(--accent-primary);
-  box-shadow: 0 0 32px 5px rgb(162 116 244 / 20%);
+  box-shadow: var(--shadow-main);
 }
 
 .profile-header {

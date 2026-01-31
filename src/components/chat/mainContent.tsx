@@ -24,7 +24,7 @@ interface MainContentProps {
 }
 
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
-  useModal();
+  const { openModal } = useModal();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { typingUsers, user, memberLists } = useGateway();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -304,18 +304,38 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                           <track kind='captions' />
                         </video>
                       ) : (
-                        <a href={attachment.url} target='_blank' rel='noreferrer'>
+                        <button
+                          type='button'
+                          onClick={() => {
+                            openModal('IMAGE_PREVIEW', {
+                              src: attachment.url,
+                              alt: attachment.filename,
+                              width: attachment.width ?? 0,
+                              height: attachment.height ?? 0,
+                              author: msg.author,
+                              id: attachment.id,
+                            });
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            display: 'block',
+                            width: '50%',
+                          }}
+                        >
                           <img
                             src={attachment.url}
                             alt={attachment.filename}
                             className='chat-image'
                             style={{
-                              width: '50%',
+                              width: '100%',
                               height: 'auto',
                               maxHeight: 400,
                             }}
                           />
-                        </a>
+                        </button>
                       )}
                     </div>
                   );

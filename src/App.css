@@ -22,7 +22,8 @@
   --bg-modifier-accent: var(--bg-alt); /* what is a bg-modifier-accent anyway? */
   --text-muted: #949ba4;
   --text-dim: #565f89;
-  --shadow-main: rgb(0 0 0 / 30%);
+  --shadow-main: 0 0 32px 5px rgb(162 116 244 / 20%);
+  --shadow-dark: rgb(0 0 0 / 30%);
   --gray-outline-top: inset 0 1px 0 0 var(--outline-color-gray);
   --gray-outline-left: inset 1px 0 0 0 var(--outline-color-gray);
   --gray-outline-right: inset -1px 0 0 0 var(--outline-color-gray);

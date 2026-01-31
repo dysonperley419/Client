@@ -135,11 +135,8 @@
   flex-direction: column;
   gap: 16px;
   color: var(--text-alt);
-  box-shadow:
-    0 0 15px rgb(167 139 250 / 20%),
-    0 0 40px rgb(167 139 250 / 10%),
-    inset 0 0 4px rgb(167 139 250 / 20%);
-  outline: 1.5px solid var(--accent-primary);
+  box-shadow: var(--shadow-main);
+  outline: 1px solid var(--accent-primary);
 }
 
 .register-form .form-header {
