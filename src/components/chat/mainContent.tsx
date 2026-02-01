@@ -314,6 +314,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                               height: attachment.height ?? 0,
                               author: msg.author,
                               id: attachment.id,
+                              timestamp: formatTimestamp(msg.timestamp),
                             });
                           }}
                           style={{

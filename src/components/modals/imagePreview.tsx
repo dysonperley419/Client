@@ -8,16 +8,17 @@ import { useAssetsUrl } from '../../context/assetsUrl';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 
-interface ImagePreviewProps {
+export interface ImagePreviewProps {
   src: string;
   alt: string;
   width: number;
   height: number;
   author: Message['author'];
   id: string;
+  timestamp: string;
 }
 
-export const ImagePreview = ({ src, alt, author }: ImagePreviewProps): JSX.Element => {
+export const ImagePreview = ({ src, alt, author, timestamp }: ImagePreviewProps): JSX.Element => {
   const { closeModal } = useModal();
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -136,7 +137,7 @@ export const ImagePreview = ({ src, alt, author }: ImagePreviewProps): JSX.Eleme
           />
           <div className='attribution-info'>
             <span className='attribution-name'>{author.username ?? ''}</span>
-            <span className='attribution-sub'>Uploaded today</span>
+            <span className='attribution-sub'>{timestamp}</span>
           </div>
         </div>
 

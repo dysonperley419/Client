@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 
+import type { ImagePreviewProps } from '@/components/modals/imagePreview';
 import type { Member } from '@/types/guilds';
-import type { Message } from '@/types/messages';
 
 export interface ModalDataMap {
   JOIN_SERVER: undefined;
@@ -11,14 +11,7 @@ export interface ModalDataMap {
   CLEAR_SELECTED_INSTANCE: undefined;
   CONFIRMATION_DELETE: { name: string; id: string; type: string };
   SERVER_PROFILE: { member: Member };
-  IMAGE_PREVIEW: {
-    src: string;
-    alt: string;
-    width: number;
-    height: number;
-    author: Message['author'];
-    id: string;
-  };
+  IMAGE_PREVIEW: ImagePreviewProps;
 }
 
 export type ModalType = keyof ModalDataMap;
