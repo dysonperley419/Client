@@ -62,6 +62,8 @@ export const ReadyEventSchema = z.looseObject({
   guilds: z.array(GuildSchema),
   relationships: z.array(RelationshipSchema),
   sessions: z.array(SessionSchema).nullish(),
+  session_id: z.string(),
+  resume_gateway_url: z.string().nullish(),
 });
 
 export const MessageCreateSchema = MessageSchema.extend({

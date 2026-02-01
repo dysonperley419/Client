@@ -42,6 +42,11 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const [typingUsers, setTypingUsers] = useState<Record<string, Record<string, number>>>({});
   const subscribedChannels = useRef<Record<string, string>>({});
 
+  const sessionId = useRef<string | null>(null);
+  const lastSequence = useRef<number | null>(null);
+  const resumeGatewayUrl = useRef<string | null>(null);
+  const [reconnectCounter, setReconnectTrigger] = useState(0);
+
   useEffect(() => {
     memberListsRef.current = memberLists;
   }, [memberLists]);
@@ -68,6 +73,9 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
       switch (type) {
         case 'READY': {
           const parsed = ReadyEventSchema.parse(data);
+          sessionId.current = parsed.session_id;
+          resumeGatewayUrl.current = parsed.resume_gateway_url ?? null;
+
           upsertUsers([parsed.user]);
           upsertUsers(parsed.relationships.map((r) => r.user));
           parsed.guilds.forEach((guild: Guild) => {
@@ -89,6 +97,10 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           setIsReady(true);
           break;
         }
+
+        case 'RESUMED':
+          setIsReady(true);
+          break;
 
         case 'SESSIONS_REPLACE': {
           const parsed = SessionListSchema.parse(data);
@@ -274,7 +286,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
   const connect = useCallback(() => {
     const token = localStorage.getItem('Authorization') ?? '';
-    const gatewayUrl = localStorage.getItem('selectedGatewayUrl');
+    const gatewayUrl = resumeGatewayUrl.current ?? localStorage.getItem('selectedGatewayUrl');
 
     if (gatewayUrl && gatewayUrl.length > 0) {
       const ws = new WebSocket(gatewayUrl);
@@ -282,33 +294,75 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
       let heartbeatId: number | undefined;
 
       ws.onopen = () => {
-        const identifyPayload = {
-          op: 2,
-          d: {
-            token: token,
-            capabilities: 125,
-            properties: { os: 'Windows', browser: 'Chrome' },
-          },
-        };
-        ws.send(JSON.stringify(identifyPayload));
+        if (sessionId.current && lastSequence.current) {
+          ws.send(
+            JSON.stringify({
+              op: 6,
+              d: {
+                token: token,
+                session_id: sessionId.current,
+                seq: lastSequence.current,
+              },
+            }),
+          );
+        } else {
+          const identifyPayload = {
+            op: 2,
+            d: {
+              token: token,
+              capabilities: 125,
+              properties: { os: 'Windows', browser: 'Chrome' },
+            },
+          };
+          ws.send(JSON.stringify(identifyPayload));
+        }
       };
 
       ws.onmessage = (event: MessageEvent<string>) => {
         const payload = GatewayPayloadSchema.parse(JSON.parse(event.data));
-        const { op, t, d } = payload;
+        const { op, t, d, s } = payload;
+
+        if (s) {
+          lastSequence.current = s;
+        }
 
         switch (op) {
           case 0:
             handleDispatch(t ?? '', d);
             break;
+          case 7:
+            ws.close();
+            break;
+          case 9:
+            if (!d) {
+              sessionId.current = null;
+              lastSequence.current = null;
+            }
+            ws.close();
+            break;
           case 10:
             heartbeatId = startHeartbeat(HelloSchema.parse(d).heartbeat_interval, ws);
             break;
+          case 11:
+            break;
+        }
+      };
+
+      ws.onclose = (event) => {
+        if (heartbeatId) clearInterval(heartbeatId);
+        if (event.code !== 1000 && event.code !== 1001) {
+          setTimeout(
+            () => {
+              setReconnectTrigger((prev) => prev + 1);
+            },
+            1000 + Math.random() * 2000,
+          );
         }
       };
 
       return () => {
         if (heartbeatId) clearInterval(heartbeatId);
+        ws.onclose = null;
         ws.close();
       };
     }
@@ -326,7 +380,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     return () => {
       cleanup();
     };
-  }, [connect]);
+  }, [connect, reconnectCounter]);
 
   const gatewayProps: GatewayContextSchema = {
     isReady,
