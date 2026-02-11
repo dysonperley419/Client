@@ -11,7 +11,7 @@ WIP Spacebar compatible (themed as comfy lavender) client that also works with O
 
 ## Setup
 
-Run npm install and npm start.
+Run `npm install` and `npm run dev`.
 
 Works well with the latest LTS version of Node (Node 24), for ideal security practice, we aim for latest LTS compatibility.
 
