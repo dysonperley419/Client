@@ -32,15 +32,6 @@ const LoginForm = ({
       </span>
     );
   };
-  const renderCredentialError = () => {
-    return (
-      <span className={`status-msg ${credentialsStatus}`}>
-        {credentialsStatus === 'checking' && 'Logging in...'}
-        {credentialsStatus === 'error' && 'Invalid email or password'}
-        {credentialsStatus === 'neterror' && 'A network error occurred'}
-      </span>
-    );
-  };
 
   return (
     <div className='register-form'>
@@ -93,7 +84,11 @@ const LoginForm = ({
             setPassword(e.target.value);
           }}
         />
-        {renderCredentialError()}
+        <span className={`status-msg ${credentialsStatus}`}>
+          {credentialsStatus === 'checking' && 'Logging in...'}
+          {credentialsStatus === 'error' && 'Invalid email or password'}
+          {credentialsStatus === 'neterror' && 'A network error occurred'}
+        </span>
       </div>
       <div className='form-footer'>
         <div className='actions'>

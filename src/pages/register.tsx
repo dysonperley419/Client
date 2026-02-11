@@ -19,27 +19,31 @@ function Register(): JSX.Element {
   const [password, setPassword] = useState('');
   const [customInstance, setCustomInstance] = useState('');
   const [instance, setInstance] = useState<Instance | string | undefined>(undefined);
+  const [credentialsStatus, setCredentialsStatus] = useState<string | null>(null);
+  const [usernameStatus, setUsernameStatus] = useState<string | null>(null);
+  const [passwordStatus, setPasswordStatus] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState<string | null>(null);
+  const [miscError, setMiscError] = useState<string | null>(null);
 
-  const { instances, status, setStatus, errorMsg, setErrorMsg, checkInstance } = useAuthLogic(
+  const { instances, status: instanceStatus, checkInstance } = useAuthLogic(
     instance,
     customInstance,
   );
 
   const handleInstanceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = e.target.value;
-    setInstance(selected);
-    if (selected !== 'custom-instance') void checkInstance(selected);
-    else setStatus((prev) => ({ ...prev, instance: null }));
+    const selectedUrl = e.target.value;
+    const fullInstance = instances.find((i) => i.url === selectedUrl);
+    setInstance(fullInstance ?? selectedUrl);
+    void checkInstance(selectedUrl);
   };
 
   if (localStorage.getItem('Authorization')) return <Navigate to='/' />;
 
   const handleSignup = async () => {
-    setErrorMsg({
-      username: false,
-      email: false,
-    });
-    setStatus({ instance: 'valid', username: null, email: null, password: null });
+    console.log("AAAA");
+    setUsernameStatus(null);
+    setPasswordStatus(null);
+    setEmailStatus(null);
 
     try {
       const registerRequest: RegisterRequest = {
@@ -62,24 +66,10 @@ function Register(): JSX.Element {
       const data: unknown = await response.json();
 
       if (!response.ok) {
-        const parsed = ErrorResponseSchema.loose().parse(data);
-        const newErrors: Record<string, unknown> = {};
-        const newStatus: ErrorStatusFields = { ...status };
-        const errorKeys = Object.keys(parsed).filter((k) => k !== 'code' && k !== 'message');
-
-        if (errorKeys.length > 0) {
-          errorKeys.forEach((key) => {
-            const fieldKey = key as keyof ErrorStatusFields;
-            newErrors[key] = parsed[key];
-            newStatus[fieldKey] = 'error';
-          });
-        } else if (parsed.message) {
-          newErrors.password = parsed.message;
-          newStatus.password = 'error';
-        }
-
-        setErrorMsg(ErrorMsgSchema.parse(newErrors));
-        setStatus(newStatus);
+        const parsed = JSON.parse(data);
+        setUsernameStatus(parsed.username && 'error');
+        setPasswordStatus(parsed.password && 'error');
+        setEmailStatus(parsed.email && 'error');
         return;
       }
 
@@ -89,10 +79,8 @@ function Register(): JSX.Element {
       localStorage.setItem('email', email);
       window.location.href = '/';
     } catch (err) {
-      const parsedErr = z.string().parse(err);
-
-      setStatus((prev) => ({ ...prev, password: 'error' }));
-      setErrorMsg((prev) => ({ ...prev, password: parsedErr }));
+      setMiscError('An error occurred while registering');
+      console.error(err);
     }
   };
 
@@ -102,14 +90,17 @@ function Register(): JSX.Element {
       <div className='center'>
         <RegisterForm
           handleInstanceSelect={handleInstanceSelect}
-          handleSignup={() => void handleSignup}
+          handleSignup={() => void handleSignup()}
           instances={instances}
           setUsername={setUsername}
           username={username}
           email={email}
           instance={instance}
-          status={status}
-          errorMsg={errorMsg}
+          instanceStatus={instanceStatus}
+          usernameStatus={usernameStatus}
+          passwordStatus={passwordStatus}
+          emailStatus={emailStatus}
+          miscError={miscError}
           setEmail={setEmail}
           password={password}
           customInstance={customInstance}

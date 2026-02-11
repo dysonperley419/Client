@@ -16,8 +16,11 @@ const RegisterForm = ({
   handleSignup,
   instances,
   instance,
-  errorMsg,
-  status,
+  instanceStatus,
+  usernameStatus,
+  passwordStatus,
+  emailStatus,
+  miscError,
   customInstance,
   setCustomInstance,
   setUsername,
@@ -27,13 +30,12 @@ const RegisterForm = ({
   password,
   setPassword,
 }: RegisterFormProps): JSX.Element => {
-  const renderStatus = () => {
-    if (!status.instance) return null;
+  const renderInstanceStatus = () => {
     return (
-      <span className={`status-msg ${status.instance}`}>
-        {status.instance === 'checking' && 'Checking...'}
-        {status.instance === 'error' && (errorMsg.instance ?? 'Request timed out')}
-        {status.instance === 'valid' && 'Instance is online'}
+      <span className={`status-msg ${instanceStatus}`}>
+        {instanceStatus === 'checking' && 'Checking...'}
+        {instanceStatus === 'error' && 'Invalid instance or connection error'}
+        {instanceStatus === 'valid' && 'Instance is online'}
       </span>
     );
   };
@@ -56,7 +58,7 @@ const RegisterForm = ({
             Custom Instance
           </option>
         </select>
-        {instance !== 'custom-instance' && renderStatus()}
+        {instance !== 'custom-instance' && renderInstanceStatus()}
         {instance === 'custom-instance' && (
           <>
             <span>Instance URL</span>
@@ -68,7 +70,7 @@ const RegisterForm = ({
                 setCustomInstance(e.target.value);
               }}
             />
-            {renderStatus()}
+            {renderInstanceStatus()}
           </>
         )}
         <span>Username</span>
@@ -80,11 +82,11 @@ const RegisterForm = ({
             setUsername(e.target.value);
           }}
         />
-        {status.username && (
-          <span className={`status-msg ${status.username}`}>
-            {status.username === 'error' && errorMsg.username}
-          </span>
-        )}
+        <span className={`status-msg ${instanceStatus}`}>
+          {usernameStatus === 'checking' && 'Checking...'}
+          {usernameStatus === 'error' && 'Invalid username'}
+          {usernameStatus === 'valid' && ''}
+        </span>
         <span>Email</span>
         <input
           type='email'
@@ -94,11 +96,11 @@ const RegisterForm = ({
             setEmail(e.target.value);
           }}
         />
-        {status.email && (
-          <span className={`status-msg ${status.email}`}>
-            {status.email === 'error' && errorMsg.email}
-          </span>
-        )}
+        <span className={`status-msg ${instanceStatus}`}>
+          {emailStatus === 'checking' && 'Checking...'}
+          {emailStatus === 'error' && 'Invalid email address'}
+          {emailStatus === 'valid' && ''}
+        </span>
         <span>Password</span>
         <input
           type='password'
@@ -108,12 +110,14 @@ const RegisterForm = ({
             setPassword(e.target.value);
           }}
         />
-        {status.password && (
-          <span className={`status-msg ${status.password}`}>
-            {status.password === 'checking' && 'Signing up...'}
-            {status.password === 'error' && errorMsg.password}
-          </span>
-        )}
+        <span className={`status-msg ${instanceStatus}`}>
+          {passwordStatus === 'checking' && 'Checking...'}
+          {passwordStatus === 'error' && 'Bad password'}
+          {passwordStatus === 'valid' && ''}
+        </span>
+        {miscError && <span className={`status-msg error`}>
+          {miscError}
+        </span>}
       </div>
 
       <div className='form-footer'>
