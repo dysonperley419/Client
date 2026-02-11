@@ -82,7 +82,7 @@ const RegisterForm = ({
             setUsername(e.target.value);
           }}
         />
-        <span className={`status-msg ${instanceStatus}`}>
+        <span className={`status-msg ${usernameStatus}`}>
           {usernameStatus === 'checking' && 'Checking...'}
           {usernameStatus === 'error' && 'Invalid username'}
           {usernameStatus === 'valid' && ''}
@@ -96,7 +96,7 @@ const RegisterForm = ({
             setEmail(e.target.value);
           }}
         />
-        <span className={`status-msg ${instanceStatus}`}>
+        <span className={`status-msg ${emailStatus}`}>
           {emailStatus === 'checking' && 'Checking...'}
           {emailStatus === 'error' && 'Invalid email address'}
           {emailStatus === 'valid' && ''}
@@ -110,7 +110,7 @@ const RegisterForm = ({
             setPassword(e.target.value);
           }}
         />
-        <span className={`status-msg ${instanceStatus}`}>
+        <span className={`status-msg ${passwordStatus}`}>
           {passwordStatus === 'checking' && 'Checking...'}
           {passwordStatus === 'error' && 'Bad password'}
           {passwordStatus === 'valid' && ''}
