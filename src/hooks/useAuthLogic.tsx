@@ -7,27 +7,21 @@ import { DomainsResponseSchema, WellKnownResponseSchema } from '@/types/response
 
 export function useAuthLogic(instance: Instance | string | undefined, customInstance: string) {
   const [instances, setInstances] = useState<Instance[] | []>([]);
-  const [status, setStatus] = useState<ErrorStatusFields>({
-    instance: null,
-    email: null,
-    password: null,
-    username: null,
-  });
-  const [errorMsg, setErrorMsg] = useState<ErrorMsg>({
-    username: false,
-    email: false,
-  });
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const parsed: unknown = JSON.parse(localStorage.getItem('instances') ?? '[]');
     const instances = Array.isArray(parsed) ? parsed.map((item) => InstanceSchema.parse(item)) : [];
     setInstances(instances);
   }, []);
+  
+  const checkInstance = async (url?: string) => {
+    if (!url || url === 'custom-instance') {
+      setStatus(null);
+      return;
+    }
 
-  const checkInstance = async (url: string) => {
-    if (!url) return;
-
-    setStatus((prev) => ({ ...prev, instance: 'checking' }));
+    setStatus('checking');
 
     const cleanUrl = url.replace(/^(http|https):\/\//, '').replace(/\/$/, '');
     const isTargetLocal = cleanUrl.includes('localhost') || cleanUrl.includes('127.0.0.1');
@@ -67,10 +61,9 @@ export function useAuthLogic(instance: Instance | string | undefined, customInst
         localStorage.setItem('defaultApiVersion', 'v' + domains.defaultApiVersion);
       }
 
-      setStatus((prev) => ({ ...prev, instance: 'valid' }));
+      setStatus('valid');
     } catch {
-      setStatus((prev) => ({ ...prev, instance: 'error' }));
-      setErrorMsg((prev) => ({ ...prev, instance: 'Invalid instance or connection error' }));
+      setStatus('error');
     }
   };
 
@@ -86,5 +79,5 @@ export function useAuthLogic(instance: Instance | string | undefined, customInst
     return;
   }, [customInstance, instance]);
 
-  return { instances, status, setStatus, errorMsg, setErrorMsg, checkInstance };
+  return { instances, status, checkInstance };
 }

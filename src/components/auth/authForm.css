@@ -55,7 +55,7 @@
   text-decoration: underline;
 }
 
-.error {
+.error, .neterror {
   text-align: right;
   color: rgb(240 104 104); /* Var */
 }
@@ -74,9 +74,6 @@
   color: var(--text-dim);
   font-style: italic;
   animation: breathing 1.5s ease-in-out infinite;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .status-msg .checking::after {

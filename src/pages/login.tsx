@@ -15,8 +15,9 @@ function Login(): JSX.Element {
   const [password, setPassword] = useState('');
   const [customInstance, setCustomInstance] = useState('');
   const [instance, setInstance] = useState<Instance | string | undefined>(undefined);
+  const [credentialsStatus, setCredentialsStatus] = useState<string | null>(null);
 
-  const { instances, status, setStatus, errorMsg, checkInstance } = useAuthLogic(
+  const { instances, status: instanceStatus, checkInstance } = useAuthLogic(
     instance,
     customInstance,
   );
@@ -25,17 +26,15 @@ function Login(): JSX.Element {
     const selectedUrl = e.target.value;
     const fullInstance = instances.find((i) => i.url === selectedUrl);
     setInstance(fullInstance ?? selectedUrl);
-    if (selectedUrl !== 'custom-instance') {
-      void checkInstance(selectedUrl);
-    } else {
-      setStatus((prev) => ({ ...prev, instance: null }));
-    }
+    void checkInstance(selectedUrl);
   };
 
   if (localStorage.getItem('Authorization')) return <Navigate to='/' />;
 
   const handleSignin = async () => {
     try {
+      setCredentialsStatus('checking');
+      
       const loginRequest: LoginRequest = { password };
       const apiVersion = localStorage.getItem('defaultApiVersion')?.split('v')[1];
 
@@ -51,13 +50,21 @@ function Login(): JSX.Element {
         },
       );
 
-      if (!response.ok) return;
+      if (!response.ok) {
+        setCredentialsStatus('error');
+        return;
+      }
+
       const data = LoginResponseSchema.parse(await response.json());
-      if (!data.token) return;
+      if (!data.token) {
+        setCredentialsStatus('error');
+        return;
+      }
 
       localStorage.setItem('Authorization', data.token);
       window.location.href = '/';
     } catch (err) {
+      setCredentialsStatus('neterror');
       console.log(err);
     }
   };
@@ -76,8 +83,8 @@ function Login(): JSX.Element {
           email={email}
           setEmail={setEmail}
           password={password}
-          errorMsg={errorMsg}
-          status={status}
+          instanceStatus={instanceStatus}
+          credentialsStatus={credentialsStatus}
           setPassword={setPassword}
         />
       </div>

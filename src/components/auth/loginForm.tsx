@@ -16,20 +16,28 @@ const LoginForm = ({
   instance,
   customInstance,
   setCustomInstance,
-  errorMsg,
-  status,
+  instanceStatus,
+  credentialsStatus,
   email,
   setEmail,
   password,
   setPassword,
 }: LoginFormProps): JSX.Element => {
-  const renderStatus = () => {
-    if (!status.instance) return null;
+  const renderInstanceStatus = () => {
     return (
-      <span className={`status-msg ${status.instance}`}>
-        {status.instance === 'checking' && 'Checking...'}
-        {status.instance === 'error' && (errorMsg.instance ?? 'Request timed out')}
-        {status.instance === 'valid' && 'Instance is online'}
+      <span className={`status-msg ${instanceStatus}`}>
+        {instanceStatus === 'checking' && 'Checking...'}
+        {instanceStatus === 'error' && 'Invalid instance or connection error'}
+        {instanceStatus === 'valid' && 'Instance is online'}
+      </span>
+    );
+  };
+  const renderCredentialError = () => {
+    return (
+      <span className={`status-msg ${credentialsStatus}`}>
+        {credentialsStatus === 'checking' && 'Logging in...'}
+        {credentialsStatus === 'error' && 'Invalid email or password'}
+        {credentialsStatus === 'neterror' && 'A network error occurred'}
       </span>
     );
   };
@@ -52,7 +60,7 @@ const LoginForm = ({
             Custom Instance
           </option>
         </select>
-        {instance !== 'custom-instance' && renderStatus()}
+        {instance !== 'custom-instance' && renderInstanceStatus()}
         {instance === 'custom-instance' && (
           <>
             <span>Instance URL</span>
@@ -64,7 +72,7 @@ const LoginForm = ({
                 setCustomInstance(e.target.value);
               }}
             />
-            {renderStatus()}
+            {renderInstanceStatus()}
           </>
         )}
         <span>Email</span>
@@ -85,12 +93,7 @@ const LoginForm = ({
             setPassword(e.target.value);
           }}
         />
-        {status.password && (
-          <span className={`status-msg ${status.password}`}>
-            {status.password === 'checking' && 'Logging in...'}
-            {status.password === 'error' && errorMsg.password}
-          </span>
-        )}
+        {renderCredentialError()}
       </div>
       <div className='form-footer'>
         <div className='actions'>
