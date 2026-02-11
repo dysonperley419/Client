@@ -83,7 +83,6 @@
 }
 
 .message-details {
-  flex: 1;
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -291,7 +290,8 @@ input:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 6px;
+  margin-bottom: 6px;
 }
 
 .chat-image {
