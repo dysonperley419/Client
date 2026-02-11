@@ -20,3 +20,7 @@ Works well with the latest LTS version of Node (Node 24), for ideal security pra
 Help is actively wanted to implement more features into the client & clean/organize existing files.
 
 The end goal for Flicker is to be a suitable daily driver which is essentially bulletproof to takedowns (custom designed/open-licensed icons, and free-to-use fonts for commercial and non commerical purposes, etc).
+
+# Pictures
+
+![Flicker Client Screenshot](https://github.com/FlickerTeam/Client/blob/main/Screenshot%20From%202026-02-11%2015-52-23.png?raw=true)
