@@ -288,7 +288,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     const token = localStorage.getItem('Authorization') ?? '';
     const gatewayUrl = resumeGatewayUrl.current ?? localStorage.getItem('selectedGatewayUrl');
 
-    if (gatewayUrl && gatewayUrl.length > 0) {
+    if (gatewayUrl && gatewayUrl.length > 0 && token && token.length > 0) {
       const ws = new WebSocket(gatewayUrl);
       socket.current = ws;
       let heartbeatId: number | undefined;
