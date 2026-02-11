@@ -32,6 +32,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   const lastTypingSent = useRef<number>(0);
   const isloadingMore = useRef(false);
   const isFirstLoad = useRef(true);
+  const autoScroll = useRef(true);
 
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,7 +72,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (autoScroll.current)
+      scrollToBottom();
   }, [messages]);
 
   const fetchMessages = useCallback(
@@ -178,6 +180,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         isloadingMore.current = false;
       }
     }
+    autoScroll.current = scrollerRef.current.scrollTop + scrollerRef.current.clientHeight >= scrollerRef.current.scrollHeight;
   };
 
   const formatTimestamp = (dateString: string) => {
