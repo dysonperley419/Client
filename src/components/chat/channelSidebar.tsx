@@ -28,19 +28,21 @@ const ChannelSidebar = ({
         </div>
 
         <div className='scroller scroller_hide'>
-          <button
-            className={`sidebar-btn ${!selectedChannel ? 'active' : ''}`}
-            onClick={() => {
-              onSelectChannel(null);
-            }}
-          >
-            <div className='icon-wrapper'>
-              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-                group
-              </span>
-            </div>
-            <span className='sidebar-text'>Friends</span>
-          </button>
+          <div className='no-channels-sidebar-wrapper'>
+            <button
+              className={`sidebar-btn ${!selectedChannel ? 'active' : ''}`}
+              onClick={() => {
+                onSelectChannel(null);
+              }}
+            >
+              <div className='icon-wrapper'>
+                <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                  group
+                </span>
+              </div>
+              <span className='sidebar-text'>Friends</span>
+            </button>
+          </div>
 
           <div className='dm-section'>
             <div className='dm-header'>
@@ -63,8 +65,12 @@ const ChannelSidebar = ({
   allChannels.sort((a: Channel, b: Channel) => a.position - b.position);
 
   const categoryChannels = allChannels.filter((c: Channel) => c.type === 4); //Text Channels, Voice Channels, other channels..
-  const categorizedChannels = allChannels.filter((c: Channel) => c.parent_id !== null && allChannels.some(c2 => c.parent_id === c2.id));
-  const nonCategorizedChannels = allChannels.filter((c: Channel) => !categoryChannels.includes(c) && !categorizedChannels.includes(c));
+  const categorizedChannels = allChannels.filter(
+    (c: Channel) => c.parent_id !== null && allChannels.some((c2) => c.parent_id === c2.id),
+  );
+  const nonCategorizedChannels = allChannels.filter(
+    (c: Channel) => !categoryChannels.includes(c) && !categorizedChannels.includes(c),
+  );
 
   const renderChannel = (channel: Channel) => (
     <button

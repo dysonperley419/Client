@@ -29,12 +29,14 @@
 }
 
 .search-bar-container {
+  display: flex;
   padding-bottom: 10px;
   width: 100%;
   padding-right: 20px;
 }
 
 .search-bar {
+  flex: 1;
   background-color: #1e1f22;
   outline: 1px solid rgb(187 154 247 / 20%);
   border-radius: 8px;
@@ -78,26 +80,30 @@
   font-size: 14px;
   margin-bottom: 8px;
   padding-left: 10px;
+  display: flex;
+  width: 100%;
 }
 
 .sidebar-item {
-  width: 100%;
+  width: calc(100% - 10px); /* Jank solution but it works */
   padding: 10px 12px;
+  margin-right: 10px;
   background: transparent;
   outline: none;
   text-align: left;
   cursor: pointer;
-  border-radius: 10px 0 0 10px;
+  border-radius: 10px;
   color: #949ba4;
   font-family: Inter, sans-serif;
   font-weight: 400;
   font-size: 16px;
   transition:
     background-color 0.2s,
-    color 0.2s;
+    color 0.2s,
+    width 0.2s;
 }
 
-.sidebar-item:hover {
+.sidebar-item:hover:not(.active) {
   background-color: rgb(255 255 255 / 5%);
   color: #dbdee1;
 }
@@ -106,7 +112,11 @@
   background-image:
     linear-gradient(90deg, rgb(133 79 187 / 0%) 75%, rgb(187 154 247) 100%),
     linear-gradient(90deg, rgb(133 79 187) 0%, rgb(133 79 187) 100%);
-  color: #16161e;
+  width: 100%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  color: var(--text-bright);
+  margin-right: 0;
 }
 
 .sidebar-item.logout {
@@ -120,6 +130,11 @@
   position: relative;
   margin: 5px 0;
   padding-right: 20px;
+  display: flex;
+}
+
+.divider-container hr {
+  width: 100%;
 }
 
 .divider-img {
