@@ -37,7 +37,6 @@ function Register(): JSX.Element {
   if (localStorage.getItem('Authorization')) return <Navigate to='/' />;
 
   const handleSignup = async () => {
-    console.log('AAAA');
     setUsernameStatus(null);
     setPasswordStatus(null);
     setEmailStatus(null);
