@@ -1,5 +1,7 @@
 #guilds-column {
-  width: 98px;
+  min-width: 75px;
+  max-width: 100px;
+  width: 5vw;
   height: 100vh;
   background-color: var(--bg-sidebar);
   display: flex;
@@ -52,7 +54,7 @@
 .stat-text {
   color: #949ba4;
   font-family: Inter, sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
 }
 

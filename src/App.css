@@ -227,12 +227,80 @@ body,
 }
 
 .scroller {
-  padding: 15px;
+  padding: 0 25px 0 25px;
   overflow-y: auto;
   height: 100%;
   display: flex;
   flex-direction: column;
   width: 100%;
+}
+
+/* webkit scrollbars */
+.scroller::-webkit-scrollbar {
+  width: 8px;
+}
+.scroller::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+}
+
+.scroller_hide::-webkit-scrollbar {
+  background: transparent;
+}
+.scroller_hide::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.scroller_hide:hover::-webkit-scrollbar-thumb {
+  transition: background 0.3s;
+  background: rgba(0, 0, 0, 0.4);
+}
+.scroller_hide:hover::-webkit-scrollbar-track {
+  transition: background 0.3s;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* firefox scrollbars */
+.scroller {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.4) transparent;
+}
+.scroller_hide {
+  scrollbar-width: none;
+  transition: background 0.3s;
+}
+.scroller_hide:hover {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.4) transparent;
+  transition: background 0.3s;
+}
+
+
+.user-info {
+  height: 1.4em;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+  align-items: center
+}
+
+.user-info .name {
+  color: var(--text-bright);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bot-tag {
+  text-transform: uppercase;
+  background: var(--text-dim);
+  padding-left: 3px;
+  border: 1px solid var(--accent-primary);
+  border-radius: 6px;
+  padding-right: 3px;
+  margin-left: 6px;
+  color: var(--bg-bright);
+  font-size: 12px;
+  position: relative;
+  height: 1.5em;
 }
 
 .user-settings-panel {
@@ -250,9 +318,10 @@ body,
 }
 
 .members-column {
-  max-width: 400px;
+  max-width: 300px;
   background-color: var(--bg-sidebar-secondary);
   min-width: 250px;
+  width: 20vw;
 }
 
 .stat-badge {
@@ -262,10 +331,6 @@ body,
   text-align: center;
   font-size: 14px;
   padding: 5px;
-}
-
-.user-info .name {
-  color: var(--text-bright);
 }
 
 .members-column-header-base {
@@ -296,20 +361,6 @@ button {
   transition:
     transform 0.1s,
     background 0.2s;
-}
-
-.bot-tag {
-  text-transform: uppercase;
-  background: var(--text-dim);
-  padding-left: 2px;
-  border: 1px solid var(--accent-primary);
-  border-radius: 6px;
-  padding-right: 2px;
-  margin-left: 5px;
-  color: var(--bg-bright);
-  font-size: 12px;
-  position: relative;
-  bottom: 0;
 }
 
 .primary-btn:hover {
@@ -346,6 +397,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
+  overflow: hidden;
 }
 
 .header-right {

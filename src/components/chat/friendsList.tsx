@@ -290,7 +290,7 @@ export const FriendsList = ({
           </div>
         </div>
         <div className='active-now-column'>
-          <div className='scroller'>
+          <div className='scroller scroller_hide'>
             <h3 className='active-now-header'>Active now</h3>
             <div className='active-now-empty'>
               <h4>Hello? Is anybody on?</h4>

@@ -88,11 +88,11 @@
 .roles-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .role-pill {
-  padding: 4px 8px;
+  padding: 4px 6px;
   border-radius: 4px;
   font-size: 12px;
   outline: 1px solid var(--outline-color-gray);
@@ -104,13 +104,16 @@
 }
 
 .role-removal-btn {
-  opacity: 0;
+  opacity: 0.5;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-radius: 8px;
+  border-radius: 4px;
+  width: 16px;
+  height: 16px;
+  margin: 0 -2px 0 -2px;
 }
 
 .role-removal-btn:hover {
@@ -118,7 +121,7 @@
   color: var(--accent-primary);
 }
 
-.role-pill:hover .role-removal-btn {
+.role-pill .role-removal-btn:hover {
   opacity: 1;
 }
 

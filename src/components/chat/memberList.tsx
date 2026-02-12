@@ -203,7 +203,7 @@ const MemberList = ({
   return (
     <aside className='members-column'>
       <header className='members-column-header-base'>Members ({listData.member_count})</header>
-      <div className='scroller' onScroll={handleScroll}>
+      <div className='scroller scroller_hide' onScroll={handleScroll}>
         {items.map((item: GuildMemberListOperationItem, index: number) => {
           if (item.group && item.group.count > 0) {
             const role = selectedGuild?.roles.find((x: Role) => x.id === item.group?.id);

@@ -3,9 +3,12 @@
   color: white;
   align-items: center;
   gap: 10px;
-  padding-bottom: 10px;
-  transition: 0.3s opacity;
   cursor: pointer;
+  border-radius: 10px;
+}
+
+.member-list-item:hover {
+  background-color: rgb(78 80 88 / 30%);
 }
 
 .member-list-item.offline-member {
@@ -21,12 +24,12 @@
 }
 
 .member-list-item-wrapper {
-  padding-left: 20px;
   display: block;
+  margin-bottom: 10px;
 }
 
 .role-title {
-  padding: 10px 0 10px 10px;
+  margin: 20px 0 10px 0;
   color: var(--text-bright);
   text-transform: uppercase;
   font-size: 14px;

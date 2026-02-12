@@ -27,7 +27,7 @@ const ChannelSidebar = ({
           </div>
         </div>
 
-        <div className='scroller'>
+        <div className='scroller scroller_hide'>
           <button
             className={`sidebar-btn ${!selectedChannel ? 'active' : ''}`}
             onClick={() => {
@@ -110,7 +110,7 @@ const ChannelSidebar = ({
         </div>
       </div>
 
-      <div className='scroller'>
+      <div className='scroller scroller_hide'>
         {categoryChannels
           .sort((a: Channel, b: Channel) => (a.position ?? 0) - (b.position ?? 0))
           .map((category: Channel) => {

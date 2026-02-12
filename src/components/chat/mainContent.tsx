@@ -12,6 +12,7 @@ import { useGateway } from '../../context/gatewayContext';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import MemberList from './memberList';
+import ChatInput from './chatInput';
 
 interface MediaAttachment {
   file: File;
@@ -562,12 +563,14 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                     </span>
                   </div>
                 </button>
-                <input
-                  type='text'
+                <ChatInput
                   placeholder={`Message #${selectedChannel.name ?? ''}`}
                   value={chatMessage}
                   onChange={(e) => {
                     updateChat(e.target.value);
+                  }}
+                  onSubmit={(e) => {
+                    void handleSendMessage(e);
                   }}
                 />
                 <div className='input-icons'>

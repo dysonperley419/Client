@@ -95,6 +95,7 @@
   position: relative;
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
 }
 
 .friend-item-row .avatar-img {

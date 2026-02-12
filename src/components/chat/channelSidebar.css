@@ -115,7 +115,7 @@
 }
 
 .sidebar-text {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
 }
 
@@ -134,18 +134,19 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  padding-left: 10px;
 }
 
 .category-header {
   width: 100%;
-  padding: 0 10px;
+  padding: 0 2px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: start;
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 300;
   cursor: pointer;
   transition: color 0.1s;
   background: transparent;
@@ -186,12 +187,10 @@
   color: var(--text-muted);
   font-weight: 600;
   font-size: 16px;
-  margin: 10px 10px 0;
   justify-content: flex-start;
   border-radius: 8px;
   transition:
     margin-right ease 0.2s,
-    background-color 0.2s,
     border-radius ease 0.2s;
 }
 
