@@ -7,6 +7,7 @@ import { ContextMenuProvider } from './context/contextMenuProvider';
 import { GatewayProvider } from './context/gatewayProvider';
 import { ModalProvider } from './context/modalProvider';
 import { PopupProvider } from './context/popupProvider';
+import { VoiceProvider } from './context/voiceContext';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
@@ -15,13 +16,15 @@ if (rootElement) {
     <React.StrictMode>
       <BrowserRouter>
         <GatewayProvider>
-          <ModalProvider>
-            <PopupProvider>
-              <ContextMenuProvider>
-                <App />
-              </ContextMenuProvider>
-            </PopupProvider>
-          </ModalProvider>
+          <VoiceProvider>
+            <ModalProvider>
+              <PopupProvider>
+                <ContextMenuProvider>
+                  <App />
+                </ContextMenuProvider>
+              </PopupProvider>
+            </ModalProvider>
+          </VoiceProvider>
         </GatewayProvider>
       </BrowserRouter>
     </React.StrictMode>,

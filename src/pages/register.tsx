@@ -1,13 +1,10 @@
 import { type JSX, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import * as z from 'zod';
 
 import { useAuthLogic } from '@/hooks/useAuthLogic';
-import { ErrorMsgSchema } from '@/types/authFormProps';
-import type { ErrorStatusFields } from '@/types/errorStatusFields';
 import type { Instance } from '@/types/instance';
 import type { RegisterRequest } from '@/types/requests';
-import { ErrorResponseSchema, RegisterResponseSchema } from '@/types/responses';
+import { RegisterResponseSchema } from '@/types/responses';
 
 import RegisterForm from '../components/auth/registerForm';
 import Brand from '../components/common/brand';
@@ -19,16 +16,16 @@ function Register(): JSX.Element {
   const [password, setPassword] = useState('');
   const [customInstance, setCustomInstance] = useState('');
   const [instance, setInstance] = useState<Instance | string | undefined>(undefined);
-  const [credentialsStatus, setCredentialsStatus] = useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<string | null>(null);
   const [passwordStatus, setPasswordStatus] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<string | null>(null);
   const [miscError, setMiscError] = useState<string | null>(null);
 
-  const { instances, status: instanceStatus, checkInstance } = useAuthLogic(
-    instance,
-    customInstance,
-  );
+  const {
+    instances,
+    status: instanceStatus,
+    checkInstance,
+  } = useAuthLogic(instance, customInstance);
 
   const handleInstanceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedUrl = e.target.value;
@@ -40,7 +37,7 @@ function Register(): JSX.Element {
   if (localStorage.getItem('Authorization')) return <Navigate to='/' />;
 
   const handleSignup = async () => {
-    console.log("AAAA");
+    console.log('AAAA');
     setUsernameStatus(null);
     setPasswordStatus(null);
     setEmailStatus(null);
@@ -63,7 +60,7 @@ function Register(): JSX.Element {
         },
       );
 
-      const data: unknown = await response.json();
+      const data: any = await response.json();
 
       if (!response.ok) {
         const parsed = JSON.parse(data);
@@ -96,11 +93,11 @@ function Register(): JSX.Element {
           username={username}
           email={email}
           instance={instance}
-          instanceStatus={instanceStatus}
-          usernameStatus={usernameStatus}
-          passwordStatus={passwordStatus}
-          emailStatus={emailStatus}
-          miscError={miscError}
+          instanceStatus={instanceStatus!}
+          usernameStatus={usernameStatus!}
+          passwordStatus={passwordStatus!}
+          emailStatus={emailStatus!}
+          miscError={miscError!}
           setEmail={setEmail}
           password={password}
           customInstance={customInstance}

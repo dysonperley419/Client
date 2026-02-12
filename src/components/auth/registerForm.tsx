@@ -9,6 +9,11 @@ interface RegisterFormProps extends AuthFormProps {
   handleSignup: () => void;
   setUsername: Dispatch<SetStateAction<string>>;
   username: string;
+  instanceStatus: string;
+  usernameStatus: string;
+  passwordStatus: string;
+  emailStatus: string;
+  miscError: string;
 }
 
 const RegisterForm = ({
@@ -115,9 +120,7 @@ const RegisterForm = ({
           {passwordStatus === 'error' && 'Bad password'}
           {passwordStatus === 'valid' && ''}
         </span>
-        {miscError && <span className={`status-msg error`}>
-          {miscError}
-        </span>}
+        {miscError && <span className={`status-msg error`}>{miscError}</span>}
       </div>
 
       <div className='form-footer'>

@@ -40,7 +40,7 @@ export const UserSettingsSchema = z.object({
   default_guilds_restricted: z.boolean().nullish(),
   guild_folders: z.array(GuildFolderSchema),
   afk_timeout: z.coerce.number().int().nullish(),
-  timezone_offset: z.coerce.number().int(),
+  timezone_offset: z.coerce.number().int().nullish().or(z.literal(NaN)),
   allow_accessibility_detection: z.boolean().nullish(),
   inline_attachment_media: z.boolean(),
   inline_embed_media: z.boolean(),

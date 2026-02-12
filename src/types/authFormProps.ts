@@ -1,7 +1,6 @@
 import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
 import * as z from 'zod';
 
-import type { ErrorStatusFields } from './errorStatusFields';
 import type { Instance } from './instance';
 
 export const ErrorMsgSchema = z.object({
@@ -19,8 +18,8 @@ export interface AuthFormProps {
   instance: string | Instance | undefined;
   customInstance: string;
   setCustomInstance: Dispatch<SetStateAction<string>>;
-  errorMsg: ErrorMsg;
-  status: ErrorStatusFields;
+  errorMsg?: ErrorMsg;
+  status?: any;
   email: string;
   setEmail: Dispatch<SetStateAction<string>>;
   password: string;

@@ -58,6 +58,7 @@
     0 4px 32px 5px rgb(162 116 244 / 20%),
     var(--gray-outline-bottom);
   flex-shrink: 0;
+  background-color: var(--bg-alt);
 }
 
 .sidebar-header-banner-bg {

@@ -7,6 +7,8 @@ import type { AuthFormProps } from '@/types/authFormProps';
 
 interface LoginFormProps extends AuthFormProps {
   handleSignin: () => void;
+  instanceStatus: string | null;
+  credentialsStatus: string | null;
 }
 
 const LoginForm = ({

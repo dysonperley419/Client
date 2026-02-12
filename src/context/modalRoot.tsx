@@ -2,6 +2,8 @@ import './modal.css';
 
 import { createPortal } from 'react-dom';
 
+import { ConfirmationConnectP2PModal } from '@/components/modals/confirmationConnectP2P';
+
 import { ClearSelectedInstanceModal } from '../components/modals/clearSelectedInstance';
 import { ConfirmationDeleteModal } from '../components/modals/confirmationDelete';
 import { ConfirmationLeaveModal } from '../components/modals/confirmationLeave';
@@ -27,6 +29,12 @@ export const ModalRoot = () => {
         return <JoinServerModal />;
       case 'CLEAR_SELECTED_INSTANCE':
         return <ClearSelectedInstanceModal />;
+      case 'CONFIRMATION_CONNECT_P2P':
+        return (
+          <ConfirmationConnectP2PModal
+            {...(modalData as ModalDataMap['CONFIRMATION_CONNECT_P2P'])}
+          />
+        );
       case 'CONFIRMATION_LEAVE':
         return <ConfirmationLeaveModal {...(modalData as ModalDataMap['CONFIRMATION_LEAVE'])} />;
       case 'CONFIRMATION_DELETE':

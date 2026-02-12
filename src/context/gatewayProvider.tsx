@@ -6,8 +6,8 @@ import {
   GuildMemberListUpdateSchema,
   HelloSchema,
   MessageCreateSchema,
-  MessageUpdateSchema,
   MessageDeleteSchema,
+  MessageUpdateSchema,
   PresenceUpdateSchema,
   ReadyEventSchema,
   TypingStartSchema,
@@ -48,6 +48,12 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const lastSequence = useRef<number | null>(null);
   const resumeGatewayUrl = useRef<string | null>(null);
   const [reconnectCounter, setReconnectTrigger] = useState(0);
+
+  const sendOp = useCallback((op: number, d: any) => {
+    if (socket.current?.readyState === WebSocket.OPEN) {
+      socket.current.send(JSON.stringify({ op, d }));
+    }
+  }, []);
 
   useEffect(() => {
     memberListsRef.current = memberLists;
@@ -110,6 +116,14 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           break;
         }
 
+        case 'VOICE_STATE_UPDATE':
+          window.dispatchEvent(new CustomEvent('gateway_voice_state', { detail: data }));
+          break;
+
+        case 'VOICE_SERVER_UPDATE':
+          window.dispatchEvent(new CustomEvent('gateway_voice_server', { detail: data }));
+          break;
+
         case 'MESSAGE_CREATE': {
           const parsed = MessageCreateSchema.parse(data);
           upsertUsers([parsed.author as User]);
@@ -125,11 +139,11 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           });
           break;
         }
-        
+
         case 'MESSAGE_UPDATE': {
           const parsed = MessageUpdateSchema.parse(data);
           upsertUsers([parsed.author as User]);
-          
+
           window.dispatchEvent(new CustomEvent('gateway_message_update', { detail: parsed }));
           break;
         }
@@ -410,6 +424,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     typingUsers,
     memberLists,
     memberListsRef,
+    sendOp,
   };
 
   return <GatewayContext value={gatewayProps}>{children}</GatewayContext>;

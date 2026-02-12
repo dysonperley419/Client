@@ -1,6 +1,9 @@
 import { type JSX, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { useModal } from '@/context/modalContext';
+import { useVoiceContext } from '@/context/voiceContext';
+import { useVoice } from '@/hooks/useVoice';
 import type { Channel } from '@/types/channel';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
 import type { Guild } from '@/types/guilds';
@@ -19,6 +22,9 @@ const ChatApp = (): JSX.Element => {
   const { isReady, guilds, user, relationships, requestMembers }: GatewayContextSchema =
     useGateway();
   const { guildId, channelId } = useParams();
+  const { openModal } = useModal();
+  const { connectToVoice } = useVoiceContext();
+
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
   const [localFriends, setLocalFriends] = useState<Relationship[] | []>([]);
@@ -131,7 +137,29 @@ const ChatApp = (): JSX.Element => {
     void navigate(`/channels/${guild.id}`);
   };
 
+  const handleVoiceConnection = (channel: Channel) => {
+    if (!selectedGuild) {
+      return; //only support guild calls for now
+    }
+
+    const webrtc_p2p =
+      JSON.parse(localStorage.getItem('developerSettings') ?? '{}').webrtc_p2p ?? false;
+
+    if (webrtc_p2p) {
+      openModal('CONFIRMATION_CONNECT_P2P', {
+        channel: channel,
+        name: channel.name!,
+        guild_id: channel.guild_id ?? null,
+      });
+    } else {
+      connectToVoice(channel.guild_id ?? null, channel);
+    }
+  };
+
   const handleSelectChannel = (channel: Channel | null) => {
+    if (channel?.type === 2) {
+      handleVoiceConnection(channel);
+    }
     void navigate(`/channels/${guildId ?? '@me'}/${channel?.id ?? ''}`);
   };
 

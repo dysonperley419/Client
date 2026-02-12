@@ -10,6 +10,11 @@ export interface ModalDataMap {
   CONFIRMATION_LEAVE: { name: string; id: string; type: string };
   CLEAR_SELECTED_INSTANCE: undefined;
   CONFIRMATION_DELETE: { name: string; id: string; type: string };
+  CONFIRMATION_CONNECT_P2P: {
+    channel: any;
+    name: string;
+    guild_id?: string | null;
+  };
   SERVER_PROFILE: { member: Member };
   IMAGE_PREVIEW: ImagePreviewProps;
 }

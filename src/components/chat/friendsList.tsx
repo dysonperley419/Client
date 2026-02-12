@@ -122,19 +122,19 @@ export const FriendsList = ({
           <div className='vertical-divider'></div>
           <button
             onClick={() => {
-              setFilter('ONLINE');
-            }}
-            className={filter === 'ONLINE' ? 'active' : ''}
-          >
-            Online
-          </button>
-          <button
-            onClick={() => {
               setFilter('ALL');
             }}
             className={filter === 'ALL' ? 'active' : ''}
           >
             All
+          </button>
+          <button
+            onClick={() => {
+              setFilter('ONLINE');
+            }}
+            className={filter === 'ONLINE' ? 'active' : ''}
+          >
+            Online
           </button>
           <button
             onClick={() => {

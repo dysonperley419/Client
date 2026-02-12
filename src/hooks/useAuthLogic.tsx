@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import type { ErrorMsg } from '@/types/authFormProps';
-import type { ErrorStatusFields } from '@/types/errorStatusFields';
 import { type Instance, InstanceSchema } from '@/types/instance';
 import { DomainsResponseSchema, WellKnownResponseSchema } from '@/types/responses';
 
@@ -14,7 +12,7 @@ export function useAuthLogic(instance: Instance | string | undefined, customInst
     const instances = Array.isArray(parsed) ? parsed.map((item) => InstanceSchema.parse(item)) : [];
     setInstances(instances);
   }, []);
-  
+
   const checkInstance = async (url?: string) => {
     if (!url || url === 'custom-instance') {
       setStatus(null);

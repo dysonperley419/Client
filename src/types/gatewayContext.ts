@@ -26,4 +26,5 @@ export interface GatewayContextSchema {
   typingUsers: Record<string, Record<string, number>>;
   memberLists?: Record<string, GuildMemberListState>;
   memberListsRef?: React.RefObject<Record<string, GuildMemberListState> | undefined>;
+  sendOp?: any;
 }
