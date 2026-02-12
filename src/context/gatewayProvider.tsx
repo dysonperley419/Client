@@ -112,7 +112,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           const parsed = MessageCreateSchema.parse(data);
           upsertUsers([parsed.author as User]);
 
-          window.dispatchEvent(new CustomEvent('gateway_message', { detail: parsed }));
+          window.dispatchEvent(new CustomEvent('gateway_message_create', { detail: parsed }));
 
           setTypingUsers((prev) => {
             const channelTyping = { ...prev[parsed.channel_id] };

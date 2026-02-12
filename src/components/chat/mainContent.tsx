@@ -243,10 +243,10 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       }
     };
 
-    window.addEventListener('gateway_message', handleNewMessage);
+    window.addEventListener('gateway_message_create', handleNewMessage);
 
     return () => {
-      window.removeEventListener('gateway_message', handleNewMessage);
+      window.removeEventListener('gateway_message_create', handleNewMessage);
     };
   }, [selectedChannel.id]);
 
