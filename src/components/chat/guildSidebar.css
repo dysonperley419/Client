@@ -205,7 +205,7 @@
   display: flex;
   z-index: 1;
   bottom: -5px;
-  right: 20px;
+  right: -5px;
 }
 
 .user-status-indicator span {

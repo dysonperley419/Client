@@ -223,11 +223,11 @@ const GuildSidebar = ({
             className={`icon-container user-icon-container shadow-container ${isUserPopupOpen ? 'active' : ''}`}
           >
             <UserAvatar />
-          </div>
           <div className='user-status-indicator'>
             <div className='status-indicator-wrapper'>
               <div className={`status-dot-large ${status}`}></div>
             </div>
+          </div>
           </div>
         </button>
       </div>
