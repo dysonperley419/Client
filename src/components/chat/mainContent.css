@@ -96,7 +96,8 @@
   margin-bottom: 2px;
 }
 
-.author-name, .user-info.name {
+.author-name,
+.user-info.name {
   color: #c0caf5;
   font-weight: 600;
   font-size: 15px;
@@ -124,11 +125,6 @@
 .chat-input-area {
   padding: 0 20px;
   flex-shrink: 0;
-}
-
-input:focus {
-  outline: none;
-  border: 1px solid var(--accent-primary);
 }
 
 .input-wrapper {

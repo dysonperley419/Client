@@ -62,7 +62,7 @@ export const ChannelSchema = z.object({
   id: z.string(),
   type: z.enum(ChannelType),
   guild_id: z.string().nullish(),
-  position: z.coerce.number().int().nullish(),
+  position: z.coerce.number().int(),
   permission_overwrites: z.array(PermissionOverwriteSchema).nullish(),
   name: z.string().min(1).max(100).nullish(),
   topic: z.string().max(4096).nullish(),

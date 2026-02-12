@@ -46,6 +46,10 @@ export const UserProfileModal = (): JSX.Element => {
     closePopup();
   };
 
+  const switchAccount = () => {};
+
+  const switchInstance = () => {};
+
   const status =
     sessions[0]?.status ?? (user?.id ? presences[user.id]?.status : undefined) ?? 'offline';
 
@@ -98,12 +102,17 @@ export const UserProfileModal = (): JSX.Element => {
               </span>
             )}
           </div>
-          <div className='icon-btn-small'>
+          <div className='icon-btn-small' title={`Switch account`} onClick={switchAccount}>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
               switch_account
             </span>
           </div>
-          <div className='icon-btn-small'>
+          <div className='icon-btn-small' title={`Switch instance`} onClick={switchInstance}>
+            <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
+              hard_drive
+            </span>
+          </div>
+          <div className='icon-btn-small' title={`View user profile`}>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
               chevron_right
             </span>
@@ -158,7 +167,15 @@ export const UserProfileModal = (): JSX.Element => {
                 account_box
               </span>
             </div>
-            <p className='action-text'>Copy User ID</p>
+            <p
+              className='action-text'
+              onClick={() => {
+                navigator.clipboard.writeText(user?.id ?? '');
+                closePopup();
+              }}
+            >
+              Copy User ID
+            </p>
           </div>
         </button>
       </div>

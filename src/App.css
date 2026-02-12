@@ -226,7 +226,8 @@ body,
   color: #989898;
 }
 
-.scroller, .scroller_hide {
+.scroller,
+.scroller_hide {
   padding: 20px 0;
   overflow-y: auto;
   height: 100%;
@@ -236,48 +237,56 @@ body,
 }
 
 /* webkit scrollbars */
-.scroller::-webkit-scrollbar, .scroller_hide::-webkit-scrollbar {
+.scroller::-webkit-scrollbar,
+.scroller_hide::-webkit-scrollbar {
   width: 8px;
 }
-.scroller::-webkit-scrollbar-thumb, .scroller_hide:hover::-webkit-scrollbar-thumb {
+
+.scroller::-webkit-scrollbar-thumb,
+.scroller_hide:hover::-webkit-scrollbar-thumb {
   border-radius: 4px;
 }
 
 .scroller_hide::-webkit-scrollbar {
   background: transparent;
 }
+
 .scroller_hide::-webkit-scrollbar-thumb {
   background: transparent;
 }
+
 .scroller_hide:hover::-webkit-scrollbar-thumb {
   transition: background 0.1s;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgb(0 0 0 / 40%);
 }
+
 .scroller_hide:hover::-webkit-scrollbar-track {
   transition: background 0.1s;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgb(0 0 0 / 10%);
 }
 
 /* firefox scrollbars */
-.scroller, .scroller_hide {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.4) transparent;
-}
+.scroller,
 .scroller_hide {
-  transition: scrollbar-color 0.1s;
-  scrollbar-color: rgba(0,0,0,0.0) transparent;
-}
-.scroller_hide:hover {
-  scrollbar-color: rgba(0,0,0,0.4) transparent;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(0 0 0 / 40%) transparent;
 }
 
+.scroller_hide {
+  transition: scrollbar-color 0.1s;
+  scrollbar-color: rgb(0 0 0 / 0%) transparent;
+}
+
+.scroller_hide:hover {
+  scrollbar-color: rgb(0 0 0 / 40%) transparent;
+}
 
 .user-info {
   height: 1.4em;
   width: 100%;
   display: flex;
   overflow: hidden;
-  align-items: center
+  align-items: center;
 }
 
 .user-info .name {
@@ -323,7 +332,7 @@ body,
 }
 
 .members-column-scroller {
-  padding: 0 20px 0 20px;
+  padding: 0 20px;
 }
 
 .stat-badge {
@@ -449,6 +458,15 @@ button {
   color: var(--text-muted);
   font-size: 14px;
   width: 140px;
+}
+
+.search-bar input:focus {
+  outline: none;
+}
+
+.search-bar:focus-within {
+  outline: 1px solid var(--accent-primary);
+  box-shadow: 0 0 4px 1px rgb(187 154 247 / 30%); /* move to its own color */
 }
 
 .search-icon {

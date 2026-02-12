@@ -3,6 +3,7 @@ import './settings.css';
 import { type JSX, useEffect, useState } from 'react';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
+import { useModal } from '@/context/modalContext';
 import type { User } from '@/types/users';
 import { getDefaultAvatar } from '@/utils/avatar';
 
@@ -24,7 +25,7 @@ const DefaultDevSettings: DevSettings = {
 const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
   const [activeTab, setActiveTab] = useState('My Account');
   const [editingProfile, setEditingProfile] = useState(false);
-
+  const { openModal, closeModal } = useModal();
   const [devSettings, setDevSettings] = useState(() => {
     const saved = localStorage.getItem('developerSettings');
 
@@ -50,6 +51,21 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
     }
 
     return `${email.slice(0, 2)}***@${domain}`;
+  };
+
+  const handleLogout = () => {
+    openModal('DANGER_CONFIRMATION', {
+      title: 'Are you sure you want to logout?',
+      body: 'We are working on a way to easily switch the instance without requiring this!',
+      onCancel: () => {
+        closeModal();
+      },
+      onConfirm: () => {
+        localStorage.removeItem('Authorization');
+        localStorage.removeItem('email');
+        location.reload();
+      },
+    });
   };
 
   const renderTab = () => {
@@ -278,7 +294,9 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
           </div>
 
           <div className='sidebar-group'>
-            <button className='sidebar-item logout'>Log Out</button>
+            <button className='sidebar-item logout' onClick={handleLogout}>
+              Log Out
+            </button>
           </div>
 
           <div className='divider-container'>

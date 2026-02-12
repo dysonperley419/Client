@@ -3,7 +3,6 @@ import './memberList.css';
 import { type JSX, useCallback, useEffect, useState } from 'react';
 
 import type { Channel } from '@/types/channel';
-import type { GuildMemberListOperationItem } from '@/types/gateway';
 import type { Guild, Member, Role } from '@/types/guilds';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
@@ -91,13 +90,13 @@ const MemberListItem = ({
 
   return (
     <button
-    className={`member-list-item ${status === 'offline' ? 'offline-member' : ''}`}
-    onContextMenu={(e) => {
-      handleRightClick(e);
-    }}
-    onClick={(e) => {
-      showProfilePopout(e);
-    }}
+      className={`member-list-item ${status === 'offline' ? 'offline-member' : ''}`}
+      onContextMenu={(e) => {
+        handleRightClick(e);
+      }}
+      onClick={(e) => {
+        showProfilePopout(e);
+      }}
     >
       <div className='avatar-wrapper'>
         <MemberAvatar member={member} className='avatar-img' />
@@ -126,6 +125,9 @@ const MemberListItem = ({
   );
 };
 
+const ITEM_HEIGHT = 44;
+const LEEWAY_HEIGHT = 100;
+
 const MemberList = ({
   selectedGuild,
   selectedChannel,
@@ -135,6 +137,18 @@ const MemberList = ({
 }): JSX.Element => {
   const { memberLists, memberListsRef, requestMembers, typingUsers } = useGateway();
   const [rangeIndex, setRangeIndex] = useState(0);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight - LEEWAY_HEIGHT);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportHeight(window.innerHeight - LEEWAY_HEIGHT);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     const guildId = selectedGuild?.id;
@@ -156,6 +170,8 @@ const MemberList = ({
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+
+      setScrollTop(scrollTop);
 
       if (scrollHeight - scrollTop <= clientHeight + 100) {
         const nextRangeStart = (rangeIndex + 1) * 100;
@@ -196,41 +212,61 @@ const MemberList = ({
     return undefined;
   };
 
-  const items = listData.items;
+  const items = listData?.items || [];
+
+  const startIndex = Math.floor(scrollTop / ITEM_HEIGHT);
+
+  const endIndex = Math.min(startIndex + Math.ceil(viewportHeight / ITEM_HEIGHT) + 5, items.length);
+
+  const visibleItems = items.slice(startIndex, endIndex);
+  const totalHeight = items.length * ITEM_HEIGHT;
+  const offsetY = startIndex * ITEM_HEIGHT;
+
+  if (!listData) return <aside className='members-column'>Loading...</aside>;
 
   return (
     <aside className='members-column'>
       <header className='members-column-header-base'>Members ({listData.member_count})</header>
-      <div className='scroller_hide members-column-scroller' onScroll={handleScroll}>
-        {items.map((item: GuildMemberListOperationItem, index: number) => {
-          if (item.group && item.group.count > 0) {
-            const role = selectedGuild?.roles.find((x: Role) => x.id === item.group?.id);
+      <div
+        className='scroller_hide members-column-scroller'
+        onScroll={handleScroll}
+        style={{ height: `${viewportHeight}px`, overflowY: 'auto' }}
+      >
+        <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
+          <div style={{ transform: `translateY(${offsetY}px)`, width: '100%' }}>
+            {visibleItems.map((item, index) => {
+              if (item.group && item.group.count > 0) {
+                const role = selectedGuild?.roles.find((x: Role) => x.id === item.group?.id);
+                return (
+                  <div key={`group-${item.group.id}`} className='role-title'>
+                    {role?.name ?? item.group.id} — {item.group.count}
+                  </div>
+                );
+              }
 
-            return (
-              <div key={`group-${item.group.id}`} className='role-title'>
-                {role?.name ?? item.group.id} — {item.group.count}
-              </div>
-            );
-          }
-
-          if (item.member) {
-            const memberWithGuild = { ...item.member, guild_id: selectedGuild?.id };
-            const color = getMemberColor(item.member, selectedGuild);
-            const memberId = item.member.user.id;
-            return (
-              <MemberListItem
-                key={`${memberId}-${index.toString()}`}
-                member={memberWithGuild}
-                isTyping={!!currentChannelTyping?.[memberId]}
-                roles={selectedGuild?.roles}
-                color={color}
-              />
-            );
-          }
-
-          return null;
-        })}
-        {listData.partial && <div className='role-title'>Loading...</div>}
+              if (item.member) {
+                const memberWithGuild = { ...item.member, guild_id: selectedGuild?.id };
+                const color = getMemberColor(item.member, selectedGuild);
+                const memberId = item.member.user.id;
+                return (
+                  <MemberListItem
+                    key={`${memberId}-${index.toString()}`}
+                    member={memberWithGuild}
+                    isTyping={!!currentChannelTyping?.[memberId]}
+                    roles={selectedGuild?.roles}
+                    color={color}
+                  />
+                );
+              }
+              return null;
+            })}
+          </div>
+        </div>
+        {listData.partial && (
+          <div className='role-title' style={{ transform: `translateY(${offsetY}px)` }}>
+            Loading...
+          </div>
+        )}
       </div>
     </aside>
   );

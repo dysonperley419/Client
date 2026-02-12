@@ -3,6 +3,7 @@ import './modal.css';
 import { createPortal } from 'react-dom';
 
 import { ConfirmationConnectP2PModal } from '@/components/modals/confirmationConnectP2P';
+import { DangerConfirmationModal } from '@/components/modals/dangerConfirmationModal';
 
 import { ClearSelectedInstanceModal } from '../components/modals/clearSelectedInstance';
 import { ConfirmationDeleteModal } from '../components/modals/confirmationDelete';
@@ -43,7 +44,8 @@ export const ModalRoot = () => {
         return <ServerProfileModal {...(modalData as ModalDataMap['SERVER_PROFILE'])} />;
       case 'IMAGE_PREVIEW':
         return <ImagePreview {...(modalData as ModalDataMap['IMAGE_PREVIEW'])} />;
-
+      case 'DANGER_CONFIRMATION':
+        return <DangerConfirmationModal {...(modalData as ModalDataMap['DANGER_CONFIRMATION'])} />;
       default:
         return null;
     }
