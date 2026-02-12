@@ -6,6 +6,8 @@ import {
   GuildMemberListUpdateSchema,
   HelloSchema,
   MessageCreateSchema,
+  MessageUpdateSchema,
+  MessageDeleteSchema,
   PresenceUpdateSchema,
   ReadyEventSchema,
   TypingStartSchema,
@@ -121,6 +123,20 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
             const { [parsed.author.id ?? '']: _, ...remainingTyping } = channelTyping;
             return { ...prev, [parsed.channel_id]: remainingTyping };
           });
+          break;
+        }
+        
+        case 'MESSAGE_UPDATE': {
+          const parsed = MessageUpdateSchema.parse(data);
+          upsertUsers([parsed.author as User]);
+          
+          window.dispatchEvent(new CustomEvent('gateway_message_update', { detail: parsed }));
+          break;
+        }
+
+        case 'MESSAGE_DELETE': {
+          const parsed = MessageDeleteSchema.parse(data);
+          window.dispatchEvent(new CustomEvent('gateway_message_delete', { detail: parsed }));
           break;
         }
 

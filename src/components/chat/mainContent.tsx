@@ -5,6 +5,7 @@ import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 import type { Channel } from '@/types/channel';
 import type { Guild } from '@/types/guilds';
 import { type Message, MessageListSchema } from '@/types/messages';
+import { type MessageCreate, MessageUpdate, MessageDelete } from '@/types/gateway';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -229,7 +230,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   }, [selectedChannel.id, fetchMessages]);
 
   useEffect(() => {
-    const handleNewMessage = (event: CustomEvent<Message>) => {
+    const handleNewMessage = (event: CustomEvent<MessageCreate>) => {
       const newMessage = event.detail;
 
       if (newMessage.channel_id === selectedChannel.id) {
@@ -242,11 +243,29 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         scrollToBottom();
       }
     };
+    const handleUpdateMessage = (event: CustomEvent<MessageUpdate>) => {
+      const updatedMessage = event.detail;
+      
+      if (updatedMessage.channel_id === selectedChannel.id) {
+        setMessages(prev => prev.map(old => old.id === updatedMessage.id ? updatedMessage : old));
+      }
+    };
+    const handleDeleteMessage = (event: CustomEvent<MessageDelete>) => {
+      const deletedMessage = event.detail;
+      
+      if (deletedMessage.channel_id === selectedChannel.id) {
+        setMessages(prev => prev.filter(msg => msg.id !== deletedMessage.id));
+      }
+    };
 
     window.addEventListener('gateway_message_create', handleNewMessage);
+    window.addEventListener('gateway_message_update', handleUpdateMessage);
+    window.addEventListener('gateway_message_delete', handleDeleteMessage);
 
     return () => {
       window.removeEventListener('gateway_message_create', handleNewMessage);
+      window.removeEventListener('gateway_message_update', handleUpdateMessage);
+      window.removeEventListener('gateway_message_delete', handleDeleteMessage);
     };
   }, [selectedChannel.id]);
 

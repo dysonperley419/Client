@@ -91,6 +91,13 @@ export const MessageUpdateSchema = MessageSchema.extend({
   tts: z.preprocess(() => false, z.boolean()), // https://docs.discord.food/topics/gateway-events#message-update -- Check warning
 });
 
+export const MessageDeleteSchema = z.object({
+  id: z.string(),
+  channel_id: z.string(),
+  guild_id: z.string().nullish(),
+});
+
+
 export const TypingStartSchema = z.object({
   channel_id: z.string(),
   guild_id: z.string().nullish(),
@@ -110,6 +117,10 @@ export const GatewayPayloadSchema = z.object({
 });
 
 export const PresenceUpdateSchema = PresenceSchema;
+
+export const MessageCreate = z.infer<typeof MessageCreateSchema>;
+export const MessageUpdate = z.infer<typeof MessageUpdateSchema>;
+export const MessageDelete = z.infer<typeof MessageDeleteSchema>;
 
 export type GatewayPayload = z.infer<typeof GatewayPayloadSchema>;
 export type GuildMemberList = z.infer<typeof GuildMemberListUpdateSchema>;
