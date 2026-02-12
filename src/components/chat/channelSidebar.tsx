@@ -60,6 +60,8 @@ const ChannelSidebar = ({
   }
 
   const allChannels = selectedGuild.channels;
+  allChannels.sort((a: Channel, b: Channel) => a.position - b.position);
+
   const categoryChannels = allChannels.filter((c: Channel) => c.type === 4); //Text Channels, Voice Channels, other channels..
   const categorizedChannels = allChannels.filter((c: Channel) => c.parent_id !== null && allChannels.some(c2 => c.parent_id === c2.id));
   const nonCategorizedChannels = allChannels.filter((c: Channel) => !categoryChannels.includes(c) && !categorizedChannels.includes(c));
