@@ -1,16 +1,56 @@
 import './settings.css';
 
-import { type JSX, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 
+import { useAssetsUrl } from '@/context/assetsUrl';
 import type { User } from '@/types/users';
+import { getDefaultAvatar } from '@/utils/avatar';
 
 interface SettingsProps {
   user: User | null;
   onClose: () => void;
 }
 
+interface DevSettings {
+  log_gateway: boolean;
+  webrtc_p2p: boolean;
+}
+
+const DefaultDevSettings: DevSettings = {
+  log_gateway: false,
+  webrtc_p2p: false,
+};
+
 const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
   const [activeTab, setActiveTab] = useState('My Account');
+  const [editingProfile, setEditingProfile] = useState(false);
+
+  const [devSettings, setDevSettings] = useState(() => {
+    const saved = localStorage.getItem('developerSettings');
+
+    return saved ? (JSON.parse(saved) as DevSettings) : DefaultDevSettings;
+  });
+
+  const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user) ?? ''}.png`);
+
+  const avatarUrl = user?.avatar
+    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${user.id}/${user.avatar ?? ''}.png`
+    : defaultAvatarUrl;
+  const bannerUrl = user?.banner
+    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${user.id}/${user.banner ?? ''}.png`
+    : '';
+
+  const maskEmail = (email: string | undefined) => {
+    if (!email) return '****@gmail.com';
+
+    const [username, domain] = email.split('@');
+
+    if (username!.length <= 2) {
+      return `*@${domain}`;
+    }
+
+    return `${email.slice(0, 2)}***@${domain}`;
+  };
 
   const renderTab = () => {
     switch (activeTab) {
@@ -20,14 +60,154 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
             <div className='settings-header'>
               <h1>My Account</h1>
             </div>
+            {user?.banner && (
+              <div className='banner-display' style={{ backgroundImage: `url(${bannerUrl})` }} />
+            )}
             <div className='account-card'>
               <div className='account-info-grid'>
-                <p className='info-label'>UserTag</p>
-                <p className='info-value'>
-                  {user?.username ?? 'User'}#{user?.discriminator ?? '0000'}
-                </p>
-                <p className='info-label'>Email</p>
-                <p className='info-value'>*****@gmail.com</p>
+                <img src={avatarUrl} className='profile-picture' alt='Avatar' />
+                <div className='account-info-wrapper'>
+                  <div className='account-info-section'>
+                    <div>
+                      <p className='info-label'>USERNAME</p>
+                      <p className='info-value'>
+                        {user?.username ?? 'User'}
+                        <span className='discriminator'>#{user?.discriminator ?? '0000'}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className='account-info-section'>
+                    <div>
+                      <p className='info-label'>EMAIL</p>
+                      <p className='info-value'>{maskEmail(user?.email ?? undefined)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className='account-card' style={{ marginTop: '-20px' }}>
+              <div className='account-info-grid'>
+                <div className='account-info-wrapper'>
+                  <div className='account-info-section'>
+                    <div>
+                      <p className='info-label'>GLOBAL NAME</p>
+                      <p className='info-value'>{user?.global_name ?? user?.username}</p>
+                    </div>
+                  </div>
+                  <div className='account-info-section'>
+                    <div>
+                      <p className='info-label'>PRONOUNS</p>
+                      <p className='info-value'>{user?.pronouns ?? 'Not set'}</p>
+                    </div>
+                  </div>
+                  <div className='account-info-section'>
+                    <div>
+                      <p className='info-label'>ABOUT ME</p>
+                      <p className='info-value'>{user?.bio ?? 'Not set'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                className='edit-btn'
+                style={{
+                  width: '100%',
+                }}
+                onClick={() => {
+                  setEditingProfile(!editingProfile);
+                }}
+              >
+                Edit Profile
+              </button>
+            </div>
+          </div>
+        );
+      case 'Developer Options':
+        return (
+          <div className='settings-section'>
+            <div className='settings-header'>
+              <h1>Developer Options</h1>
+            </div>
+            <div className='account-card'>
+              <div className='account-info-grid'>
+                <div className='account-info-wrapper'>
+                  <div key='log-gateway'>
+                    <div className='account-info-section'>
+                      <p className='info-label'>Log Gateway</p>
+                      <p className='info-value'>
+                        <input
+                          type={'checkbox'}
+                          className='info-checkbox'
+                          checked={devSettings.log_gateway}
+                          onChange={(e) => {
+                            const updatedSettings = {
+                              ...devSettings,
+                              log_gateway: e.target.checked,
+                            };
+
+                            setDevSettings(updatedSettings);
+
+                            localStorage.setItem(
+                              'developerSettings',
+                              JSON.stringify(updatedSettings),
+                            );
+                          }}
+                        ></input>
+                      </p>
+                    </div>
+                    <div className='account-info-section'>
+                      <p
+                        className='info-value'
+                        style={{
+                          fontWeight: '400',
+                          marginTop: '10px',
+                        }}
+                      >
+                        Logs gateway events, packets, data to the console.
+                      </p>
+                    </div>
+                  </div>
+                  <div key='webrtc-p2p'>
+                    <div className='account-info-section'>
+                      <p className='info-label'>WebRTC P2P</p>
+                      <p className='info-value'>
+                        <input
+                          type={'checkbox'}
+                          className='info-checkbox'
+                          checked={devSettings.webrtc_p2p}
+                          onChange={(e) => {
+                            const updatedSettings = {
+                              ...devSettings,
+                              webrtc_p2p: e.target.checked,
+                            };
+
+                            setDevSettings(updatedSettings);
+
+                            localStorage.setItem(
+                              'developerSettings',
+                              JSON.stringify(updatedSettings),
+                            );
+                          }}
+                        ></input>
+                      </p>
+                    </div>
+                    <div className='account-info-section'>
+                      <p
+                        className='info-value'
+                        style={{
+                          fontWeight: '400',
+                          marginTop: '10px',
+                        }}
+                      >
+                        Enables usage of webrtc-p2p for voice calls.{' '}
+                        <b>
+                          This will expose your public IP to others in the call, re-consider before
+                          enabling.
+                        </b>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -36,6 +216,20 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
         return <></>;
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
 
   return (
     <div className='settings-overlay'>

@@ -3,16 +3,16 @@ import './mainContent.css';
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Channel } from '@/types/channel';
+import type { MessageCreate, MessageDelete } from '@/types/gateway';
 import type { Guild } from '@/types/guilds';
 import { type Message, MessageListSchema } from '@/types/messages';
-import { type MessageCreate, MessageUpdate, MessageDelete } from '@/types/gateway';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
-import MemberList from './memberList';
 import ChatInput from './chatInput';
+import MemberList from './memberList';
 
 interface MediaAttachment {
   file: File;
@@ -74,8 +74,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   };
 
   useEffect(() => {
-    if (autoScroll.current)
-      scrollToBottom();
+    if (autoScroll.current) scrollToBottom();
   }, [messages]);
 
   const fetchMessages = useCallback(
@@ -182,7 +181,9 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         isloadingMore.current = false;
       }
     }
-    autoScroll.current = scrollerRef.current.scrollTop + scrollerRef.current.clientHeight >= scrollerRef.current.scrollHeight;
+    autoScroll.current =
+      scrollerRef.current!.scrollTop + scrollerRef.current!.clientHeight >=
+      scrollerRef.current!.scrollHeight;
   };
 
   const formatTimestamp = (dateString: string) => {
@@ -231,7 +232,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   }, [selectedChannel.id, fetchMessages]);
 
   useEffect(() => {
-    const handleNewMessage = (event: CustomEvent<MessageCreate>) => {
+    const handleNewMessage = (event: CustomEvent) => {
       const newMessage = event.detail;
 
       if (newMessage.channel_id === selectedChannel.id) {
@@ -244,18 +245,21 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         scrollToBottom();
       }
     };
-    const handleUpdateMessage = (event: CustomEvent<MessageUpdate>) => {
+    //MessageCreate, MessageUpdate and MessageDelete need types
+    const handleUpdateMessage = (event: CustomEvent<typeof MessageCreate>) => {
       const updatedMessage = event.detail;
-      
+
       if (updatedMessage.channel_id === selectedChannel.id) {
-        setMessages(prev => prev.map(old => old.id === updatedMessage.id ? updatedMessage : old));
+        setMessages((prev) =>
+          prev.map((old) => (old.id === updatedMessage.id ? updatedMessage : old)),
+        );
       }
     };
-    const handleDeleteMessage = (event: CustomEvent<MessageDelete>) => {
+    const handleDeleteMessage = (event: CustomEvent<typeof MessageDelete>) => {
       const deletedMessage = event.detail;
-      
+
       if (deletedMessage.channel_id === selectedChannel.id) {
-        setMessages(prev => prev.filter(msg => msg.id !== deletedMessage.id));
+        setMessages((prev) => prev.filter((msg) => msg.id !== deletedMessage.id));
       }
     };
 

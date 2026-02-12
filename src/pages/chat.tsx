@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { useModal } from '@/context/modalContext';
 import { useVoiceContext } from '@/context/voiceContext';
-import { useVoice } from '@/hooks/useVoice';
 import type { Channel } from '@/types/channel';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
 import type { Guild } from '@/types/guilds';
