@@ -226,8 +226,8 @@ body,
   color: #989898;
 }
 
-.scroller {
-  padding: 0 25px 0 25px;
+.scroller, .scroller_hide {
+  padding: 20px 0;
   overflow-y: auto;
   height: 100%;
   display: flex;
@@ -236,10 +236,10 @@ body,
 }
 
 /* webkit scrollbars */
-.scroller::-webkit-scrollbar {
+.scroller::-webkit-scrollbar, .scroller_hide::-webkit-scrollbar {
   width: 8px;
 }
-.scroller::-webkit-scrollbar-thumb {
+.scroller::-webkit-scrollbar-thumb, .scroller_hide:hover::-webkit-scrollbar-thumb {
   border-radius: 4px;
 }
 
@@ -250,27 +250,25 @@ body,
   background: transparent;
 }
 .scroller_hide:hover::-webkit-scrollbar-thumb {
-  transition: background 0.3s;
+  transition: background 0.1s;
   background: rgba(0, 0, 0, 0.4);
 }
 .scroller_hide:hover::-webkit-scrollbar-track {
-  transition: background 0.3s;
+  transition: background 0.1s;
   background: rgba(0, 0, 0, 0.1);
 }
 
 /* firefox scrollbars */
-.scroller {
+.scroller, .scroller_hide {
   scrollbar-width: thin;
   scrollbar-color: rgba(0,0,0,0.4) transparent;
 }
 .scroller_hide {
-  scrollbar-width: none;
-  transition: background 0.3s;
+  transition: scrollbar-color 0.1s;
+  scrollbar-color: rgba(0,0,0,0.0) transparent;
 }
 .scroller_hide:hover {
-  scrollbar-width: thin;
   scrollbar-color: rgba(0,0,0,0.4) transparent;
-  transition: background 0.3s;
 }
 
 
@@ -322,6 +320,10 @@ body,
   background-color: var(--bg-sidebar-secondary);
   min-width: 250px;
   width: 20vw;
+}
+
+.members-column-scroller {
+  padding: 0 20px 0 20px;
 }
 
 .stat-badge {

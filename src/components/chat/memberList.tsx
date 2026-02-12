@@ -91,38 +91,36 @@ const MemberListItem = ({
 
   return (
     <button
-      className='member-list-item-wrapper'
-      onContextMenu={(e) => {
-        handleRightClick(e);
-      }}
-      onClick={(e) => {
-        showProfilePopout(e);
-      }}
+    className={`member-list-item ${status === 'offline' ? 'offline-member' : ''}`}
+    onContextMenu={(e) => {
+      handleRightClick(e);
+    }}
+    onClick={(e) => {
+      showProfilePopout(e);
+    }}
     >
-      <div className={`member-list-item ${status === 'offline' ? 'offline-member' : ''}`}>
-        <div className='avatar-wrapper'>
-          <MemberAvatar member={member} className='avatar-img' />
-          {isTyping ? (
-            <div className={`typing-indicator-dots ${status}`}>
-              <span className='dot'></span>
-              <span className='dot'></span>
-              <span className='dot'></span>
-            </div>
-          ) : (
-            <div className={`status-dot ${status}`}></div>
-          )}
-        </div>
-        <div className='user-info'>
-          <span
-            className='name'
-            style={{
-              color: color,
-            }}
-          >
-            {member.user.username}
-          </span>
-          {member.user.bot && <span className='bot-tag'>Bot</span>}
-        </div>
+      <div className='avatar-wrapper'>
+        <MemberAvatar member={member} className='avatar-img' />
+        {isTyping ? (
+          <div className={`typing-indicator-dots ${status}`}>
+            <span className='dot'></span>
+            <span className='dot'></span>
+            <span className='dot'></span>
+          </div>
+        ) : (
+          <div className={`status-dot ${status}`}></div>
+        )}
+      </div>
+      <div className='user-info'>
+        <span
+          className='name'
+          style={{
+            color: color,
+          }}
+        >
+          {member.user.username}
+        </span>
+        {member.user.bot && <span className='bot-tag'>Bot</span>}
       </div>
     </button>
   );
@@ -203,7 +201,7 @@ const MemberList = ({
   return (
     <aside className='members-column'>
       <header className='members-column-header-base'>Members ({listData.member_count})</header>
-      <div className='scroller scroller_hide' onScroll={handleScroll}>
+      <div className='scroller_hide members-column-scroller' onScroll={handleScroll}>
         {items.map((item: GuildMemberListOperationItem, index: number) => {
           if (item.group && item.group.count > 0) {
             const role = selectedGuild?.roles.find((x: Role) => x.id === item.group?.id);
