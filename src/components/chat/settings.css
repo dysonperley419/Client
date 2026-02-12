@@ -23,7 +23,6 @@
 .settings-sidebar {
   width: 260px;
   padding-top: 60px;
-  padding-right: 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -32,6 +31,7 @@
 .search-bar-container {
   padding-bottom: 10px;
   width: 100%;
+  padding-right: 20px;
 }
 
 .search-bar {
@@ -111,6 +111,7 @@
 
 .sidebar-item.logout {
   color: #f23f43;
+  padding-right: 20px;
 }
 
 .divider-container {
@@ -118,6 +119,7 @@
   height: 1px;
   position: relative;
   margin: 5px 0;
+  padding-right: 20px;
 }
 
 .divider-img {
@@ -215,7 +217,6 @@
 }
 
 input[type='checkbox'] {
-  appearance: none;
   appearance: none;
   width: 20px;
   height: 20px;
