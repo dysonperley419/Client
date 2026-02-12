@@ -14,7 +14,7 @@
   flex: 1;
   overflow: hidden auto;
   min-height: 0;
-  padding: 0;
+  padding: 20px 0;
 }
 
 .sidebar-header {
@@ -127,8 +127,8 @@
 .category-wrapper {
   display: flex;
   flex-direction: column;
-  margin-top: 18px;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 .category-children {
