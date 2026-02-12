@@ -33,7 +33,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   const [chatMessage, setChatMessage] = useState('');
   const lastTypingSent = useRef<number>(0);
   const isloadingMore = useRef(false);
-  const isFirstLoad = useRef(true);
+  const [firstLoad, setFirstLoad] = useState(true);
   const autoScroll = useRef(true);
 
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
@@ -208,26 +208,22 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   };
 
   useEffect(() => {
-    if (isFirstLoad.current && messages.length > 0) {
-      scrollToBottom();
-      isFirstLoad.current = false;
-    }
-  }, [messages]);
-
-  useEffect(() => {
     if (!selectedChannel.id) {
       setMessages([]);
       return;
     }
 
-    isFirstLoad.current = true;
-
+    isloadingMore.current = true;
+    setFirstLoad(true);
     setMessages([]);
 
     void fetchMessages(50).then((data) => {
       if (data.length > 0) {
         setMessages([...data].reverse());
+        autoScroll.current = true;
       }
+      isloadingMore.current = false;
+      setFirstLoad(false);
     });
   }, [selectedChannel.id, fetchMessages]);
 
@@ -276,12 +272,19 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
   const renderMessages = () => {
     if (messages.length === 0) {
-      return (
-        <div className='no-messages'>
-          <h1>There are no messages here yet!</h1>
-          <p>This is the start of something exciting!</p>
-        </div>
-      );
+      if (firstLoad)
+        return (
+          <div className='no-messages'>
+            <h1>Loading...</h1>
+          </div>
+        );
+      else
+        return (
+          <div className='no-messages'>
+            <h1>There are no messages here yet!</h1>
+            <p>This is the start of something exciting!</p>
+          </div>
+        );
     }
 
     const AuthorAvatar = ({ msg }: { msg: Message }) => {
