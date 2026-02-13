@@ -3,9 +3,9 @@ import './mainContent.css';
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Channel } from '@/types/channel';
-import type { MessageCreate, MessageDelete } from '@/types/gateway';
+import type { MessageCreate, MessageDelete,MessageUpdate } from '@/types/gateway';
 import type { Guild } from '@/types/guilds';
-import { type Message, MessageListSchema } from '@/types/messages';
+import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -181,9 +181,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         isloadingMore.current = false;
       }
     }
-    autoScroll.current =
-      scrollerRef.current!.scrollTop + scrollerRef.current!.clientHeight >=
-      scrollerRef.current!.scrollHeight;
+    autoScroll.current = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight;
   };
 
   const formatTimestamp = (dateString: string) => {
@@ -228,30 +226,27 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   }, [selectedChannel.id, fetchMessages]);
 
   useEffect(() => {
-    const handleNewMessage = (event: CustomEvent) => {
-      const newMessage = event.detail;
+    const handleNewMessage = (event: CustomEvent<MessageCreate>) => {
+        const newMessage = event.detail;
 
       if (newMessage.channel_id === selectedChannel.id) {
         setMessages((prev) => {
           if (prev.find((m) => m.id === newMessage.id)) return prev;
-
-          return [...prev, newMessage];
+            return [...prev, MessageSchema.parse(newMessage)];
         });
 
         scrollToBottom();
       }
     };
     //MessageCreate, MessageUpdate and MessageDelete need types
-    const handleUpdateMessage = (event: CustomEvent<typeof MessageCreate>) => {
+    const handleUpdateMessage = (event: CustomEvent<MessageUpdate>) => {
       const updatedMessage = event.detail;
 
       if (updatedMessage.channel_id === selectedChannel.id) {
-        setMessages((prev) =>
-          prev.map((old) => (old.id === updatedMessage.id ? updatedMessage : old)),
-        );
+        setMessages((prev) => prev.map((old) => (old.id === updatedMessage.id ? MessageSchema.parse(updatedMessage) : old)));
       }
     };
-    const handleDeleteMessage = (event: CustomEvent<typeof MessageDelete>) => {
+    const handleDeleteMessage = (event: CustomEvent<MessageDelete>) => {
       const deletedMessage = event.detail;
 
       if (deletedMessage.channel_id === selectedChannel.id) {

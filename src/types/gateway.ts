@@ -118,9 +118,9 @@ export const GatewayPayloadSchema = z.object({
 
 export const PresenceUpdateSchema = PresenceSchema;
 
-export const MessageCreate = z.infer<typeof MessageCreateSchema>;
-export const MessageUpdate = z.infer<typeof MessageUpdateSchema>;
-export const MessageDelete = z.infer<typeof MessageDeleteSchema>;
+export type MessageCreate = z.infer<typeof MessageCreateSchema>;
+export type MessageUpdate = z.infer<typeof MessageUpdateSchema>;
+export type MessageDelete = z.infer<typeof MessageDeleteSchema>;
 
 export type GatewayPayload = z.infer<typeof GatewayPayloadSchema>;
 export type GuildMemberList = z.infer<typeof GuildMemberListUpdateSchema>;
