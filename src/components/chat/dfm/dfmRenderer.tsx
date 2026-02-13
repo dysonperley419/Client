@@ -100,14 +100,13 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
 
       //find closing delimiter
       const endAcc = accumulate(text, closingDelimiters);
-      innerText = endAcc.accumulated;
-      text = endAcc.remaining;
-
-      if (!closingDelimiters.includes(endAcc.terminator)) {
-        //not closed
+      if (closingDelimiters.includes(endAcc.terminator)) {
+        innerText = endAcc.accumulated;
+        text = endAcc.remaining;
+      } else {
+        //not closed. skip the orphan delimiter
         result.push(openingDelimiter);
-        result.push(text);
-        break;
+        continue;
       }
     }
 
