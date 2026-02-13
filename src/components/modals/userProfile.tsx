@@ -171,7 +171,7 @@ export const UserProfileModal = (): JSX.Element => {
             <p
               className='action-text'
               onClick={() => {
-                await navigator.clipboard.writeText(user?.id ?? '');
+                navigator.clipboard.writeText(user?.id ?? '');
                 closePopup();
               }}
             >
