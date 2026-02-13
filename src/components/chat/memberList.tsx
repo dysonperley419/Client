@@ -10,7 +10,6 @@ import { useContextMenu } from '../../context/contextMenuContext';
 import { useGateway } from '../../context/gatewayContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
-import { getMemberColor } from '../../utils/members';
 
 const MemberListItem = ({
   member,
@@ -135,8 +134,8 @@ const MemberList = ({
 }: {
   selectedGuild: Guild | null;
   selectedChannel: Channel | null;
-}): JSX.Element => {
-  const { memberLists, memberListsRef, requestMembers, typingUsers } = useGateway();
+  }): JSX.Element => {
+  const { memberLists, memberListsRef, requestMembers, getMemberColor, typingUsers } = useGateway();
   const [rangeIndex, setRangeIndex] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight - LEEWAY_HEIGHT);
@@ -155,7 +154,7 @@ const MemberList = ({
     const guildId = selectedGuild?.id;
     const channelId = selectedChannel?.id;
 
-    if (guildId && channelId && requestMembers && memberListsRef) {
+    if (guildId && channelId && memberListsRef) {
       const hasData = memberListsRef.current?.[guildId];
 
       if (!hasData) {
@@ -180,7 +179,7 @@ const MemberList = ({
         if (listData && nextRangeStart < listData.member_count) {
           setRangeIndex((prev) => prev + 1);
           if (selectedGuild?.id && selectedChannel?.id) {
-            requestMembers?.(selectedGuild.id, selectedChannel.id, [
+            requestMembers(selectedGuild.id, selectedChannel.id, [
               [0, 99],
               [nextRangeStart, nextRangeStart + 99],
             ]);

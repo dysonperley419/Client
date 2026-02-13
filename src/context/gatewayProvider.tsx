@@ -13,7 +13,7 @@ import {
   TypingStartSchema,
 } from '@/types/gateway';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
-import type { Guild } from '@/types/guilds';
+import type { Guild, Member } from '@/types/guilds';
 import { type Session, SessionListSchema } from '@/types/presences';
 import type { Relationship } from '@/types/relationship';
 import type { User } from '@/types/users';
@@ -37,9 +37,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [presences, setPresences] = useState<GatewayContextSchema['presences']>({});
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
-  const [memberLists, setMemberLists] = useState<GatewayContextSchema['memberLists'] | undefined>(
-    {},
-  );
+  const [memberLists, setMemberLists] = useState<GatewayContextSchema['memberLists']>({});
   const memberListsRef = useRef(memberLists);
   const [typingUsers, setTypingUsers] = useState<Record<string, Record<string, number>>>({});
   const subscribedChannels = useRef<Record<string, string>>({});
@@ -72,6 +70,28 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         }),
       );
     }
+  }, []);
+
+  const getMember = useCallback((guild_id: string | null | undefined, user_id: string | null | undefined) : Member | null => {
+    //lord have mercy
+    if (!guild_id)
+      return null;
+    else
+      return memberLists?.[guild_id]?.items.find((item) => item.member?.id === user_id)?.member ?? null;
+  }, [memberLists]);
+
+  const getMemberColor = useCallback((member: Member, guild?: Guild | null): string | undefined => {
+    if (!guild || member.roles.length === 0) return undefined;
+
+    const memberRoles = guild.roles.filter((r) => member.roles.includes(r.id));
+
+    memberRoles.sort((a, b) => b.position - a.position);
+
+    const colorRole = memberRoles.find((r) => r.color !== 0);
+    if (colorRole) {
+      return `#${colorRole.color.toString(16).padStart(6, '0')}`;
+    }
+    return undefined;
   }, []);
 
   const handleDispatch = useCallback(
@@ -421,6 +441,8 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     sessions,
     presences,
     requestMembers,
+    getMember,
+    getMemberColor,
     typingUsers,
     memberLists,
     memberListsRef,

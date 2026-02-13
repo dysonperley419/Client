@@ -1,5 +1,5 @@
 import type { GuildMemberListGroup, GuildMemberListOperationItem } from './gateway';
-import type { Guild } from './guilds';
+import type { Guild, Member } from './guilds';
 import type { Presence, Session } from './presences';
 import type { Relationship } from './relationship';
 import type { User } from './users';
@@ -22,7 +22,9 @@ export interface GatewayContextSchema {
   user_settings: UserSettings | null;
   sessions: Session[];
   presences: Record<string, Presence>;
-  requestMembers?: (guildId: string, channelId: string, ranges?: number[][]) => void;
+  requestMembers: (guildId: string, channelId: string, ranges?: number[][]) => void;
+  getMember: (guild_id: string | null | undefined, user_id: string | null | undefined) => Member | null;
+  getMemberColor: (member: Member, guild?: Guild | null) => string | undefined;
   typingUsers: Record<string, Record<string, number>>;
   memberLists?: Record<string, GuildMemberListState>;
   memberListsRef?: React.RefObject<Record<string, GuildMemberListState> | undefined>;
