@@ -26,7 +26,7 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
 
   const result: (JSX.Element | string)[] = [];
   while (text.length > 0) {
-    const openingDelimiter = indexOfAny(text, ['```', '``', '`', '>>> ', '> ', '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
+    const openingDelimiter = indexOfAny(text, ['```', '``', '`', '>>> ', '> ', `### `, `## `, `# `, '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
     if (openingDelimiter == null) {
       //no more dfm
       result.push(text);
@@ -47,6 +47,9 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
       let closingDelimiter: string = openingDelimiter.match;
       switch (openingDelimiter.match) {
         case '> ':
+        case '### ':
+        case '## ':
+        case '# ':
           closingDelimiter = '\n';
           break;
 
@@ -99,6 +102,18 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
             <blockquote>{renderDfmInner(innerText)}</blockquote>
           </div>
         );
+        break;
+
+      case '###':
+        result.push(<h1>{renderDfmInner(innerText)}</h1>);
+        break;
+
+      case '##':
+        result.push(<h2>{renderDfmInner(innerText)}</h2>);
+        break;
+
+      case '#':
+        result.push(<h3>{renderDfmInner(innerText)}</h3>);
         break;
 
       case '***':
