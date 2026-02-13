@@ -29,7 +29,7 @@ const VoiceActivityControls = (): JSX.Element => {
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
 
-  const currentChannelName = channel?.name ?? '';
+  const currentChannelName: string = channel?.name ?? '';
 
   const toggleOpen = () => {
     setIsOpen((prev) => !prev);

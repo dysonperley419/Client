@@ -212,17 +212,14 @@ const MemberList = ({
     return undefined;
   };
 
-  const items = listData?.items || [];
+  const items = listData.items;
 
   const startIndex = Math.floor(scrollTop / ITEM_HEIGHT);
-
   const endIndex = Math.min(startIndex + Math.ceil(viewportHeight / ITEM_HEIGHT) + 5, items.length);
 
   const visibleItems = items.slice(startIndex, endIndex);
   const totalHeight = items.length * ITEM_HEIGHT;
   const offsetY = startIndex * ITEM_HEIGHT;
-
-  if (!listData) return <aside className='members-column'>Loading...</aside>;
 
   return (
     <aside className='members-column'>
@@ -230,10 +227,10 @@ const MemberList = ({
       <div
         className='scroller_hide members-column-scroller'
         onScroll={handleScroll}
-        style={{ height: `${viewportHeight}px`, overflowY: 'auto' }}
+        style={{ height: `${String(viewportHeight)}px`, overflowY: 'auto' }}
       >
-        <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
-          <div style={{ transform: `translateY(${offsetY}px)`, width: '100%' }}>
+        <div style={{ height: `${String(totalHeight)}px`, position: 'relative' }}>
+          <div style={{ transform: `translateY(${String(offsetY)}px)`, width: '100%' }}>
             {visibleItems.map((item, index) => {
               if (item.group && item.group.count > 0) {
                 const role = selectedGuild?.roles.find((x: Role) => x.id === item.group?.id);
@@ -263,7 +260,7 @@ const MemberList = ({
           </div>
         </div>
         {listData.partial && (
-          <div className='role-title' style={{ transform: `translateY(${offsetY}px)` }}>
+          <div className='role-title' style={{ transform: `translateY(${String(offsetY)}px)` }}>
             Loading...
           </div>
         )}

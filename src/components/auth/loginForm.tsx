@@ -1,14 +1,24 @@
 import './authForm.css';
 
-import type { JSX } from 'react';
+import type { ChangeEvent, Dispatch, JSX, SetStateAction } from 'react';
 import { Link } from 'react-router-dom';
 
-import type { AuthFormProps } from '@/types/authFormProps';
+import type { Instance } from '@/types/instance';
 
-interface LoginFormProps extends AuthFormProps {
+interface LoginFormProps {
   handleSignin: () => void;
   instanceStatus: string | null;
   credentialsStatus: string | null;
+
+  handleInstanceSelect: (event: ChangeEvent<HTMLSelectElement>) => void;
+  instances: Instance[] | [];
+  instance: string | Instance | undefined;
+  customInstance: string;
+  setCustomInstance: Dispatch<SetStateAction<string>>;
+  email: string;
+  setEmail: Dispatch<SetStateAction<string>>;
+  password: string;
+  setPassword: Dispatch<SetStateAction<string>>;
 }
 
 const LoginForm = ({
@@ -26,13 +36,16 @@ const LoginForm = ({
   setPassword,
 }: LoginFormProps): JSX.Element => {
   const renderInstanceStatus = () => {
-    return (
-      <span className={`status-msg ${instanceStatus}`}>
-        {instanceStatus === 'checking' && 'Checking...'}
-        {instanceStatus === 'error' && 'Invalid instance or connection error'}
-        {instanceStatus === 'valid' && 'Instance is online'}
-      </span>
-    );
+    if (instanceStatus)
+      return (
+        <span className={`status-msg ${instanceStatus}`}>
+          {instanceStatus === 'checking' && 'Checking...'}
+          {instanceStatus === 'error' && 'Invalid instance or connection error'}
+          {instanceStatus === 'valid' && 'Instance is online'}
+        </span>
+      );
+    else
+      return (<></>);
   };
 
   return (
@@ -86,11 +99,13 @@ const LoginForm = ({
             setPassword(e.target.value);
           }}
         />
-        <span className={`status-msg ${credentialsStatus}`}>
-          {credentialsStatus === 'checking' && 'Logging in...'}
-          {credentialsStatus === 'error' && 'Invalid email or password'}
-          {credentialsStatus === 'neterror' && 'A network error occurred'}
-        </span>
+        {credentialsStatus && (
+          <span className={`status-msg ${credentialsStatus}`}>
+            {credentialsStatus === 'checking' && 'Logging in...'}
+            {credentialsStatus === 'error' && 'Invalid email or password'}
+            {credentialsStatus === 'neterror' && 'A network error occurred'}
+          </span>
+        )}
       </div>
       <div className='form-footer'>
         <div className='actions'>

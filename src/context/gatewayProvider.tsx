@@ -49,7 +49,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const resumeGatewayUrl = useRef<string | null>(null);
   const [reconnectCounter, setReconnectTrigger] = useState(0);
 
-  const sendOp = useCallback((op: number, d: any) => {
+  const sendOp = useCallback((op: number, d: unknown) => {
     if (socket.current?.readyState === WebSocket.OPEN) {
       socket.current.send(JSON.stringify({ op, d }));
     }

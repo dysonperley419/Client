@@ -46,11 +46,11 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
 
     const [username, domain] = email.split('@');
 
-    if (username!.length <= 2) {
-      return `*@${domain}`;
+    if (!username || username.length <= 2) {
+      return `*@${String(domain)}`;
     }
 
-    return `${email.slice(0, 2)}***@${domain}`;
+    return `${email.slice(0, 2)}***@${String(domain)}`;
   };
 
   const handleLogout = () => {

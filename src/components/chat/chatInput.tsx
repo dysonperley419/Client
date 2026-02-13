@@ -1,5 +1,6 @@
 import './chatInput.css';
-import { useRef, useLayoutEffect } from "react";
+
+import { useLayoutEffect,useRef } from "react";
 
 interface ChatInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   value: string;
@@ -14,8 +15,8 @@ const ChatInput = ({ value, onChange, onSubmit, ...props }: ChatInputProps) => {
     const el = ref.current;
     if (!el) return;
 
-    el.style.height = "1em"; // reset
-    el.style.height = `${el.scrollHeight}px`; // resize
+    el.style.height = "1em";
+    el.style.height = `${String(el.scrollHeight)}px`;
   }, [value]);
   
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

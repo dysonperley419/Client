@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuthLogic } from '@/hooks/useAuthLogic';
 import type { Instance } from '@/types/instance';
 import type { RegisterRequest } from '@/types/requests';
-import { RegisterResponseSchema } from '@/types/responses';
+import { RegisterResponseSchema, RegistrationFieldErrorsSchema } from '@/types/responses';
 
 import RegisterForm from '../components/auth/registerForm';
 import Brand from '../components/common/brand';
@@ -59,17 +59,15 @@ function Register(): JSX.Element {
         },
       );
 
-      const data: any = await response.json();
-
       if (!response.ok) {
-        const parsed = JSON.parse(data);
+        const parsed = RegistrationFieldErrorsSchema.parse(await response.json());
         setUsernameStatus(parsed.username && 'error');
         setPasswordStatus(parsed.password && 'error');
         setEmailStatus(parsed.email && 'error');
         return;
       }
 
-      const parsed = RegisterResponseSchema.parse(data);
+      const parsed = RegisterResponseSchema.parse(await response.json());
 
       localStorage.setItem('Authorization', parsed.token);
       localStorage.setItem('email', email);
@@ -92,11 +90,11 @@ function Register(): JSX.Element {
           username={username}
           email={email}
           instance={instance}
-          instanceStatus={instanceStatus!}
-          usernameStatus={usernameStatus!}
-          passwordStatus={passwordStatus!}
-          emailStatus={emailStatus!}
-          miscError={miscError!}
+          instanceStatus={instanceStatus}
+          usernameStatus={usernameStatus}
+          passwordStatus={passwordStatus}
+          emailStatus={emailStatus}
+          miscError={miscError}
           setEmail={setEmail}
           password={password}
           customInstance={customInstance}

@@ -10,8 +10,8 @@ export const DangerConfirmationModal = ({
 }: {
   title: string;
   body: string;
-  onCancel: any;
-  onConfirm: any;
+  onCancel: () => void;
+  onConfirm: () => void;
 }): JSX.Element => {
   const { closeModal } = useModal();
 
@@ -38,7 +38,7 @@ export const DangerConfirmationModal = ({
         </button>
         <button
           className='primary-btn'
-          onClick={() => void onConfirm()}
+          onClick={onConfirm}
           style={{
             backgroundColor: 'var(--bg-dnd)',
             color: 'white',

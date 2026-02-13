@@ -2,10 +2,12 @@ import './userProfile.css';
 
 import { type JSX, useState } from 'react';
 
+import { getDefaultAvatar } from '@/utils/avatar';
+import { noop } from '@/utils/noop';
+
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
 import { usePopup } from '../../context/popupContext';
-import { getDefaultAvatar } from '../../utils/avatar';
 
 export const UserProfileModal = (): JSX.Element => {
   const { user, sessions, presences } = useGateway();
@@ -46,9 +48,8 @@ export const UserProfileModal = (): JSX.Element => {
     closePopup();
   };
 
-  const switchAccount = () => {};
-
-  const switchInstance = () => {};
+  const switchAccount = noop;
+  const switchInstance = noop;
 
   const status =
     sessions[0]?.status ?? (user?.id ? presences[user.id]?.status : undefined) ?? 'offline';
@@ -102,12 +103,12 @@ export const UserProfileModal = (): JSX.Element => {
               </span>
             )}
           </div>
-          <div className='icon-btn-small' title={`Switch account`} onClick={switchAccount}>
+          <div className='icon-btn-small' title='Switch account' onClick={switchAccount}>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
               switch_account
             </span>
           </div>
-          <div className='icon-btn-small' title={`Switch instance`} onClick={switchInstance}>
+          <div className='icon-btn-small' title='Switch instance' onClick={switchInstance}>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
               hard_drive
             </span>
@@ -170,7 +171,7 @@ export const UserProfileModal = (): JSX.Element => {
             <p
               className='action-text'
               onClick={() => {
-                navigator.clipboard.writeText(user?.id ?? '');
+                await navigator.clipboard.writeText(user?.id ?? '');
                 closePopup();
               }}
             >

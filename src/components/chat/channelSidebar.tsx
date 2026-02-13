@@ -120,12 +120,12 @@ const ChannelSidebar = ({
 
       <div className='scroller_hide'>
         {categoryChannels
-          .sort((a: Channel, b: Channel) => (a.position ?? 0) - (b.position ?? 0))
+          .sort((a: Channel, b: Channel) => a.position - b.position)
           .map((category: Channel) => {
             const isCollapsed = collapsedCategories[category.id];
             const children = categorizedChannels
               .filter((c: Channel) => c.parent_id === category.id)
-              .sort((a: Channel, b: Channel) => (a.position ?? 0) - (b.position ?? 0));
+              .sort((a: Channel, b: Channel) => a.position - b.position);
 
             return (
               <div key={category.id} className='category-wrapper'>

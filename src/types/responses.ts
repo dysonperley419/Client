@@ -67,6 +67,12 @@ export const RegisterResponseSchema = z.object({
   show_verification_form: z.boolean().nullish(),
 });
 
+export const RegistrationFieldErrorsSchema = z.object({
+  username: z.string().nullable(),
+  password: z.string().nullable(),
+  email: z.string().nullable(),
+});
+
 export type WellKnownResponse = z.infer<typeof WellKnownResponseSchema>;
 
 export type DomainsResponse = z.infer<typeof DomainsResponseSchema>;

@@ -40,7 +40,7 @@ export const ConfirmationConnectP2PModal = ({
             color: 'white',
           }}
           onClick={() => {
-            connectToVoice(guild_id!, channel);
+            connectToVoice(guild_id ?? null, channel);
           }}
         >
           Continue to connect
