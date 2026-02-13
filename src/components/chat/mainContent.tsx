@@ -6,6 +6,7 @@ import type { Channel } from '@/types/channel';
 import type { MessageCreate, MessageDelete,MessageUpdate } from '@/types/gateway';
 import type { Guild } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
+import { getMember, getMemberColor } from '@/utils/members';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -373,12 +374,17 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       );
 
       if (isNewGroup) {
+        const member = getMember(memberLists, selectedGuild.id, msg.author.id);
+        const color = (member && getMemberColor(member, selectedGuild)) ?? undefined;
         return (
           <div key={msg.id} className='message-group'>
             <AuthorAvatar msg={msg} />
             <div className='message-details'>
               <div className='message-header'>
-                <span className='author-name'>{msg.author.username}</span>
+                <span
+                  className='author-name'
+                  style={{ color: color }}
+                >{member?.nick ?? msg.author.username}</span>
                 <span className='timestamp'>{formatTimestamp(msg.timestamp)}</span>
               </div>
               {msgContent}
@@ -429,12 +435,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     if (typingIds.length === 0) return null;
 
     const names = typingIds.map((id) => {
-      const guildId = selectedChannel.guild_id;
-      const listData = memberLists?.[guildId ?? ''];
-      const items = listData?.items ?? [];
-      const memberEntry = items.find((item) => item.member?.user.id === id);
-
-      return memberEntry?.member?.user.username ?? 'Someone';
+      const member = getMember(memberLists, selectedGuild.id, id);
+      return member?.nick ?? member?.user.username ?? 'Someone';
     });
 
     const reactKeyThing = names.join('-');

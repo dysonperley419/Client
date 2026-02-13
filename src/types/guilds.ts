@@ -21,6 +21,7 @@ export const MemberSchema = z.object({
   roles: z.array(z.string()),
   presence: PresenceSchema.nullish(),
   joined_at: z.iso.datetime({ offset: true }),
+  nick: z.string().nullish(),
 });
 
 export const GuildSchema = z.object({

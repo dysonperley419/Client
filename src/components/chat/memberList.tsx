@@ -10,6 +10,7 @@ import { useContextMenu } from '../../context/contextMenuContext';
 import { useGateway } from '../../context/gatewayContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { getMemberColor } from '../../utils/members';
 
 const MemberListItem = ({
   member,
@@ -117,7 +118,7 @@ const MemberListItem = ({
             color: color,
           }}
         >
-          {member.user.username}
+          {member.nick ?? member.user.username}
         </span>
         {member.user.bot && <span className='bot-tag'>Bot</span>}
       </div>
@@ -197,20 +198,6 @@ const MemberList = ({
       </aside>
     );
   }
-
-  const getMemberColor = (member: Member, guild?: Guild | null): string | undefined => {
-    if (!guild || member.roles.length === 0) return undefined;
-
-    const memberRoles = guild.roles.filter((r) => member.roles.includes(r.id));
-
-    memberRoles.sort((a, b) => b.position - a.position);
-
-    const colorRole = memberRoles.find((r) => r.color !== 0);
-    if (colorRole) {
-      return `#${colorRole.color.toString(16).padStart(6, '0')}`;
-    }
-    return undefined;
-  };
 
   const items = listData.items;
 
