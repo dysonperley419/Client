@@ -312,7 +312,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       const msgContent = (
         <>
           <div className='message-content'>
-            {msg.content}
+            {renderDfm(msg.content)}
             {msg.attachments.length > 0 && (
               <div className='message-attachments'>
                 {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
