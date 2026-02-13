@@ -23,7 +23,7 @@ export const PopupRoot = () => {
         let fixedY = data.y;
 
         if (data.y + popout_height > window.innerHeight) {
-          fixedY = window.innerHeight - popout_height + 110; //leeway from bottom of the member list
+          fixedY = window.innerHeight - popout_height; // + 110; (find a middle ground for msg author profile popouts uhh) - leeway from bottom of the member list
         }
 
         if (data.x + popout_width > window.innerWidth) {
@@ -37,7 +37,7 @@ export const PopupRoot = () => {
             role='dialog'
             tabIndex={-1}
           >
-            <PopoutProfile member={data.member} roles={data.roles} />
+            <PopoutProfile member={data.member} roles={data.roles} contextGuildId={null} />
           </div>
         );
       }

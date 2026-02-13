@@ -18,7 +18,7 @@ export const ServerProfileModal = ({ member }: { member: Member }): JSX.Element 
     );
     const avatarUrl =
       member.avatar || member.user.avatar
-        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${member.id}/${member.user.avatar ?? ''}.png`
+        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${member.id ?? member.user.id}/${member.user.avatar ?? ''}.png`
         : defaultAvatarUrl;
 
     return (

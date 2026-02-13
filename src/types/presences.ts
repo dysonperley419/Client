@@ -90,7 +90,7 @@ export const ClientStatusSchema = z.object({
 export const PresenceSchema = z.object({
   user: UserSchema.partial(),
   status: StatusEnumSchema,
-  activities: z.array(ActivitySchema),
+  activities: z.array(ActivitySchema).catch([]),
   client_status: ClientStatusSchema.nullish(),
   guild_id: z.string().nullish(),
   hidden_activities: z.array(ActivitySchema).nullish(),

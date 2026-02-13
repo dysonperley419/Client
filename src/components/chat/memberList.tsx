@@ -117,7 +117,7 @@ const MemberListItem = ({
             color: color,
           }}
         >
-          {member.nick ?? member.user.username}
+          {member.nick || member.user.global_name || member.user.username}
         </span>
         {member.user.bot && <span className='bot-tag'>Bot</span>}
       </div>
@@ -134,7 +134,7 @@ const MemberList = ({
 }: {
   selectedGuild: Guild | null;
   selectedChannel: Channel | null;
-  }): JSX.Element => {
+}): JSX.Element => {
   const { memberLists, memberListsRef, requestMembers, getMemberColor, typingUsers } = useGateway();
   const [rangeIndex, setRangeIndex] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);

@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 
 import type { ImagePreviewProps } from '@/components/modals/imagePreview';
+import type { Channel } from '@/types/channel';
 import type { Member } from '@/types/guilds';
 
 export interface ModalDataMap {
@@ -10,9 +11,9 @@ export interface ModalDataMap {
   CONFIRMATION_LEAVE: { name: string; id: string; type: string };
   CLEAR_SELECTED_INSTANCE: undefined;
   CONFIRMATION_DELETE: { name: string; id: string; type: string };
-  DANGER_CONFIRMATION: { title: string; body: string; onCancel: any; onConfirm: any };
+  DANGER_CONFIRMATION: { title: string; body: string; onCancel: () => void; onConfirm: () => void };
   CONFIRMATION_CONNECT_P2P: {
-    channel: any;
+    channel: Channel;
     name: string;
     guild_id?: string | null;
   };

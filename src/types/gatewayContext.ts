@@ -23,10 +23,13 @@ export interface GatewayContextSchema {
   sessions: Session[];
   presences: Record<string, Presence>;
   requestMembers: (guildId: string, channelId: string, ranges?: number[][]) => void;
-  getMember: (guild_id: string | null | undefined, user_id: string | null | undefined) => Member | null;
+  getMember: (
+    guild_id: string | null | undefined,
+    user_id: string | null | undefined,
+  ) => Member | null;
   getMemberColor: (member: Member, guild?: Guild | null) => string | undefined;
   typingUsers: Record<string, Record<string, number>>;
   memberLists?: Record<string, GuildMemberListState>;
   memberListsRef?: React.RefObject<Record<string, GuildMemberListState> | undefined>;
-  sendOp?: any;
+  sendOp?: (op: number, d: unknown) => void;
 }

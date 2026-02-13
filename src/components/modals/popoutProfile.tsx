@@ -2,6 +2,7 @@ import './popoutProfile.css';
 
 import { type JSX } from 'react';
 
+import { usePermissions } from '@/hooks/usePermissions';
 import type { Member, Role } from '@/types/guilds';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
@@ -12,12 +13,18 @@ import { getDefaultAvatar } from '../../utils/avatar';
 interface PopoutProfileProps {
   member: Member;
   roles: Role[];
+  contextGuildId: string | null;
 }
 
-export const PopoutProfile = ({ member, roles }: PopoutProfileProps): JSX.Element => {
+export const PopoutProfile = ({
+  member,
+  roles,
+  contextGuildId,
+}: PopoutProfileProps): JSX.Element => {
   const { openModal } = useModal();
   const { closePopup } = usePopup();
 
+  const contextPerms = usePermissions(contextGuildId ?? '0');
   const status = member.presence?.status ?? 'offline';
 
   const MemberAvatar = ({ member, className }: { member: Member; className: string }) => {
@@ -26,7 +33,7 @@ export const PopoutProfile = ({ member, roles }: PopoutProfileProps): JSX.Elemen
     );
     const avatarUrl =
       member.avatar || member.user.avatar
-        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${member.id}/${member.user.avatar ?? ''}.png`
+        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${member.id ?? member.user.id}/${member.user.avatar ?? ''}.png`
         : defaultAvatarUrl;
 
     return (
@@ -147,11 +154,12 @@ export const PopoutProfile = ({ member, roles }: PopoutProfileProps): JSX.Elemen
                     background: `${color}22`,
                   }}
                 >
-                  <span className='role-removal-btn'>×</span> {role.name}
+                  {contextPerms.canManageRoles && <span className='role-removal-btn'>×</span>}{' '}
+                  {role.name}
                 </div>
               );
             })}
-            <div className='add-role-btn'>+</div>
+            {contextPerms.canManageRoles && <div className='add-role-btn'>+</div>}
           </div>
         </div>
         <div className='popout-section'>

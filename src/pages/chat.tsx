@@ -2,7 +2,7 @@ import { type JSX, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useModal } from '@/context/modalContext';
-import { useVoiceContext } from '@/context/voiceContext';
+import { useVoice } from '@/hooks/useVoice';
 import type { Channel } from '@/types/channel';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
 import type { Guild } from '@/types/guilds';
@@ -22,7 +22,7 @@ const ChatApp = (): JSX.Element => {
     useGateway();
   const { guildId, channelId } = useParams();
   const { openModal } = useModal();
-  const { connectToVoice } = useVoiceContext();
+  const { connectToVoice } = useVoice();
 
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);

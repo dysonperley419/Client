@@ -2,10 +2,13 @@ import './mainContent.css';
 
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 
+import { usePopup } from '@/context/popupContext';
+import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
-import type { MessageCreate, MessageDelete,MessageUpdate } from '@/types/gateway';
-import type { Guild } from '@/types/guilds';
+import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
+import type { Guild, Role } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
+import type { User } from '@/types/users';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -28,6 +31,8 @@ interface MainContentProps {
 
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
+  const storedUsers = useUserStore((state) => state.users);
+  const { openPopup } = usePopup();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { typingUsers, user, getMember, getMemberColor } = useGateway();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -228,12 +233,12 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
   useEffect(() => {
     const handleNewMessage = (event: CustomEvent<MessageCreate>) => {
-        const newMessage = event.detail;
+      const newMessage = event.detail;
 
       if (newMessage.channel_id === selectedChannel.id) {
         setMessages((prev) => {
           if (prev.find((m) => m.id === newMessage.id)) return prev;
-            return [...prev, MessageSchema.parse(newMessage)];
+          return [...prev, MessageSchema.parse(newMessage)];
         });
 
         scrollToBottom();
@@ -244,7 +249,11 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       const updatedMessage = event.detail;
 
       if (updatedMessage.channel_id === selectedChannel.id) {
-        setMessages((prev) => prev.map((old) => (old.id === updatedMessage.id ? MessageSchema.parse(updatedMessage) : old)));
+        setMessages((prev) =>
+          prev.map((old) =>
+            old.id === updatedMessage.id ? MessageSchema.parse(updatedMessage) : old,
+          ),
+        );
       }
     };
     const handleDeleteMessage = (event: CustomEvent<MessageDelete>) => {
@@ -265,6 +274,37 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       window.removeEventListener('gateway_message_delete', handleDeleteMessage);
     };
   }, [selectedChannel.id]);
+
+  const openUserProfile = (e: React.MouseEvent<HTMLElement>, user: User) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = rect.left;
+    const y = rect.top;
+    const existingMember = getMember(selectedGuild.id, user.id);
+    const member = existingMember ?? {
+      id: user.id,
+      user: user,
+      nick: null,
+      roles: [],
+      joined_at: new Date().toISOString(),
+      deaf: false,
+      mute: false,
+    };
+
+    const roleIds = existingMember?.roles ?? [];
+    const memberRoles: Role[] = roleIds
+      .map((id) => selectedGuild.roles.find((r) => r.id === id))
+      .filter((role): role is Role => !!role);
+
+    openPopup('USER_PROFILE_POPOUT', {
+      x,
+      y,
+      member,
+      roles: memberRoles,
+    });
+  };
 
   const renderMessages = () => {
     if (messages.length === 0) {
@@ -296,8 +336,12 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
           src={avatarUrl}
           className='avatar-img'
           alt=''
+          style={{ cursor: 'pointer' }}
           onError={() => {
             rollover();
+          }}
+          onClick={(e) => {
+            openUserProfile(e, msg.author as User);
           }}
         />
       );
@@ -383,8 +427,13 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
               <div className='message-header'>
                 <span
                   className='author-name'
-                  style={{ color: color }}
-                >{member?.nick ?? msg.author.username}</span>
+                  style={{ color: color, cursor: 'pointer' }}
+                  onClick={(e) => {
+                    openUserProfile(e, msg.author as User);
+                  }}
+                >
+                  {member?.nick ?? msg.author.username}
+                </span>
                 <span className='timestamp'>{formatTimestamp(msg.timestamp)}</span>
               </div>
               {msgContent}
@@ -436,7 +485,12 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
     const names = typingIds.map((id) => {
       const member = getMember(selectedGuild.id, id);
-      return member?.nick ?? member?.user.username ?? 'Someone';
+
+      if (member?.nick) return member.nick;
+      if (member?.user?.username) return member.user.username;
+
+      const fallbackUser = storedUsers[id];
+      return fallbackUser?.username ?? 'Someone';
     });
 
     const reactKeyThing = names.join('-');
@@ -461,7 +515,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         </p>
       );
     } else {
-      return <p key={`several-people`}>MFmgph.. so many people.. aresh typing...</p>;
+      return <p key={`several-people`}>Several people are typing...</p>;
     }
   };
 

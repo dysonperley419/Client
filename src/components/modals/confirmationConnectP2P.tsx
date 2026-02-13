@@ -1,6 +1,7 @@
 import type { JSX } from 'react';
 
-import { useVoiceContext } from '@/context/voiceContext';
+import { useVoice } from '@/hooks/useVoice';
+import type { Channel } from '@/types/channel';
 
 import { useModal } from '../../context/modalContext';
 
@@ -9,12 +10,12 @@ export const ConfirmationConnectP2PModal = ({
   name,
   guild_id,
 }: {
-  channel: any;
+  channel: Channel;
   name: string;
   guild_id?: string | null;
 }): JSX.Element => {
   const { closeModal } = useModal();
-  const { connectToVoice } = useVoiceContext();
+  const { connectToVoice } = useVoice();
 
   return (
     <div className='confirmation-leave-modal'>

@@ -1,11 +1,12 @@
 import './guildSidebar.css';
 
-import { type JSX } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
 import { useUserStore } from '@/stores/userstore';
 import type { Guild } from '@/types/guilds';
+import type { User } from '@/types/users';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useContextMenu } from '../../context/contextMenuContext';
@@ -24,6 +25,8 @@ const GuildSidebar = ({
   onSelectGuild: (guild: Guild) => void;
 }): JSX.Element => {
   const storedUsers = useUserStore((state) => state.users);
+  const [unreads, setUnreads] = useState<Set<string>>(new Set());
+  const [mentions, setMentions] = useState<Map<string, number>>(new Map());
   const { user, sessions, presences, relationships } = useGateway();
   const { openModal } = useModal();
   const { openContextMenu } = useContextMenu();
@@ -36,6 +39,49 @@ const GuildSidebar = ({
   const handleDeleteServer = (guild_name: string, guild_id: string) => {
     openModal('CONFIRMATION_DELETE', { name: guild_name, id: guild_id, type: 'server' });
   };
+
+  useEffect(() => {
+    const handleNewMessage = (event: CustomEvent) => {
+      const newMessage = event.detail;
+      if (!newMessage.guild_id || newMessage.guild_id === selectedGuildId) return;
+
+      const isMentioned =
+        newMessage.mentions?.some((m: User) => m.id === user?.id) || newMessage.mention_everyone;
+
+      if (isMentioned) {
+        setMentions((prev) => {
+          const newMap = new Map(prev);
+          const currentCount = newMap.get(newMessage.guild_id) ?? 0;
+          newMap.set(newMessage.guild_id, currentCount + 1);
+          return newMap;
+        });
+      } else {
+        setUnreads((prev) => new Set(prev).add(newMessage.guild_id));
+      }
+    };
+
+    window.addEventListener('gateway_message_create', handleNewMessage);
+
+    return () => {
+      window.removeEventListener('gateway_message_create', handleNewMessage);
+    };
+  }, [selectedGuildId]);
+
+  useEffect(() => {
+    if (selectedGuildId) {
+      setUnreads((prev) => {
+        const next = new Set(prev);
+        next.delete(selectedGuildId);
+        return next;
+      });
+      setMentions((prev) => {
+        if (!prev.has(selectedGuildId)) return prev;
+        const next = new Map(prev);
+        next.delete(selectedGuildId);
+        return next;
+      });
+    }
+  }, [selectedGuildId]);
 
   const handleRightClick = (e: React.MouseEvent, guild: Guild) => {
     e.preventDefault();
@@ -174,7 +220,10 @@ const GuildSidebar = ({
               </div>
             )}
             <div
-              className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''}`}
+              style={
+                { '--mention-count': `"${mentions.get(guild.id) ?? 0}"` } as React.CSSProperties
+              }
+              className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${unreads.has(guild.id) ? 'unread-notification' : ''} ${mentions && mentions.has(guild.id) ? 'mention-badge' : ''}`}
             >
               {guild.icon ? (
                 <img
@@ -223,11 +272,11 @@ const GuildSidebar = ({
             className={`icon-container user-icon-container shadow-container ${isUserPopupOpen ? 'active' : ''}`}
           >
             <UserAvatar />
-          <div className='user-status-indicator'>
-            <div className='status-indicator-wrapper'>
-              <div className={`status-dot-large ${status}`}></div>
+            <div className='user-status-indicator'>
+              <div className='status-indicator-wrapper'>
+                <div className={`status-dot-large ${status}`}></div>
+              </div>
             </div>
-          </div>
           </div>
         </button>
       </div>

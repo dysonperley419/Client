@@ -113,7 +113,7 @@ export const ReactionSchema = z.object({
       burst: z.coerce.number().int(),
     })
     .nullish(),
-  me: z.boolean(),
+  me: z.boolean().default(false),
   me_burst: z.boolean().nullish(),
   emoji: z.object({
     id: z.string().nullish(),
@@ -131,14 +131,14 @@ export const MessageSchema = z.object({
   edited_timestamp: z.iso.datetime({ offset: true }).nullish(),
   tts: z.boolean(),
   mention_everyone: z.boolean().nullish(),
-  mentions: z.array(UserSchema.partial()),
+  mentions: z.array(UserSchema.partial()).default([]),
   mention_roles: z.array(z.string()).nullish(),
   mention_channels: z.array(z.any()).nullish(),
-  attachments: z.array(AttachmentSchema),
-  embeds: z.array(EmbedSchema),
+  attachments: z.array(AttachmentSchema).default([]),
+  embeds: z.array(EmbedSchema).default([]),
   reactions: z.array(ReactionSchema).nullish(),
   nonce: z.union([z.coerce.number().int(), z.string()]).nullable().nullish(),
-  pinned: z.boolean(),
+  pinned: z.boolean().nullish(),
   webhook_id: z.string().nullish(),
   type: z.coerce.number().int(),
   activity: z

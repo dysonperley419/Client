@@ -6,7 +6,6 @@ const VoiceContext = createContext<ReturnType<typeof useVoice> | null>(null);
 
 export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
   const voice = useVoice();
-
   return <VoiceContext.Provider value={voice}>{children}</VoiceContext.Provider>;
 };
 

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import { useGateway } from '@/context/gatewayContext';
+import type { Channel } from '@/types/channel';
 
 export const useVoice = () => {
   const { sendOp, user } = useGateway();
@@ -9,7 +10,7 @@ export const useVoice = () => {
   >('disconnected');
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
 
-  const [activeChannel, setActiveChannel] = useState<any | null>(null);
+  const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
   const [activeGuildId, setActiveGuildId] = useState<string | null>(null);
 
   const voiceSocket = useRef<WebSocket | null>(null);
@@ -61,7 +62,7 @@ export const useVoice = () => {
     };
   }, [activeGuildId, user?.id]);
 
-  const handleVoiceReady = async (vs: WebSocket, data: any) => {
+  const handleVoiceReady = async (vs: WebSocket, data: unknown) => {
     //data has: ssrc, ip, port, modes, heartbeat_interval
 
     const pc = new RTCPeerConnection();
@@ -101,7 +102,7 @@ export const useVoice = () => {
   };
 
   const connectToVoice = useCallback(
-    (guildId: string | null, channel: any) => {
+    (guildId: string | null, channel: Channel) => {
       if (activeChannel?.id === channel.id) return;
 
       setConnectionStatus('connecting');
@@ -123,7 +124,7 @@ export const useVoice = () => {
       window.addEventListener('gateway_voice_state', onVoiceState);
       window.addEventListener('gateway_voice_server', onVoiceServer);
 
-      sendOp(4, {
+      sendOp!(4, {
         guild_id: guildId,
         channel_id: channel.id,
         self_mute: false,
