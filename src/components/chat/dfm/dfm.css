@@ -1,6 +1,6 @@
 .message-content .emoji {
-    width: 40px;
-    height: 40px;
+ width: 40px;
+ height: 40px;
 }
 
 .message-content strong {
@@ -13,49 +13,49 @@
 }
 
 .message-content .blockquoteContainer {
-    display: flex;
-    margin-top: 4px;
-    margin-bottom: 4px;
+ display: flex;
+ margin-top: 4px;
+ margin-bottom: 4px;
 }
 
 .message-content .blockquoteDivider {
-    background-color: #52566c;
-    border-radius: 4px;
-    min-width: 4px;
-    width: 4px;
+ background-color: #52566c;
+ border-radius: 4px;
+ min-width: 4px;
+ width: 4px;
 }
 
 .message-content blockquote {
-    box-sizing: border-box;
-    padding-block: 0;
-    padding-inline: 12px 8px;
-    text-indent: 0;
+ box-sizing: border-box;
+ padding-block: 0;
+ padding-inline: 12px 8px;
+ text-indent: 0;
 }
 
 .message-content code {
-    font-family: "Source Code Pro",Consolas,"Andale Mono WT","Andale Mono","Lucida Console","Lucida Sans Typewriter","DejaVu Sans Mono","Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L",Monaco,"Courier New",Courier,monospace;
-    line-height: 16px;
-    background: #5865f214;
-    border: 1px solid var(--border-normal);
-    line-height: 1.125rem;
+ font-family: "Source Code Pro",Consolas,"Andale Mono WT","Andale Mono","Lucida Console","Lucida Sans Typewriter","DejaVu Sans Mono","Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L",Monaco,"Courier New",Courier,monospace;
+ line-height: 16px;
+ background: #5865f214;
+ border: 1px solid var(--border-normal);
+ line-height: 1.125rem;
 }
 
 .message-content code.inline {
-    border-radius: 4px;
-    height: auto;
-    margin: -.2em 0;
-    padding: 0 .2em;
-    text-indent: 0;
-    white-space: pre-wrap;
-    width: auto;
+ border-radius: 4px;
+ height: auto;
+ margin: -.2em 0;
+ padding: 0 .2em;
+ text-indent: 0;
+  white-space: pre-wrap;
+  width: auto;
 }
 
 .message-content code.block {
-    border-radius: 4px;
-    height: auto;
-    margin: -.2em 0;
-    padding: 0 .2em;
-    text-indent: 0;
-    white-space: pre-wrap;
-    width: auto;
+  border-radius: 4px;
+  height: auto;
+  margin: -.2em 0;
+  padding: 0 .2em;
+  text-indent: 0;
+  white-space: pre-wrap;
+  width: auto;
 }
