@@ -32,6 +32,10 @@
   margin-bottom: 4px;
 }
 
+.message-content small {
+  color: #616784;
+}
+
 .message-content .blockquoteContainer {
  display: flex;
  margin-top: 4px;

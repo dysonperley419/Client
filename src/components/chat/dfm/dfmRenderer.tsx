@@ -47,7 +47,7 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
 
   const result: (JSX.Element | string)[] = [];
   while (text.length > 0) {
-    const startAcc = accumulate(text, ['```', '``', '`', '>>> ', '> ', `### `, `## `, `# `, '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
+    const startAcc = accumulate(text, ['```', '``', '`', '>>> ', '> ', '### ', '## ', '# ', '-# ', '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
     if (!startAcc.terminator) {
       //end
       result.push(startAcc.accumulated);
@@ -71,6 +71,7 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
         case '### ':
         case '## ':
         case '# ':
+        case '-# ':
           closingDelimiter = '\n';
           break;
 
@@ -131,6 +132,10 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
 
       case '#':
         result.push(<h3>{renderDfmInner(innerText)}</h3>);
+        break;
+
+      case '-# ':
+        result.push(<small>{renderDfmInner(innerText)}</small>);
         break;
 
       case '***':
