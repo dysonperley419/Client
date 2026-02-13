@@ -6,7 +6,7 @@ import type { Channel } from '@/types/channel';
 import type { MessageCreate, MessageDelete,MessageUpdate } from '@/types/gateway';
 import type { Guild } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
-import { getMember, getMemberColor } from '@/utils/members';
+import renderDfm from '@/utils/dfmRenderer';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -29,7 +29,7 @@ interface MainContentProps {
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const { typingUsers, user, memberLists } = useGateway();
+  const { typingUsers, user, getMember, getMemberColor } = useGateway();
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatMessage, setChatMessage] = useState('');
   const lastTypingSent = useRef<number>(0);
@@ -374,7 +374,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       );
 
       if (isNewGroup) {
-        const member = getMember(memberLists, selectedGuild.id, msg.author.id);
+        const member = getMember(selectedGuild.id, msg.author.id);
         const color = (member && getMemberColor(member, selectedGuild)) ?? undefined;
         return (
           <div key={msg.id} className='message-group'>
@@ -435,7 +435,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     if (typingIds.length === 0) return null;
 
     const names = typingIds.map((id) => {
-      const member = getMember(memberLists, selectedGuild.id, id);
+      const member = getMember(selectedGuild.id, id);
       return member?.nick ?? member?.user.username ?? 'Someone';
     });
 
