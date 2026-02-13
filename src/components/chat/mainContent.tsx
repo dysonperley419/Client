@@ -2,13 +2,13 @@ import './mainContent.css';
 
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 
-import { usePopup } from '@/context/popupContext';
 import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
-import type { Guild, Role } from '@/types/guilds';
+import type { Guild } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import type { User } from '@/types/users';
+import { useUserProfileActions } from '@/utils/profileUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -32,7 +32,7 @@ interface MainContentProps {
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
   const storedUsers = useUserStore((state) => state.users);
-  const { openPopup } = usePopup();
+  const { openUserProfile } = useUserProfileActions(selectedGuild);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { typingUsers, user, getMember, getMemberColor } = useGateway();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -274,37 +274,6 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       window.removeEventListener('gateway_message_delete', handleDeleteMessage);
     };
   }, [selectedChannel.id]);
-
-  const openUserProfile = (e: React.MouseEvent<HTMLElement>, user: User) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = rect.left;
-    const y = rect.top;
-    const existingMember = getMember(selectedGuild.id, user.id);
-    const member = existingMember ?? {
-      id: user.id,
-      user: user,
-      nick: null,
-      roles: [],
-      joined_at: new Date().toISOString(),
-      deaf: false,
-      mute: false,
-    };
-
-    const roleIds = existingMember?.roles ?? [];
-    const memberRoles: Role[] = roleIds
-      .map((id) => selectedGuild.roles.find((r) => r.id === id))
-      .filter((role): role is Role => !!role);
-
-    openPopup('USER_PROFILE_POPOUT', {
-      x,
-      y,
-      member,
-      roles: memberRoles,
-    });
-  };
 
   const renderMessages = () => {
     if (messages.length === 0) {

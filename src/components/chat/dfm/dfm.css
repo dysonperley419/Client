@@ -62,8 +62,10 @@
 }
 
 .message-content code {
-  font-family: "Source Code Pro",Consolas,"Andale Mono WT","Andale Mono","Lucida Console","Lucida Sans Typewriter","DejaVu Sans Mono","Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L",Monaco,"Courier New",Courier,monospace;
-  line-height: 16px;
+  font-family:
+    'Source Code Pro', Consolas, 'Andale Mono WT', 'Andale Mono', 'Lucida Console',
+    'Lucida Sans Typewriter', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Liberation Mono',
+    'Nimbus Mono L', Monaco, 'Courier New', Courier, monospace;
   background: #5865f214;
   border: 1px solid var(--border-normal);
   line-height: 1.125rem;
@@ -72,8 +74,8 @@
 .message-content code.inline {
   border-radius: 4px;
   height: auto;
-  margin: -.2em 0;
-  padding: 0 .2em;
+  margin: -0.2em 0;
+  padding: 0 0.2em;
   text-indent: 0;
   white-space: pre-wrap;
   width: auto;
@@ -82,9 +84,23 @@
 .message-content code.block {
   border-radius: 4px;
   height: auto;
-  margin: -.2em 0;
-  padding: 0 .2em;
+  margin: -0.2em 0;
+  padding: 0 0.2em;
   text-indent: 0;
   white-space: pre-wrap;
   width: auto;
+}
+
+.user-msg-mention {
+  background: var(--bg-alt);
+  border-radius: 8px;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: 0.3s all;
+}
+
+.user-msg-mention:hover {
+  background-color: var(--bg-dark-alt);
+  color: var(--text-brightness);
 }
