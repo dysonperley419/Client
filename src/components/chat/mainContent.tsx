@@ -6,13 +6,13 @@ import type { Channel } from '@/types/channel';
 import type { MessageCreate, MessageDelete,MessageUpdate } from '@/types/gateway';
 import type { Guild } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
-import renderDfm from '@/utils/dfmRenderer';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import ChatInput from './chatInput';
+import renderDfm from './dfm/dfmRenderer';
 import MemberList from './memberList';
 
 interface MediaAttachment {
@@ -312,7 +312,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       const msgContent = (
         <>
           <div className='message-content'>
-            {renderDfm(msg.content)}
+            {renderDfm(msg.content, selectedGuild.id)}
             {msg.attachments.length > 0 && (
               <div className='message-attachments'>
                 {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
