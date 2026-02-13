@@ -7,15 +7,17 @@ import type { Guild } from '@/types/guilds';
 
 import VoiceActivityControls from './voiceActivityControls';
 
+interface ChannelSidebarProps {
+  selectedGuild?: Guild | null;
+  selectedChannel?: Channel | null;
+  onSelectChannel: (channel: Channel | null) => void;
+}
+
 const ChannelSidebar = ({
   selectedGuild,
   selectedChannel,
   onSelectChannel,
-}: {
-  selectedGuild?: Guild | null;
-  selectedChannel?: Channel | null;
-  onSelectChannel: (channel: Channel | null) => void;
-}): JSX.Element => {
+}: ChannelSidebarProps): JSX.Element => {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
   if (!selectedGuild) {
