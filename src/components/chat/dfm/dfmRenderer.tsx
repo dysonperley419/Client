@@ -6,19 +6,40 @@ import type { JSX } from "react";
 
 import { ChannelMention, Emoji, EveryoneMention, HereMention, MemberMention, RoleMention } from "./dfmComponents";
 
-export function indexOfAny(str: string, substrings: string[]): { index: number; match: string } | null {
-  let earliestIndex = Infinity;
-  let found: string | null = null;
-
-  for (const sub of substrings) {
-    const i = str.indexOf(sub);
-    if (i !== -1 && i < earliestIndex) {
-      earliestIndex = i;
-      found = sub;
+function accumulate(source: string, terminators: string[]): { accumulated: string, remaining: string, terminator: string | null } {
+  let accumulated = "";
+  let i = 0;
+  for (; ;) {
+    if (i >= source.length) {
+      return {
+        accumulated: accumulated,
+        remaining: "",
+        terminator: null,
+      }
     }
-  }
 
-  return found === null ? null : { index: earliestIndex, match: found };
+    if (source[i] == '\\') {
+      //escape char
+      accumulated += source[i + 1] ?? '';
+      i += 2;
+      continue;
+    }
+
+    for (const terminator of terminators) {
+      if (source.startsWith(terminator, i)) {
+        return {
+          accumulated: accumulated,
+          remaining: source.substring(i + terminator.length),
+          terminator: terminator
+        };
+      }
+    }
+
+    const c = source[i];
+    if (c)
+      accumulated += c;
+    i++;
+  }
 }
 
 export default function renderDfm(text: string, guild_id: string | undefined): JSX.Element {
@@ -26,26 +47,26 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
 
   const result: (JSX.Element | string)[] = [];
   while (text.length > 0) {
-    const openingDelimiter = indexOfAny(text, ['```', '``', '`', '>>> ', '> ', `### `, `## `, `# `, '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
-    if (openingDelimiter == null) {
-      //no more dfm
-      result.push(text);
+    const startAcc = accumulate(text, ['```', '``', '`', '>>> ', '> ', `### `, `## `, `# `, '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
+    if (!startAcc.terminator) {
+      //end
+      result.push(startAcc.accumulated);
       break;
     }
 
+    text = startAcc.remaining;
+    const openingDelimiter = startAcc.terminator;
+
     //take text up to the first delimiter
-    const initialText = text.substring(0, openingDelimiter.index);
-    if (initialText.trim().length > 0 || initialText.length > 1) //ignore bogus newlines between elements
-      result.push(initialText);
-    text = text.substring(openingDelimiter.index + openingDelimiter.match.length);
+    if (startAcc.accumulated.trim().length > 0 || startAcc.accumulated.length > 1) //ignore bogus newlines between elements
+      result.push(startAcc.accumulated);
 
     let innerText;
-    if (openingDelimiter.match == "@everyone" || openingDelimiter.match == "@here") {
-      text = text.substring(openingDelimiter.index + openingDelimiter.match.length);
-      innerText = openingDelimiter.match;
+    if (openingDelimiter == "@everyone" || openingDelimiter == "@here") {
+      innerText = openingDelimiter;
     } else {
-      let closingDelimiter: string = openingDelimiter.match;
-      switch (openingDelimiter.match) {
+      let closingDelimiter: string = openingDelimiter;
+      switch (openingDelimiter) {
         case '> ':
         case '### ':
         case '## ':
@@ -67,24 +88,20 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
           break;
       }
 
-      let closingDelimiterIndex = closingDelimiter == '\0' ? text.length : text.indexOf(closingDelimiter);
-      if (closingDelimiterIndex == -1) {
-        if (closingDelimiter == '\n') {
-          closingDelimiterIndex = text.length;
-        } else {
-          //spuriously was not closed
-          result.push(closingDelimiter);
-          result.push(text);
-          break;
-        }
-      }
+      //find closing delimiter
+      const endAcc = accumulate(text, [closingDelimiter]);
+      innerText = endAcc.accumulated;
+      text = endAcc.remaining;
 
-      //take inner text
-      innerText = text.substring(0, closingDelimiterIndex);
-      text = text.substring(closingDelimiterIndex + closingDelimiter.length);
+      if (!endAcc.terminator && closingDelimiter != '\n' && closingDelimiter != '\0') {
+        //not closed
+        result.push(closingDelimiter);
+        result.push(text);
+        break;
+      }
     }
 
-    switch (openingDelimiter.match) {
+    switch (openingDelimiter) {
       case '```':
         result.push(<code className="block">{innerText}</code>);
         break;
