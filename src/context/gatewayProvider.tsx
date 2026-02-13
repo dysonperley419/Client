@@ -74,10 +74,10 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
   const getMember = useCallback((guild_id: string | null | undefined, user_id: string | null | undefined) : Member | null => {
     //lord have mercy
-    if (!guild_id)
+    if (!memberLists || !guild_id)
       return null;
-    else
-      return memberLists?.[guild_id]?.items.find((item) => item.member?.id === user_id)?.member ?? null;
+
+    return memberLists[guild_id]?.items.find((item) => item.member?.id === user_id)?.member ?? null;
   }, [memberLists]);
 
   const getMemberColor = useCallback((member: Member, guild?: Guild | null): string | undefined => {
