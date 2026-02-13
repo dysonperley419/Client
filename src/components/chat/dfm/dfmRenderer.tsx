@@ -6,7 +6,7 @@ import type { JSX } from "react";
 
 import { ChannelMention, Emoji, EveryoneMention, HereMention, MemberMention, RoleMention } from "./dfmComponents";
 
-function accumulate(source: string, terminators: string[]): { accumulated: string, remaining: string, terminator: string | null } {
+function accumulate(source: string, terminators: string[]): { accumulated: string, remaining: string, terminator: string } {
   let accumulated = "";
   let i = 0;
   for (; ;) {
@@ -14,7 +14,7 @@ function accumulate(source: string, terminators: string[]): { accumulated: strin
       return {
         accumulated: accumulated,
         remaining: "",
-        terminator: null,
+        terminator: '\0',
       }
     }
 
@@ -47,8 +47,8 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
 
   const result: (JSX.Element | string)[] = [];
   while (text.length > 0) {
-    const startAcc = accumulate(text, ['```', '``', '`', '>>> ', '> ', '### ', '## ', '# ', '-# ', '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
-    if (!startAcc.terminator) {
+    const startAcc = accumulate(text, ['https://', 'http://', '```', '``', '`', '>>> ', '> ', '### ', '## ', '# ', '-# ', '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
+    if (startAcc.terminator == '\0') {
       //end
       result.push(startAcc.accumulated);
       break;
@@ -58,25 +58,30 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
     const openingDelimiter = startAcc.terminator;
 
     //take text up to the first delimiter
-    if (startAcc.accumulated.trim().length > 0 || startAcc.accumulated.length > 1) //ignore bogus newlines between elements
+    if (startAcc.accumulated != '\n') //ignore bogus newlines between elements
       result.push(startAcc.accumulated);
 
     let innerText;
     if (openingDelimiter == "@everyone" || openingDelimiter == "@here") {
       innerText = openingDelimiter;
     } else {
-      let closingDelimiter: string = openingDelimiter;
+      let closingDelimiters: string[];
       switch (openingDelimiter) {
+        case 'https://':
+        case 'http://':
+          closingDelimiters = ['\0', '\n', '"', '\'', '`', ')', '(', ']', '[', '}', '{', '<', '>', ',', ';', ' '];
+          break;
+
         case '> ':
         case '### ':
         case '## ':
         case '# ':
         case '-# ':
-          closingDelimiter = '\n';
+          closingDelimiters = ['\0', '\n'];
           break;
 
         case '>>> ':
-          closingDelimiter = '\0';
+          closingDelimiters = ['\0'];
           break;
 
         case '<@!':
@@ -85,24 +90,34 @@ export default function renderDfm(text: string, guild_id: string | undefined): J
         case '<#':
         case '<a:':
         case '<:':
-          closingDelimiter = '>';
+          closingDelimiters = ['>'];
+          break;
+
+        default:
+          closingDelimiters = [openingDelimiter];
           break;
       }
 
       //find closing delimiter
-      const endAcc = accumulate(text, [closingDelimiter]);
+      const endAcc = accumulate(text, closingDelimiters);
       innerText = endAcc.accumulated;
       text = endAcc.remaining;
 
-      if (!endAcc.terminator && closingDelimiter != '\n' && closingDelimiter != '\0') {
+      if (!closingDelimiters.includes(endAcc.terminator)) {
         //not closed
-        result.push(closingDelimiter);
+        result.push(openingDelimiter);
         result.push(text);
         break;
       }
     }
 
     switch (openingDelimiter) {
+      case 'https://':
+      case 'http://':
+        innerText = openingDelimiter + innerText;
+        result.push(<a title={innerText} href={innerText} target="_blank" rel="noreferrer">{innerText}</a>);
+        break;
+
       case '```':
         result.push(<code className="block">{innerText}</code>);
         break;
