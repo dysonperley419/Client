@@ -4,7 +4,7 @@ import { type JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useGateway } from '@/context/gatewayContext';
-import type { Member } from '@/types/guilds';
+import type { Guild, Member } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { get } from '@/utils/api';
 import { logger } from '@/utils/logger';
@@ -16,9 +16,9 @@ import { MutualItem } from '../chat/mutualItem';
 
 interface ServerProfileProps {
   member: Member;
-  mutual_guilds?: any[];
-  mutual_friends?: User[];
-  connected_accounts?: any[];
+  mutual_guilds?: Guild[] | [];
+  mutual_friends?: User[] | [];
+  connected_accounts?: any[] | [];
   premium_since?: string | null;
   premium_type?: number;
 }
@@ -189,7 +189,8 @@ export const ServerProfileModal = ({
             <div className='popout-section'>
               <div className='mutual-list'>
                 {sharedGuilds?.length ? (
-                  sharedGuilds.map((shared) => {
+                  sharedGuilds.map((shared: any) => {
+                    //to-do make a type of shared guild where its just id and nick
                     const fullGuild = guilds.find((g: any) => g.id === shared.id);
                     const guildName = fullGuild?.name || 'Unknown Server';
                     const guildIcon = fullGuild?.icon
