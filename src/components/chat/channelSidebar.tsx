@@ -104,11 +104,13 @@ const ChannelSidebar = ({
 
   return (
     <div id='channels-column'>
-      <div className='sidebar-header sidebar-header-banner'>
-        <div className='sidebar-header-banner-bg'>
-          {bannerUrl && <img src={bannerUrl} alt='' className='sidebar-header-banner-image' />}
-          <div className='sidebar-header-banner-gradient'></div>
-        </div>
+      <div className={`sidebar-header ${bannerUrl != null ? 'sidebar-header-banner' : ''}`}>
+        {bannerUrl != null && (
+          <div className='sidebar-header-banner-bg'>
+            <img src={bannerUrl} alt='' className='sidebar-header-banner-image' />
+            <div className='sidebar-header-banner-gradient'></div>
+          </div>
+        )}
         <div className='sidebar-header-content'>
           <span className='guild-name'>{selectedGuild.name}</span>
           <span
