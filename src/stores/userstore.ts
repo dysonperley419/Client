@@ -2,16 +2,21 @@ import { create } from 'zustand';
 
 import type { Presence } from '@/types/presences';
 import type { User } from '@/types/users';
+import { logger } from '@/utils/logger';
+import { get as apiGet } from '@/utils/api';
 
 export type UserWithPresence = User & { presence?: Presence };
+
+const pendingQueries: Record<string, Promise<UserWithPresence | null>> = {};
 
 export interface UserStore {
   users: Record<string, UserWithPresence>;
   upsertUsers: (newUsers: User[]) => void;
   updatePresence: (userId: string, newPresence: Presence) => void;
+  getUser: (userId: string) => Promise<UserWithPresence | null>;
 }
 
-export const useUserStore = create<UserStore>((set) => ({
+export const useUserStore = create<UserStore>((set, get) => ({
   users: {},
   upsertUsers: (newUsers) => {
     set((state) => {
@@ -51,4 +56,41 @@ export const useUserStore = create<UserStore>((set) => ({
       };
     });
   },
+  getUser: async (userId: string) => {
+    const { users, upsertUsers } = get();
+
+    if (users[userId]) {
+      return users[userId];
+    }
+
+    if (pendingQueries[userId]) {
+      return pendingQueries[userId];
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const data = await apiGet(`/users/${userId}/profile`);
+
+        if (data?.user) {
+          upsertUsers([data.user]);
+
+          return data.user as UserWithPresence;
+        }
+
+        logger.error(`USER_STORE`, `Failed to fetch user's profile from API!`);
+
+        return null;
+      }
+      catch (error) {
+        logger.error(`USER_STORE`, `Failed to fetch user's profile from API!`, error);
+        return null;
+      } finally {
+        delete pendingQueries[userId];
+      }
+    })();
+    
+    pendingQueries[userId] = fetchPromise;
+
+    return fetchPromise;
+  }
 }));

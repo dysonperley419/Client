@@ -1,9 +1,9 @@
 import './dfm.css';
 
-import type { JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 
 import { useGateway } from '@/context/gatewayContext';
-import { type UserStore, useUserStore } from '@/stores/userstore';
+import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { Guild, Role } from '@/types/guilds';
 import type { User } from '@/types/users';
@@ -17,20 +17,37 @@ export const MemberMention = ({
   user_id: string;
 }): JSX.Element => {
   const { getMember, guilds } = useGateway();
-  const storedUsers = useUserStore((state: UserStore) => state.users);
+  const getUser = useUserStore((state) => state.getUser);
   const contextGuild = guilds.find((x: Guild) => x.id === guild_id)!;
 
   const { openUserProfile } = useUserProfileActions(contextGuild);
+  const [fetchedUser, setFetchedUser] = useState<User | null>(null);
 
   const member = getMember(guild_id, user_id);
-  const storedUser = storedUsers[user_id];
 
-  const name: string = member?.nick || storedUser?.global_name || storedUser?.username || 'unknown';
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUser = async () => {
+      const user = await getUser(user_id);
+
+      if (isMounted && user) {
+        setFetchedUser(user as User);
+      }
+    };
+
+    loadUser();
+    return () => { isMounted = false; };
+  }, [user_id, getUser]);
+
+  const name: string = member?.nick || fetchedUser?.global_name || fetchedUser?.username || '...';
 
   return (
     <strong
       onClick={(e) => {
-        openUserProfile(e, storedUser as User);
+        if (fetchedUser) {
+          openUserProfile(e, fetchedUser);
+        }
       }}
       className='user-msg-mention'
     >

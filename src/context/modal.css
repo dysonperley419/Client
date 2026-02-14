@@ -96,6 +96,7 @@
   background: none;
   outline: none;
   min-width: unset;
+  min-height: 575px;
 }
 
 .modal-container.modal-container-image-preview {

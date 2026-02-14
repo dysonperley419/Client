@@ -32,9 +32,9 @@ interface MainContentProps {
 
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
-  const storedUsers = useUserStore((state) => state.users);
   const { openUserProfile } = useUserProfileActions(selectedGuild);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const getUser = useUserStore((state) => state.getUser);
   const { typingUsers, user, getMember, getMemberColor } = useGateway();
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatMessage, setChatMessage] = useState('');
@@ -312,7 +312,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       const msgContent = (
         <>
           <div className='message-content'>
-            {renderDfm(msg.content, selectedGuild.id)}
+            {renderDfm(msg.content!, selectedGuild.id)}
             {msg.attachments.length > 0 && (
               <div className='message-attachments'>
                 {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
@@ -425,6 +425,31 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     }
   };
 
+  const TypingName = ({ userId }: { userId: string }) => {
+    const [name, setName] = useState('Someone');
+
+    useEffect(() => {
+      const getName = async () => {
+        const member = getMember(selectedGuild?.id, userId);
+
+        if (member?.nick || member?.user?.username) {
+          setName(member.nick || member.user.username);
+          return;
+        }
+
+        const user = await getUser(userId);
+
+        if (user?.username) {
+          setName(user.username);
+        }
+      };
+
+      getName();
+    }, [userId, getUser, getMember, selectedGuild?.id]);
+
+    return <strong>{name}</strong>;
+  };
+
   const handleTypingStatus = () => {
     if (!selectedChannel.id) return null;
 
@@ -433,39 +458,26 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
     if (typingIds.length === 0) return null;
 
-    const names = typingIds.map((id) => {
-      const member = getMember(selectedGuild.id, id);
-
-      if (member?.nick) return member.nick;
-      if (member?.user?.username) return member.user.username;
-
-      const fallbackUser = storedUsers[id];
-      return fallbackUser?.username ?? 'Someone';
-    });
-
-    const reactKeyThing = names.join('-');
-
-    if (names.length === 1) {
+    if (typingIds.length === 1) {
       return (
-        <p key={reactKeyThing}>
-          <strong>{names[0]}</strong> is typing...
+        <p>
+          <TypingName userId={typingIds[0]!} /> is typing...
         </p>
       );
-    } else if (names.length === 2) {
+    } else if (typingIds.length === 2) {
       return (
-        <p key={reactKeyThing}>
-          <strong>{names[0]}</strong> and <strong>{names[1]}</strong> are typing...
+        <p>
+          <TypingName userId={typingIds[0]!} /> and <TypingName userId={typingIds[1]!} /> are typing...
         </p>
       );
-    } else if (names.length === 3) {
+    } else if (typingIds.length === 3) {
       return (
-        <p key={reactKeyThing}>
-          <strong>{names[0]}</strong>, <strong>{names[1]}</strong> and <strong>{names[2]}</strong>{' '}
-          are typing...
+        <p>
+          <TypingName userId={typingIds[0]!} />, <TypingName userId={typingIds[1]!} /> and <TypingName userId={typingIds[2]!} /> are typing...
         </p>
       );
     } else {
-      return <p key={`several-people`}>Several people are typing...</p>;
+      return <p>Several people are typing...</p>;
     }
   };
 

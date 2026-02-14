@@ -15,13 +15,20 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
     setModalData(data ?? null);
   };
 
+  const updateModal = <T extends ModalType>(data: Partial<ModalDataMap[T]>) => {
+    setModalData((prev: any) => ({
+      ...prev,
+      ...data,
+    }));
+  };
+
   const closeModal = () => {
     setModalType(null);
     setModalData(null);
   };
 
   return (
-    <ModalContext value={{ modalType, modalData, openModal, closeModal }}>
+    <ModalContext value={{ modalType, modalData, openModal, updateModal, closeModal }}>
       {children}
       {modalType && <ModalRoot />}
     </ModalContext>

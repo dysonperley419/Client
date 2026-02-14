@@ -20,6 +20,7 @@ import type { User } from '@/types/users';
 import type { UserSettings } from '@/types/userSettings';
 
 import { GatewayContext } from './gatewayContext';
+import { logger } from '@/utils/logger';
 
 interface GatewayProviderProps {
   children?: ReactNode;
@@ -369,6 +370,13 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
       };
 
       ws.onmessage = (event: MessageEvent<string>) => {
+        if (JSON.parse(localStorage.getItem('developerSettings') ?? '{}').log_gateway ?? false) {
+          const raw = JSON.parse(event.data.toString());
+          const summary = `Incoming OP ${raw.op}${raw.t ? ` (${raw.t})` : ''}`;
+
+          logger.info('GATEWAY', summary, raw);
+        }
+
         const payload = GatewayPayloadSchema.parse(JSON.parse(event.data));
         const { op, t, d, s } = payload;
 

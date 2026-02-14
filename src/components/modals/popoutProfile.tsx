@@ -9,6 +9,8 @@ import { useAssetsUrl } from '../../context/assetsUrl';
 import { useModal } from '../../context/modalContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { get } from '@/utils/api';
+import { logger } from '@/utils/logger';
 
 interface PopoutProfileProps {
   member: Member;
@@ -21,7 +23,7 @@ export const PopoutProfile = ({
   roles,
   contextGuildId,
 }: PopoutProfileProps): JSX.Element => {
-  const { openModal } = useModal();
+  const { openModal, updateModal } = useModal();
   const { closePopup } = usePopup();
 
   const contextPerms = usePermissions(contextGuildId ?? '0');
@@ -48,17 +50,35 @@ export const PopoutProfile = ({
     );
   };
 
-  const handleProfileOpen = (e: React.MouseEvent) => {
+  const handleProfileOpen = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     closePopup();
 
-    setTimeout(() => {
-      openModal('SERVER_PROFILE', {
-        member: member,
-      });
-    }, 0);
+    openModal('SERVER_PROFILE', {
+      member: member,
+    });
+
+    try {
+        const query = new URLSearchParams({
+          with_mutual_guilds: 'true',
+          with_mutual_friends: 'true'
+        }).toString();
+
+        const fullProfile = await get(`/users/${member.id ?? member.user.id}/profile?${query}`);
+
+        updateModal<'SERVER_PROFILE'>({
+          mutual_guilds: fullProfile.mutual_guilds,
+          mutual_friends: fullProfile.mutual_friends,
+          connected_accounts: fullProfile.connected_accounts,
+          premium_since: fullProfile.premium_since,
+          premium_type: fullProfile.premium_type
+        });
+    }
+    catch (error) {
+      logger.error(`SERVER_PROFILE`, `Failed to fetch full user profile from API!`, error);
+    }
   };
 
   const getRoleColor = (colorDecimal: number) => {

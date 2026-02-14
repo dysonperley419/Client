@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react';
 import type { ImagePreviewProps } from '@/components/modals/imagePreview';
 import type { Channel } from '@/types/channel';
 import type { Member } from '@/types/guilds';
+import type { User } from '@/types/users';
 
 export interface ModalDataMap {
   JOIN_SERVER: undefined;
@@ -17,7 +18,14 @@ export interface ModalDataMap {
     name: string;
     guild_id?: string | null;
   };
-  SERVER_PROFILE: { member: Member };
+  SERVER_PROFILE: { 
+    member: Member, 
+    mutual_guilds?: User[] | [], 
+    mutual_friends?: User[] | [], 
+    connected_accounts?: any[] | [], 
+    premium_since?: string | null, 
+    premium_type?: number | 0 
+  };
   IMAGE_PREVIEW: ImagePreviewProps;
 }
 
@@ -29,6 +37,7 @@ interface ModalContextType {
   openModal: <T extends ModalType>(
     ...args: ModalDataMap[T] extends undefined ? [type: T] : [type: T, data: ModalDataMap[T]]
   ) => void;
+  updateModal: <T extends ModalType>(data: Partial<ModalDataMap[T]>) => void;
   closeModal: () => void;
 }
 
