@@ -168,6 +168,24 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           break;
         }
 
+        case 'CHANNEL_CREATE': {
+          const newChannel = data as Channel;
+          if (newChannel.type === 1 || newChannel.type === 3) {
+            setPrivateChannels(prev => [newChannel, ...prev]);
+          }
+          window.dispatchEvent(new CustomEvent('ui_channel_created', { detail: newChannel }));
+          break;
+        }
+
+        case 'CHANNEL_DELETE': {
+          const deleted = data as Channel;
+          if (deleted.type === 1 || deleted.type === 3) {
+            setPrivateChannels(prev => prev.filter(c => c.id !== deleted.id));
+          }
+          window.dispatchEvent(new CustomEvent('ui_channel_deleted', { detail: deleted }));
+          break;
+        }
+
         case 'MESSAGE_UPDATE': {
           const parsed = MessageUpdateSchema.parse(data);
           upsertUsers([parsed.author as User]);

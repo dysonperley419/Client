@@ -4,10 +4,14 @@ import { type JSX, useState } from 'react';
 
 import { type UserStore, useUserStore } from '@/stores/userstore';
 import type { Relationship } from '@/types/relationship';
-import { del, put } from '@/utils/api';
+import { del, post, put } from '@/utils/api';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { useGateway } from '@/context/gatewayContext';
+import type { Channel } from '@/types/channel';
+import { logger } from '@/utils/logger';
+import { useNavigate } from 'react-router-dom';
 
 interface FriendsListProps {
   friends: Relationship[];
@@ -21,6 +25,8 @@ export const FriendsList = ({
   onRequestDelete,
 }: FriendsListProps): JSX.Element => {
   const storedUsers = useUserStore((state: UserStore) => state.users);
+  const navigate = useNavigate();
+  const { privateChannels, user } = useGateway();
   const [filter, setFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -95,6 +101,29 @@ export const FriendsList = ({
         }}
       />
     );
+  };
+
+  const openDMChannel = async (userId: string) => {
+     let dmChannel = (privateChannels as Channel[]).find(
+      (c) => c.type === 1 && c.recipients?.some((r) => r.id === userId)
+    );
+
+    if (!dmChannel) {
+      try {
+        const newDMChannel = await post(`/users/@me/channels`, {
+          recipients: [userId]
+        });
+
+        dmChannel = newDMChannel as Channel;
+      } catch (error) {
+        logger.error(`FRIEND_LIST`, `Failed to create new DM channel`, error);
+        return;
+      }
+    }
+
+    if (dmChannel?.id) {
+        void navigate(`/channels/@me/${dmChannel.id}`);
+    }
   };
 
   const displayFriends = getFilteredFriends();
@@ -181,7 +210,7 @@ export const FriendsList = ({
               const liveStatus = liveUser?.presence?.status ?? 'offline';
 
               return (
-                <div key={friend.id} className='friend-item-row'>
+                <div key={friend.id} className='friend-item-row' onClick={() => openDMChannel(friend.id)}>
                   <div className='friend-info'>
                     <div className='avatar-wrapper'>
                       <FriendAvatar friend={friend} />

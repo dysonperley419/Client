@@ -1,6 +1,6 @@
 import './channelSidebar.css';
 
-import { type JSX, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
@@ -63,7 +63,7 @@ const PrivateChannelItem = ({
         await handleCloseDM(channel.id);
       }}
       onClick={() => {
-        navigate(`/channels/@me/${channel.id}`);
+        void navigate(`/channels/@me/${channel.id}`);
       }}
     />
   );
@@ -82,6 +82,26 @@ const ChannelSidebar = ({
   const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || []).filter(
     (channel) => !closedChannelIds.includes(channel.id),
   );
+
+  useEffect(() => {
+    const handleRemoteDelete = (event: Event) => {
+      const deletedChannel = (event as CustomEvent<Channel>).detail;
+
+      if (selectedChannel?.id === deletedChannel.id) {
+        onSelectChannel(null);
+        void navigate('/channels/@me');
+      }
+    };
+
+    window.addEventListener('ui_channel_deleted', handleRemoteDelete);
+    return () => window.removeEventListener('ui_channel_deleted', handleRemoteDelete);
+  }, [selectedChannel, navigate, onSelectChannel]);
+
+  useEffect(() => {
+    setClosedChannelIds(prev => 
+      prev.filter(id => !globalPrivateChannels.some(c => c.id === id))
+    );
+  }, [globalPrivateChannels]);
 
   if (!selectedGuild) {
     return (
@@ -131,7 +151,7 @@ const ChannelSidebar = ({
 
                       if (selectedChannel?.id === channel.id) {
                         onSelectChannel(null);
-                        navigate('/channels/@me');
+                        void navigate('/channels/@me');
                       }
                     }}
                   />

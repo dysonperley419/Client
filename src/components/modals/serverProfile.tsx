@@ -37,7 +37,7 @@ export const ServerProfileModal = ({
 
   const handleGuildClick = (guildId: string) => {
     closeModal();
-    navigate(`/channels/${guildId}`);
+    void navigate(`/channels/${guildId}`);
   };
 
   const handleFriendClick = async (user: User) => {
