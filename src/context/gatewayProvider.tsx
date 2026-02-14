@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useUserStore } from '@/stores/userstore';
+import type { Channel } from '@/types/channel';
 import {
   GatewayPayloadSchema,
   GuildMemberListUpdateSchema,
@@ -18,9 +19,9 @@ import { type Session, SessionListSchema } from '@/types/presences';
 import type { Relationship } from '@/types/relationship';
 import type { User } from '@/types/users';
 import type { UserSettings } from '@/types/userSettings';
+import { logger } from '@/utils/logger';
 
 import { GatewayContext } from './gatewayContext';
-import { logger } from '@/utils/logger';
 
 interface GatewayProviderProps {
   children?: ReactNode;
@@ -35,6 +36,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [relationships, setRelationships] = useState<Relationship[]>([]);
+  const [privateChannels, setPrivateChannels] = useState<Channel[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [presences, setPresences] = useState<GatewayContextSchema['presences']>({});
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
@@ -73,13 +75,17 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     }
   }, []);
 
-  const getMember = useCallback((guild_id: string | null | undefined, user_id: string | null | undefined) : Member | null => {
-    //lord have mercy
-    if (!memberLists || !guild_id)
-      return null;
+  const getMember = useCallback(
+    (guild_id: string | null | undefined, user_id: string | null | undefined): Member | null => {
+      //lord have mercy
+      if (!memberLists || !guild_id) return null;
 
-    return memberLists[guild_id]?.items.find((item) => item.member?.id === user_id)?.member ?? null;
-  }, [memberLists]);
+      return (
+        memberLists[guild_id]?.items.find((item) => item.member?.id === user_id)?.member ?? null
+      );
+    },
+    [memberLists],
+  );
 
   const getMemberColor = useCallback((member: Member, guild?: Guild | null): string | undefined => {
     if (!guild || member.roles.length === 0) return undefined;
@@ -119,6 +125,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
             });
           });
           setUser(parsed.user);
+          setPrivateChannels(parsed.private_channels ?? []);
           setRelationships(parsed.relationships);
           setUserSettings(parsed.user_settings);
           setGuilds(parsed.guilds);
@@ -448,6 +455,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     user_settings: userSettings,
     sessions,
     presences,
+    privateChannels,
     requestMembers,
     getMember,
     getMemberColor,

@@ -116,6 +116,7 @@ function App(): JSX.Element {
       <Route path='/login' element={<Login />} />
       <Route path='/' element={<ChatApp />}>
         <Route path='channels/@me' element={<ChatApp />} />
+        <Route path='channels/@me/:channelId' element={<ChatApp />} />
         <Route path='channels/:guildId' element={<ChatApp />} />
         <Route path='channels/:guildId/:channelId' element={<ChatApp />} />
       </Route>

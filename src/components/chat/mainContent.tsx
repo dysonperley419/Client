@@ -27,7 +27,7 @@ interface MediaAttachment {
 
 interface MainContentProps {
   selectedChannel: Channel;
-  selectedGuild: Guild;
+  selectedGuild: Guild | null;
 }
 
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
@@ -312,7 +312,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       const msgContent = (
         <>
           <div className='message-content'>
-            {renderDfm(msg.content!, selectedGuild.id)}
+            {renderDfm(msg.content!, selectedGuild?.id)}
             {msg.attachments.length > 0 && (
               <div className='message-attachments'>
                 {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
@@ -374,8 +374,9 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       );
 
       if (isNewGroup) {
-        const member = getMember(selectedGuild.id, msg.author.id);
-        const color = (member && getMemberColor(member, selectedGuild)) ?? undefined;
+        const member = selectedGuild ? getMember(selectedGuild.id, msg.author.id) : null;
+        const color =
+          (member && selectedGuild && getMemberColor(member, selectedGuild)) ?? undefined;
         return (
           <div key={msg.id} className='message-group'>
             <AuthorAvatar msg={msg} />
@@ -388,7 +389,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                     openUserProfile(e, msg.author as User);
                   }}
                 >
-                  {member?.nick ?? msg.author.username}
+                  {member?.nick ?? msg.author.global_name ?? msg.author.username}
                 </span>
                 <span className='timestamp'>{formatTimestamp(msg.timestamp)}</span>
               </div>
@@ -467,13 +468,15 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     } else if (typingIds.length === 2) {
       return (
         <p>
-          <TypingName userId={typingIds[0]!} /> and <TypingName userId={typingIds[1]!} /> are typing...
+          <TypingName userId={typingIds[0]!} /> and <TypingName userId={typingIds[1]!} /> are
+          typing...
         </p>
       );
     } else if (typingIds.length === 3) {
       return (
         <p>
-          <TypingName userId={typingIds[0]!} />, <TypingName userId={typingIds[1]!} /> and <TypingName userId={typingIds[2]!} /> are typing...
+          <TypingName userId={typingIds[0]!} />, <TypingName userId={typingIds[1]!} /> and{' '}
+          <TypingName userId={typingIds[2]!} /> are typing...
         </p>
       );
     } else {
@@ -487,10 +490,12 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         <div className='header-left'>
           <div className='header-icon'>
             <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-              tag
+              {selectedGuild ? 'tag' : 'alternate_email'}
             </span>
           </div>
-          <span className='header-title'>{selectedChannel.name}</span>
+          <span className='header-title'>
+            {selectedChannel.name || selectedChannel?.recipients?.[0]?.username || 'Direct Message'}
+          </span>
           {selectedChannel.topic && (
             <span className='header-topic'> | {selectedChannel.topic}</span>
           )}
@@ -584,7 +589,13 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                   </div>
                 </button>
                 <ChatInput
-                  placeholder={`Message #${selectedChannel.name ?? ''}`}
+                  placeholder={
+                    selectedChannel.name
+                      ? `Message #${selectedChannel.name}`
+                      : selectedChannel.recipients?.[0]
+                        ? `Message @${selectedChannel.recipients[0].global_name ?? selectedChannel.recipients[0].username}`
+                        : 'Message...'
+                  }
                   value={chatMessage}
                   onChange={(e) => {
                     updateChat(e.target.value);
@@ -629,11 +640,13 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
           <div className='typing-status-wrapper'>{handleTypingStatus()}</div>
         </div>
 
-        <MemberList
-          key={selectedChannel.id}
-          selectedGuild={selectedGuild}
-          selectedChannel={selectedChannel}
-        />
+        {selectedGuild && (
+          <MemberList
+            key={selectedChannel.id}
+            selectedGuild={selectedGuild}
+            selectedChannel={selectedChannel}
+          />
+        )}
       </div>
     </main>
   );

@@ -1,17 +1,18 @@
 import './serverProfile.css';
 
-import { useState, type JSX } from 'react';
+import { type JSX, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { useGateway } from '@/context/gatewayContext';
 import type { Member } from '@/types/guilds';
+import type { User } from '@/types/users';
+import { get } from '@/utils/api';
+import { logger } from '@/utils/logger';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
-import type { User } from '@/types/users';
-import { useNavigate } from 'react-router-dom';
-import { useGateway } from '@/context/gatewayContext';
-import { logger } from '@/utils/logger';
-import { get } from '@/utils/api';
+import { MutualItem } from '../chat/mutualItem';
 
 interface ServerProfileProps {
   member: Member;
@@ -22,32 +23,13 @@ interface ServerProfileProps {
   premium_type?: number;
 }
 
-const MutualItem = ({ 
-  icon, 
-  title, 
-  subtitle, 
-  onClick 
-}: { 
-  icon: string | JSX.Element; 
-  title: string; 
-  subtitle?: string; 
-  onClick: () => void 
-}) => (
-  <div className="mutual-card" onClick={onClick}>
-    <div className="mutual-card-icon">
-      {typeof icon === 'string' ? <img src={icon} alt="" /> : icon}
-    </div>
-    <div className="mutual-card-info">
-      <div className="mutual-card-title">{title}</div>
-      {subtitle && <div className="mutual-card-subtitle">{subtitle}</div>}
-    </div>
-    <span className="material-symbols-rounded mutual-card-arrow">chevron_right</span>
-  </div>
-);
-
-export const ServerProfileModal = ({ member, mutual_guilds: sharedGuilds, mutual_friends: sharedFriends }: ServerProfileProps): JSX.Element => {
+export const ServerProfileModal = ({
+  member,
+  mutual_guilds: sharedGuilds,
+  mutual_friends: sharedFriends,
+}: ServerProfileProps): JSX.Element => {
   const { openModal, closeModal, updateModal } = useModal();
-  const { guilds} = useGateway();
+  const { guilds } = useGateway();
   const navigate = useNavigate();
 
   const status = member.presence?.status ?? 'offline';
@@ -61,12 +43,12 @@ export const ServerProfileModal = ({ member, mutual_guilds: sharedGuilds, mutual
   const handleFriendClick = async (user: User) => {
     closeModal();
 
-    openModal('SERVER_PROFILE', { member: { user } as any }); 
+    openModal('SERVER_PROFILE', { member: { user } as any });
 
     try {
       const query = new URLSearchParams({
         with_mutual_guilds: 'true',
-        with_mutual_friends: 'true'
+        with_mutual_friends: 'true',
       }).toString();
 
       const fullProfile = await get(`/users/${member.id ?? member.user.id}/profile?${query}`);
@@ -76,10 +58,9 @@ export const ServerProfileModal = ({ member, mutual_guilds: sharedGuilds, mutual
         mutual_friends: fullProfile.mutual_friends,
         connected_accounts: fullProfile.connected_accounts,
         premium_since: fullProfile.premium_since,
-        premium_type: fullProfile.premium_type
+        premium_type: fullProfile.premium_type,
       });
-    }
-    catch (error) {
+    } catch (error) {
       logger.error(`SERVER_PROFILE`, `Failed to fetch full user profile from API!`, error);
     }
   };
@@ -108,8 +89,6 @@ export const ServerProfileModal = ({ member, mutual_guilds: sharedGuilds, mutual
   const bannerUrl = member.user.banner
     ? `url('${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${member.user.id}/${member.user.banner ?? ''}.png')`
     : 'none';
-
-  console.log(sharedGuilds);
 
   return (
     <div className='profile-modal-root'>
@@ -151,7 +130,9 @@ export const ServerProfileModal = ({ member, mutual_guilds: sharedGuilds, mutual
               <div className='tab-bar'>
                 <div
                   className={`tab ${activeTab === 'INFO' ? 'selected' : ''}`}
-                  onClick={() => setActiveTab('INFO')}
+                  onClick={() => {
+                    setActiveTab('INFO');
+                  }}
                 >
                   User Info
                 </div>
@@ -159,13 +140,17 @@ export const ServerProfileModal = ({ member, mutual_guilds: sharedGuilds, mutual
                   <>
                     <div
                       className={`tab ${activeTab === 'GUILDS' ? 'selected' : ''}`}
-                      onClick={() => setActiveTab('GUILDS')}
+                      onClick={() => {
+                        setActiveTab('GUILDS');
+                      }}
                     >
                       Mutual Servers ({sharedGuilds.length})
                     </div>
                     <div
                       className={`tab ${activeTab === 'FRIENDS' ? 'selected' : ''}`}
-                      onClick={() => setActiveTab('FRIENDS')}
+                      onClick={() => {
+                        setActiveTab('FRIENDS');
+                      }}
                     >
                       Mutual Friends ({sharedFriends?.length})
                     </div>
@@ -189,10 +174,9 @@ export const ServerProfileModal = ({ member, mutual_guilds: sharedGuilds, mutual
         )}
 
         <hr className='popout-separator' />
-        
+
         {activeTab === 'INFO' && (
           <>
-
             <div className='popout-section'>
               <span className='section-title'>Note</span>
               <textarea className='note-input modal-note' placeholder='Click to add a note' />
@@ -203,45 +187,56 @@ export const ServerProfileModal = ({ member, mutual_guilds: sharedGuilds, mutual
         {activeTab === 'GUILDS' && (
           <>
             <div className='popout-section'>
-              <div className="mutual-list">
-                {sharedGuilds?.length ? sharedGuilds.map(shared => {
-                  const fullGuild = guilds.find((g: any) => g.id === shared.id);
-                  const guildName = fullGuild?.name || "Unknown Server";
-                  const guildIcon = fullGuild?.icon ? `${localStorage.getItem('selectedCdnUrl')}/icons/${fullGuild.id}/${fullGuild.icon}.png` : '';
+              <div className='mutual-list'>
+                {sharedGuilds?.length ? (
+                  sharedGuilds.map((shared) => {
+                    const fullGuild = guilds.find((g: any) => g.id === shared.id);
+                    const guildName = fullGuild?.name || 'Unknown Server';
+                    const guildIcon = fullGuild?.icon
+                      ? `${localStorage.getItem('selectedCdnUrl')}/icons/${fullGuild.id}/${fullGuild.icon}.png`
+                      : '';
 
-                  return (
-                    <MutualItem
-                      key={shared.id}
-                      title={guildName}
-                      subtitle={shared.nick ? shared.nick : ''}
-                      icon={guildIcon}
-                      onClick={() => handleGuildClick(shared.id)}
-                    />
-                  );
-                }) : <div className="empty-state">No Mutual Servers</div>}
+                    return (
+                      <MutualItem
+                        key={shared.id}
+                        title={guildName}
+                        subtitle={shared.nick ? shared.nick : ''}
+                        icon={guildIcon}
+                        onClick={() => {
+                          handleGuildClick(shared.id);
+                        }}
+                      />
+                    );
+                  })
+                ) : (
+                  <div className='empty-state'>No Mutual Servers</div>
+                )}
               </div>
             </div>
           </>
-          )}
+        )}
 
-         {activeTab === 'FRIENDS' && (
+        {activeTab === 'FRIENDS' && (
           <>
             <div className='popout-section'>
-              <div className="mutual-list">
-                {sharedFriends?.length ? sharedFriends.map(friend => (
-                  <MutualItem
-                    key={friend.id}
-                    title={friend.global_name || friend.username}
-                    subtitle={`@${friend.username}`}
-                    icon={`${localStorage.getItem('selectedCdnUrl')}/avatars/${friend.id}/${friend.avatar}.png`}
-                    onClick={() => handleFriendClick(friend)}
-                  />
-                )) : <div className="empty-state">No Mutual Friends</div>
-                }
-              </div>          
+              <div className='mutual-list'>
+                {sharedFriends?.length ? (
+                  sharedFriends.map((friend) => (
+                    <MutualItem
+                      key={friend.id}
+                      title={friend.global_name || friend.username}
+                      subtitle={`@${friend.username}`}
+                      icon={`${localStorage.getItem('selectedCdnUrl')}/avatars/${friend.id}/${friend.avatar}.png`}
+                      onClick={() => handleFriendClick(friend)}
+                    />
+                  ))
+                ) : (
+                  <div className='empty-state'>No Mutual Friends</div>
+                )}
+              </div>
             </div>
           </>
-          )}
+        )}
       </div>
     </div>
   );

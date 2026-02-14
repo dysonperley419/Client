@@ -1,5 +1,6 @@
 import * as z from 'zod';
 
+import { ChannelSchema } from './channel';
 import { GuildSchema, MemberSchema } from './guilds';
 import { MessageSchema } from './messages';
 import { PresenceSchema, SessionSchema } from './presences';
@@ -55,6 +56,14 @@ export const HelloSchema = z.object({
   heartbeat_interval: z.coerce.number().int(),
 });
 
+const PrivateChannelSchema = ChannelSchema.extend({
+  name: z.string().nullable().optional(),
+  position: z.preprocess((val) => {
+    const n = Number(val);
+    return isNaN(n) ? 0 : n;
+  }, z.number().default(0)),
+});
+
 // TODO: Implement all ReadyEventSchema
 export const ReadyEventSchema = z.looseObject({
   user: UserSchema,
@@ -64,6 +73,7 @@ export const ReadyEventSchema = z.looseObject({
   sessions: z.array(SessionSchema).nullish(),
   session_id: z.string(),
   resume_gateway_url: z.string().nullish(),
+  private_channels: z.array(PrivateChannelSchema).default([]),
 });
 
 export const MessageCreateSchema = MessageSchema.extend({
@@ -96,7 +106,6 @@ export const MessageDeleteSchema = z.object({
   channel_id: z.string(),
   guild_id: z.string().nullish(),
 });
-
 
 export const TypingStartSchema = z.object({
   channel_id: z.string(),

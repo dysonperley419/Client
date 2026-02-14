@@ -1,10 +1,17 @@
 import './channelSidebar.css';
 
 import { type JSX, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { useAssetsUrl } from '@/context/assetsUrl';
+import { useGateway } from '@/context/gatewayContext';
 import type { Channel } from '@/types/channel';
 import type { Guild } from '@/types/guilds';
+import { del } from '@/utils/api';
+import { getDefaultAvatar } from '@/utils/avatar';
+import { logger } from '@/utils/logger';
 
+import { DmChannel } from './dmChannel';
 import VoiceActivityControls from './voiceActivityControls';
 
 interface ChannelSidebarProps {
@@ -13,12 +20,68 @@ interface ChannelSidebarProps {
   onSelectChannel: (channel: Channel | null) => void;
 }
 
+const handleCloseDM = async (channelid: string) => {
+  try {
+    await del(`/channels/${channelid}`);
+  } catch (error) {
+    logger.error(`CHANNEL_SIDEBAR`, `Failed to close DM`, error);
+  }
+};
+
+const PrivateChannelItem = ({
+  channel,
+  navigate,
+  selected,
+  onCloseLocal,
+}: {
+  channel: Channel;
+  navigate: any;
+  selected: boolean;
+  onCloseLocal: () => void;
+}) => {
+  const recipient = channel.recipients?.[0];
+  const { url: defaultAvatarUrl } = useAssetsUrl(
+    `/assets/${getDefaultAvatar(recipient) ?? ''}.png`,
+  );
+
+  const channelName =
+    channel.name || recipient?.global_name || recipient?.username || 'Unknown User';
+  const avatarUrl = recipient?.avatar
+    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${recipient.id}/${recipient.avatar}.png`
+    : defaultAvatarUrl;
+
+  return (
+    <DmChannel
+      key={channel.id}
+      title={channelName}
+      subtitle={channel.last_message_id ? 'Message history' : 'No messages yet'}
+      icon={avatarUrl}
+      selected={selected}
+      onClose={async () => {
+        onCloseLocal();
+
+        await handleCloseDM(channel.id);
+      }}
+      onClick={() => {
+        navigate(`/channels/@me/${channel.id}`);
+      }}
+    />
+  );
+};
+
 const ChannelSidebar = ({
   selectedGuild,
   selectedChannel,
   onSelectChannel,
 }: ChannelSidebarProps): JSX.Element => {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+  const { privateChannels: globalPrivateChannels } = useGateway();
+  const [closedChannelIds, setClosedChannelIds] = useState<string[]>([]);
+  const navigate = useNavigate();
+
+  const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || []).filter(
+    (channel) => !closedChannelIds.includes(channel.id),
+  );
 
   if (!selectedGuild) {
     return (
@@ -55,7 +118,25 @@ const ChannelSidebar = ({
                 </span>
               </button>
             </div>
-            <div className='dm-list'></div>
+            <div className='dm-list'>
+              {visiblePrivateChannels.length > 0 &&
+                visiblePrivateChannels.map((channel) => (
+                  <PrivateChannelItem
+                    key={channel.id}
+                    channel={channel}
+                    navigate={navigate}
+                    selected={selectedChannel?.id === channel.id}
+                    onCloseLocal={() => {
+                      setClosedChannelIds((prev) => [...prev, channel.id]);
+
+                      if (selectedChannel?.id === channel.id) {
+                        onSelectChannel(null);
+                        navigate('/channels/@me');
+                      }
+                    }}
+                  />
+                ))}
+            </div>
           </div>
         </div>
         <VoiceActivityControls />

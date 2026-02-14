@@ -18,8 +18,14 @@ import { useGateway } from '../context/gatewayContext';
 import LoadingScreen from './loading';
 
 const ChatApp = (): JSX.Element => {
-  const { isReady, guilds, user, relationships, requestMembers }: GatewayContextSchema =
-    useGateway();
+  const {
+    isReady,
+    guilds,
+    user,
+    relationships,
+    requestMembers,
+    privateChannels,
+  }: GatewayContextSchema = useGateway();
   const { guildId, channelId } = useParams();
   const { openModal } = useModal();
   const { connectToVoice } = useVoice();
@@ -130,7 +136,9 @@ const ChatApp = (): JSX.Element => {
   }
 
   const selectedGuild = passedGuilds.find((g) => g.id === guildId) ?? null;
-  const selectedChannel = selectedGuild?.channels.find((c) => c.id === channelId) ?? null;
+  const selectedChannel = selectedGuild
+    ? (selectedGuild.channels.find((c) => c.id === channelId) ?? null)
+    : ((privateChannels as Channel[])?.find((c) => c.id === channelId) ?? null);
 
   const handleSelectGuild = (guild: Guild) => {
     void navigate(`/channels/${guild.id}`);
@@ -159,7 +167,9 @@ const ChatApp = (): JSX.Element => {
     if (channel?.type === 2) {
       handleVoiceConnection(channel);
     }
-    void navigate(`/channels/${guildId ?? '@me'}/${channel?.id ?? ''}`);
+    const gId = guildId ?? '@me';
+    const cId = channel?.id ?? '';
+    void navigate(`/channels/${gId}/${cId}`);
   };
 
   return (
@@ -186,7 +196,7 @@ const ChatApp = (): JSX.Element => {
             onSelectChannel={handleSelectChannel}
           />
 
-          {selectedChannel && selectedGuild ? (
+          {selectedChannel ? (
             <MainContent selectedChannel={selectedChannel} selectedGuild={selectedGuild} />
           ) : !selectedGuild ? (
             <FriendsList

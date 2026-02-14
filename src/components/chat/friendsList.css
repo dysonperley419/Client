@@ -166,6 +166,7 @@
   width: 360px;
   background-color: var(--bg-sidebar-secondary);
   flex-shrink: 0;
+  padding: 20px;
 }
 
 .active-now-header {
