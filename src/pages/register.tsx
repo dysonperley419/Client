@@ -5,6 +5,7 @@ import { useAuthLogic } from '@/hooks/useAuthLogic';
 import type { Instance } from '@/types/instance';
 import type { RegisterRequest } from '@/types/requests';
 import { RegisterResponseSchema, RegistrationFieldErrorsSchema } from '@/types/responses';
+import { post } from '@/utils/api';
 
 import RegisterForm from '../components/auth/registerForm';
 import Brand from '../components/common/brand';
@@ -50,30 +51,22 @@ function Register(): JSX.Element {
         consent: true,
       };
 
-      const response = await fetch(
-        `${localStorage.getItem('selectedInstanceUrl') ?? ''}/${localStorage.getItem('defaultApiVersion') ?? ''}/auth/register`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(registerRequest),
-        },
-      );
-
-      if (!response.ok) {
-        const parsed = RegistrationFieldErrorsSchema.parse(await response.json());
-        setUsernameStatus(parsed.username && 'error');
-        setPasswordStatus(parsed.password && 'error');
-        setEmailStatus(parsed.email && 'error');
-        return;
-      }
-
-      const parsed = RegisterResponseSchema.parse(await response.json());
+      const response = await post(`/auth/register`, registerRequest);
+      const parsed = RegisterResponseSchema.parse(response);
 
       localStorage.setItem('Authorization', parsed.token);
       localStorage.setItem('email', email);
       window.location.href = '/';
-    } catch (err) {
-      setMiscError('An error occurred while registering');
+    } catch (err: any) {
+      try {
+        const fieldErrors = RegistrationFieldErrorsSchema.parse(err.responseBody);
+
+        setUsernameStatus(fieldErrors.username ? 'error' : null);
+        setPasswordStatus(fieldErrors.password ? 'error' : null);
+        setEmailStatus(fieldErrors.email ? 'error' : null);
+      } catch {
+        setMiscError(err.message || 'An error occurred while registering');
+      }
       console.error(err);
     }
   };

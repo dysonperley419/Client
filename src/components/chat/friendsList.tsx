@@ -4,6 +4,7 @@ import { type JSX, useState } from 'react';
 
 import { type UserStore, useUserStore } from '@/stores/userstore';
 import type { Relationship } from '@/types/relationship';
+import { del, put } from '@/utils/api';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { getDefaultAvatar } from '../../utils/avatar';
@@ -52,16 +53,9 @@ export const FriendsList = ({
     onRequestUpdate({ ...friend, type: 1 });
 
     try {
-      const baseUrl = localStorage.getItem('selectedInstanceUrl');
-      const url = `${baseUrl ?? ''}/${localStorage.getItem('defaultApiVersion') ?? ''}/users/@me/relationships/${friend.id}`;
+      await put(`/users/@me/relationships/${friend.id}`, {});
 
-      const response = await fetch(url, {
-        headers: { Authorization: localStorage.getItem('Authorization') ?? '' },
-        method: 'PUT',
-        body: JSON.stringify({}),
-      });
-
-      return response.ok;
+      return true;
     } catch (error) {
       console.error('Failed to accept friend request: ', error);
 
@@ -73,15 +67,9 @@ export const FriendsList = ({
     onRequestDelete(friend.id);
 
     try {
-      const baseUrl = localStorage.getItem('selectedInstanceUrl');
-      const url = `${baseUrl ?? ''}/${localStorage.getItem('defaultApiVersion') ?? ''}/users/@me/relationships/${friend.id}`;
+      await del(`/users/@me/relationships/${friend.id}`);
 
-      const response = await fetch(url, {
-        headers: { Authorization: localStorage.getItem('Authorization') ?? '' },
-        method: 'DELETE',
-      });
-
-      return response.ok;
+      return true;
     } catch (error) {
       console.error('Failed to decline friend request: ', error);
 

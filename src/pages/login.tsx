@@ -5,6 +5,7 @@ import { useAuthLogic } from '@/hooks/useAuthLogic';
 import type { Instance } from '@/types/instance';
 import type { LoginRequest } from '@/types/requests';
 import { LoginResponseSchema } from '@/types/responses';
+import { post } from '@/utils/api';
 
 import LoginForm from '../components/auth/loginForm';
 import Brand from '../components/common/brand';
@@ -17,10 +18,11 @@ function Login(): JSX.Element {
   const [instance, setInstance] = useState<Instance | string | undefined>(undefined);
   const [credentialsStatus, setCredentialsStatus] = useState<string | null>(null);
 
-  const { instances, status: instanceStatus, checkInstance } = useAuthLogic(
-    instance,
-    customInstance,
-  );
+  const {
+    instances,
+    status: instanceStatus,
+    checkInstance,
+  } = useAuthLogic(instance, customInstance);
 
   const handleInstanceSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedUrl = e.target.value;
@@ -34,28 +36,17 @@ function Login(): JSX.Element {
   const handleSignin = async () => {
     try {
       setCredentialsStatus('checking');
-      
+
       const loginRequest: LoginRequest = { password };
       const apiVersion = localStorage.getItem('defaultApiVersion')?.split('v')[1];
 
       if (apiVersion && parseInt(apiVersion) > 6) loginRequest.login = email;
       else loginRequest.email = email;
 
-      const response = await fetch(
-        `${localStorage.getItem('selectedInstanceUrl') ?? ''}/${localStorage.getItem('defaultApiVersion') ?? ''}/auth/login`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(loginRequest),
-        },
-      );
+      const response = await post(`/auth/login`, loginRequest);
 
-      if (!response.ok) {
-        setCredentialsStatus('error');
-        return;
-      }
+      const data = LoginResponseSchema.parse(response);
 
-      const data = LoginResponseSchema.parse(await response.json());
       if (!data.token) {
         setCredentialsStatus('error');
         return;

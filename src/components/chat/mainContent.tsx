@@ -8,6 +8,7 @@ import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gatewa
 import type { Guild } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import type { User } from '@/types/users';
+import { get, post } from '@/utils/api';
 import { useUserProfileActions } from '@/utils/profileUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
@@ -85,18 +86,17 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
   const fetchMessages = useCallback(
     async (limit: number, before?: string) => {
-      const baseUrl = localStorage.getItem('selectedInstanceUrl') ?? '';
-      const version = localStorage.getItem('defaultApiVersion') ?? '';
-      const url = `${baseUrl}/${version}/channels/${selectedChannel.id}/messages?limit=${String(limit)}${before ? `&before=${before}` : ''}`;
+      const url = `/channels/${selectedChannel.id}/messages?limit=${String(limit)}${before ? `&before=${before}` : ''}`;
 
-      const response = await fetch(url, {
-        headers: { Authorization: localStorage.getItem('Authorization') ?? '' },
-      });
+      try {
+        const response = await get(url);
+        const data: unknown = response;
 
-      if (!response.ok) return [];
-
-      const data: unknown = await response.json();
-      return MessageListSchema.parse(data);
+        return MessageListSchema.parse(data);
+      } catch (error) {
+        console.error('Failed to fetch messages: ', error);
+        return [];
+      }
     },
     [selectedChannel.id],
   );
@@ -105,9 +105,6 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     e.preventDefault();
 
     if (!chatMessage.trim() && attachments.length === 0) return;
-
-    const baseUrl = localStorage.getItem('selectedInstanceUrl') ?? '';
-    const url = `${baseUrl}/${localStorage.getItem('defaultApiVersion') ?? ''}/channels/${selectedChannel.id}/messages`;
 
     const formData = new FormData();
 
@@ -131,21 +128,11 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     setAttachments([]);
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: localStorage.getItem('Authorization') ?? '',
-        },
-        body: formData,
-      });
+      await post(`/channels/${selectedChannel.id}/messages`, formData);
 
       toCleanup.forEach((at) => {
         URL.revokeObjectURL(at.preview);
       });
-
-      if (!response.ok) {
-        console.error('Failed to send message');
-      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -431,14 +418,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   };
 
   const sendTypingStart = async () => {
-    const baseUrl = localStorage.getItem('selectedInstanceUrl') ?? '';
-    const url = `${baseUrl}/${localStorage.getItem('defaultApiVersion') ?? ''}/channels/${selectedChannel.id}/typing`;
-
     try {
-      await fetch(url, {
-        method: 'POST',
-        headers: { Authorization: localStorage.getItem('Authorization') ?? '' },
-      });
+      await post(`/channels/${selectedChannel.id}/typing`, {});
     } catch (e) {
       console.error('Failed to send typing status', e);
     }

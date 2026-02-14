@@ -2,6 +2,8 @@ import './createServer.css';
 
 import { type JSX, useRef, useState } from 'react';
 
+import { post } from '@/utils/api';
+
 import { useModal } from '../../context/modalContext';
 
 export const CreateServerModal = (): JSX.Element => {
@@ -30,26 +32,12 @@ export const CreateServerModal = (): JSX.Element => {
       icon: avatar === null || avatar === '' ? null : avatar,
     };
 
-    const baseUrl = localStorage.getItem('selectedInstanceUrl');
-    const url = `${baseUrl ?? ''}/${localStorage.getItem('defaultApiVersion') ?? ''}/guilds`;
-
     try {
-      const request = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: localStorage.getItem('Authorization') ?? '',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!request.ok) {
-        console.error('Failed to make server');
-        return;
-      }
+      await post(`/guilds`, payload);
 
       closeModal();
     } catch (e) {
+      closeModal();
       console.error('Failed to make server', e);
     }
   };

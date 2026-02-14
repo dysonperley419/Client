@@ -10,6 +10,7 @@ import Login from './pages/login';
 import Register from './pages/register';
 import type { Instance } from './types/instance';
 import { type DomainsResponse, DomainsResponseSchema } from './types/responses';
+import { get } from './utils/api';
 
 function App(): JSX.Element {
   const { openModal } = useModal();
@@ -65,17 +66,9 @@ function App(): JSX.Element {
       }
 
       try {
-        const metadataCheck = await fetch(`${selectedUrl}/policies/instance/domains`);
+        const metadataCheck = await get(`/policies/instance/domains`);
 
-        if (!metadataCheck.ok) {
-          setCantLoad(true);
-          setLoadingStatus(
-            "This instance's API returned an error. Refresh and try again, or click Clear to remove it as your selected instance.",
-          );
-          return;
-        }
-
-        const response: DomainsResponse = DomainsResponseSchema.parse(await metadataCheck.json());
+        const response: DomainsResponse = DomainsResponseSchema.parse(metadataCheck);
 
         localStorage.setItem('selectedGatewayUrl', response.gateway);
         localStorage.setItem('selectedCdnUrl', response.cdn); // for user uploaded icons and attachments
@@ -90,7 +83,7 @@ function App(): JSX.Element {
         console.error('Connection failed:', err);
         setCantLoad(true);
         setLoadingStatus(
-          'Unable to connect to the instance. You can try to refresh the page, or clear the current instance settings to start over.',
+          "This instance's API returned an error. Refresh and try again, or click Clear to remove it as your selected instance.",
         );
       }
     };

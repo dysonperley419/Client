@@ -126,7 +126,7 @@ export const MessageSchema = z.object({
   id: z.string(),
   channel_id: z.string(),
   author: UserSchema.partial(),
-  content: z.string(),
+  content: z.string().nullable().optional(),
   timestamp: z.iso.datetime({ offset: true }),
   edited_timestamp: z.iso.datetime({ offset: true }).nullish(),
   tts: z.boolean(),

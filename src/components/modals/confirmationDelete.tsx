@@ -1,5 +1,7 @@
 import type { JSX } from 'react';
 
+import { post } from '@/utils/api';
+
 import { useModal } from '../../context/modalContext';
 
 export const ConfirmationDeleteModal = ({
@@ -15,26 +17,13 @@ export const ConfirmationDeleteModal = ({
 
   const deleteGuild = async (id: string): Promise<boolean> => {
     try {
-      const baseUrl = localStorage.getItem('selectedInstanceUrl');
-      const url = `${baseUrl ?? ''}/${localStorage.getItem('defaultApiVersion') ?? ''}/guilds/${id}/delete`;
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { Authorization: localStorage.getItem('Authorization') ?? '' },
-      });
-
-      if (!response.ok) {
-        const msg = await response.text();
-
-        closeModal(); //to-do: show an error msg
-
-        console.error('Failed to delete guild: ', msg);
-        return false;
-      }
+      await post(`/guilds/${id}/delete`, {});
 
       closeModal();
       return true;
     } catch (error) {
+      closeModal();
+
       console.error('Failed to delete guild: ', error);
       return false;
     }

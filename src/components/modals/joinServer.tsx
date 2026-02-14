@@ -8,6 +8,7 @@ import {
   type InviteResponse,
   InviteResponseSchema,
 } from '@/types/responses';
+import { get, post } from '@/utils/api';
 
 import { useModal } from '../../context/modalContext';
 
@@ -17,91 +18,59 @@ export const JoinServerModal = (): JSX.Element => {
   const [error, setError] = useState<ErrorResponse>();
 
   const fetchInvite = async (inviteCode: string): Promise<InviteResponse | ErrorResponse> => {
-    const baseUrl = localStorage.getItem('selectedInstanceUrl');
-    const url = `${baseUrl ?? ''}/${localStorage.getItem('defaultApiVersion') ?? ''}/invite/${inviteCode}`;
+    try {
+      const response = await get(`/invites/${inviteCode}`);
 
-    const request = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: localStorage.getItem('Authorization') ?? '',
-      },
-    });
-
-    const response: unknown = await request.json();
-
-    if (request.ok) {
       const result = InviteResponseSchema.safeParse(response);
+
       if (result.success) return result.data;
 
-      console.error('Failed to fetch invite', result.error);
+      return response;
+    } catch (err: any) {
+      const errorBody = err.responseBody;
+      const errorResult = ErrorResponseSchema.safeParse(errorBody);
+
+      if (errorResult.success) {
+        return errorResult.data;
+      }
 
       return {
         code: 500,
-        message: 'Client Exception',
+        message: err.message || 'Internal Server Error',
       };
     }
-
-    const errorResult = ErrorResponseSchema.safeParse(response);
-
-    if (errorResult.success) return errorResult.data;
-
-    console.error('Failed to parse error', errorResult.error);
-
-    return {
-      code: 500,
-      message: 'Client Exception',
-    };
   };
 
   const handleJoin = async (inputString: string) => {
+    setError(undefined);
+
+    const segments = inputString.trim().replace(/\/+$/, '').split('/');
+    const inviteCode = segments.pop();
+
+    if (!inviteCode) {
+      setError({ code: 400, message: 'Please enter a valid invite' });
+      return;
+    }
+
+    const inviteResponse = await fetchInvite(inviteCode);
+
+    const errorCheck = ErrorResponseSchema.safeParse(inviteResponse);
+
+    if (errorCheck.success) {
+      setError(errorCheck.data);
+      return;
+    }
+
     try {
-      const segments: string[] = inputString.trim().replace(/\/+$/, '').split('/');
-      const inviteCode = segments[segments.length - 1];
-
-      if (!inviteCode) {
-        setError({ code: 400, message: 'Please enter a valid invite' });
-
-        return;
-      }
-
-      const baseUrl = localStorage.getItem('selectedInstanceUrl');
-      const url = `${baseUrl ?? ''}/${localStorage.getItem('defaultApiVersion') ?? ''}/invite/${inviteCode}`;
-      const inviteResponse = await fetchInvite(inviteCode);
-
-      const isError = ErrorResponseSchema.safeParse(inviteResponse).success;
-
-      if (isError) {
-        //maybe zod saves you lol
-        setError(inviteResponse as ErrorResponse);
-        return;
-      }
-
-      const request = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: localStorage.getItem('Authorization') ?? '',
-        },
-        body: null,
-      });
-
-      const response: unknown = await request.json();
-
-      if (!request.ok) {
-        console.error('Failed to join server');
-
-        return response as ErrorResponse;
-      }
+      await post(`/invites/${inviteCode}`, null);
 
       closeModal();
+    } catch (err: any) {
+      console.log(err);
 
-      return;
-    } catch (e) {
-      console.error('Failed to join server', e);
-
-      return {
-        code: 500,
-        message: 'Client Exception',
-      };
+      const errorBody = err.responseBody;
+      const errorResult = ErrorResponseSchema.safeParse(errorBody);
+      setError(errorResult.success ? errorResult.data : { code: 500, message: 'Failed to join' });
     }
   };
 
