@@ -42,7 +42,10 @@ function accumulate(source: string, terminators: string[]): { accumulated: strin
   }
 }
 
-export default function renderDfm(text: string, guild_id: string | undefined): JSX.Element {
+export default function renderDfm(text: string | null | undefined, guild_id: string | undefined): JSX.Element {
+  if (!text)
+    return (<></>);
+
   const renderDfmInner = (text: string) => renderDfm(text, guild_id);
 
   const result: (JSX.Element | string)[] = [];
