@@ -87,8 +87,8 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     [memberLists],
   );
 
-  const getMemberColor = useCallback((member: Member, guild?: Guild | null): string | undefined => {
-    if (!guild || member.roles.length === 0) return undefined;
+  const getMemberColor = useCallback((member: Member | null | undefined, guild?: Guild | null | undefined): string | undefined => {
+    if (!guild || !member || member.roles.length === 0) return undefined;
 
     const memberRoles = guild.roles.filter((r) => member.roles.includes(r.id));
 

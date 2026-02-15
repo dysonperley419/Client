@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import './mainContent.css';
 
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
@@ -404,8 +405,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
           roles: [],
         };
 
-        const color =
-          (member && selectedGuild && getMemberColor(member, selectedGuild)) ?? undefined;
+        const color = getMemberColor(member, selectedGuild);
 
         return (
           <div key={msg.id} className='message-group'>
@@ -416,10 +416,10 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                   className='author-name'
                   style={{ color: color, cursor: 'pointer' }}
                   onClick={(e) => {
-                    openUserProfile(e, member);
+                    void openUserProfile(e, member);
                   }}
                 >
-                  {member?.nick ?? msg.author.global_name ?? msg.author.username}
+                  {member.nick ?? msg.author.global_name ?? msg.author.username}
                 </span>
                 <span className='timestamp'>{formatTimestamp(msg.timestamp)}</span>
               </div>
@@ -463,7 +463,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       const getName = async () => {
         const member = getMember(selectedGuild?.id, userId);
 
-        if (member?.nick || member?.user?.username) {
+        if (member?.nick || member?.user.username) {
           setName(member.nick || member.user.username);
           return;
         }
@@ -475,8 +475,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         }
       };
 
-      getName();
-    }, [userId, getUser, getMember, selectedGuild?.id]);
+      void getName();
+    }, [userId]);
 
     return <strong>{name}</strong>;
   };
@@ -485,33 +485,45 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     if (!selectedChannel.id) return null;
 
     const channelTypingMap = typingUsers[selectedChannel.id] ?? {};
-    const typingIds = Object.keys(channelTypingMap).filter((id) => id !== user?.id);
+    let typingIds: string[] = Object.keys(channelTypingMap);
+    if (user != null)
+      typingIds = typingIds.filter((id) => id !== user.id);
 
     if (typingIds.length === 0) return null;
 
-    if (typingIds.length === 1) {
-      return (
-        <p>
-          <TypingName userId={typingIds[0]!} /> is typing...
-        </p>
-      );
-    } else if (typingIds.length === 2) {
-      return (
-        <p>
-          <TypingName userId={typingIds[0]!} /> and <TypingName userId={typingIds[1]!} /> are
-          typing...
-        </p>
-      );
-    } else if (typingIds.length === 3) {
-      return (
-        <p>
-          <TypingName userId={typingIds[0]!} />, <TypingName userId={typingIds[1]!} /> and{' '}
-          <TypingName userId={typingIds[2]!} /> are typing...
-        </p>
-      );
-    } else {
-      return <p>Several people are typing...</p>;
+    const typingId0 = typingIds[0];
+    if (!typingId0) {
+      return null;
     }
+
+    const typingId1 = typingIds[1];
+    if (!typingId1) {
+      return (
+        <p>
+          <TypingName userId={typingId0} /> is typing...
+        </p>
+      );
+    }
+
+    const typingId2 = typingIds[2];
+    if (!typingId2) {
+      return (
+        <p>
+          <TypingName userId={typingId0} /> and <TypingName userId={typingId1} /> are typing...
+        </p>
+      );
+    }
+
+    const typingId3 = typingIds[3];
+    if (!typingId3) {
+      return (
+        <p>
+          <TypingName userId={typingId0} />, <TypingName userId={typingId1} /> and <TypingName userId={typingId2} /> are typing...
+        </p>
+      );
+    }
+
+    return <p>Several people are typing...</p>;
   };
 
   return (
@@ -543,7 +555,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                   roles: [],
                 };
 
-                openFullProfile(e, memberObj);
+                void openFullProfile(e, memberObj);
               }
             }}
             style={
@@ -653,7 +665,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                     selectedChannel.name
                       ? `Message #${selectedChannel.name}`
                       : selectedChannel.recipients?.[0]
-                        ? `Message @${selectedChannel.recipients[0].global_name ?? selectedChannel.recipients[0].username}`
+                        ? `Message @${selectedChannel.recipients[0].global_name ?? selectedChannel.recipients[0].username ?? 'someone'}`
                         : 'Message...'
                   }
                   value={chatMessage}

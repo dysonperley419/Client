@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import './dfm.css';
 
 import { type JSX, useEffect, useState } from 'react';
@@ -18,7 +19,7 @@ export const MemberMention = ({
 }): JSX.Element => {
   const { getMember, guilds, getPresence } = useGateway();
   const getUser = useUserStore((state) => state.getUser);
-  const contextGuild = guilds.find((x: Guild) => x.id === guild_id)!;
+  const contextGuild = guilds.find((x: Guild) => x.id === guild_id);
 
   const { openUserProfile } = useUserProfileActions(contextGuild);
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
@@ -36,7 +37,7 @@ export const MemberMention = ({
       }
     };
 
-    loadUser();
+    void loadUser();
     return () => {
       isMounted = false;
     };
@@ -44,8 +45,15 @@ export const MemberMention = ({
 
   const name: string = member?.nick || fetchedUser?.global_name || fetchedUser?.username || '...';
 
-  let fakeMemberObj: Member | any = {
+  let fakeMemberObj: Member = {
     id: user_id,
+    user: {
+        id: user_id,
+        username: 'someone',
+        discriminator: '0000'
+    },
+    roles: [],
+    joined_at: new Date().toISOString()
   };
 
   if (fetchedUser) {
