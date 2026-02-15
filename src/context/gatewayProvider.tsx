@@ -14,7 +14,7 @@ import {
   TypingStartSchema,
 } from '@/types/gateway';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
-import type { Guild, Member } from '@/types/guilds';
+import { type Guild, type Member, type VoiceState, VoiceStateSchema } from '@/types/guilds';
 import { type Presence, type Session, SessionListSchema } from '@/types/presences';
 import type { Relationship } from '@/types/relationship';
 import type { User } from '@/types/users';
@@ -39,6 +39,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const [privateChannels, setPrivateChannels] = useState<Channel[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [presences, setPresences] = useState<GatewayContextSchema['presences']>({});
+  const [voiceStates, setVoiceStates] = useState<GatewayContextSchema['voiceStates']>({});
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [memberLists, setMemberLists] = useState<GatewayContextSchema['memberLists']>({});
   const memberListsRef = useRef(memberLists);
@@ -87,19 +88,22 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     [memberLists],
   );
 
-  const getMemberColor = useCallback((member: Member | null | undefined, guild?: Guild | null | undefined): string | undefined => {
-    if (!guild || !member || member.roles.length === 0) return undefined;
+  const getMemberColor = useCallback(
+    (member: Member | null | undefined, guild?: Guild | null): string | undefined => {
+      if (!guild || !member || member.roles.length === 0) return undefined;
 
-    const memberRoles = guild.roles.filter((r) => member.roles.includes(r.id));
+      const memberRoles = guild.roles.filter((r) => member.roles.includes(r.id));
 
-    memberRoles.sort((a, b) => b.position - a.position);
+      memberRoles.sort((a, b) => b.position - a.position);
 
-    const colorRole = memberRoles.find((r) => r.color !== 0);
-    if (colorRole) {
-      return `#${colorRole.color.toString(16).padStart(6, '0')}`;
-    }
-    return undefined;
-  }, []);
+      const colorRole = memberRoles.find((r) => r.color !== 0);
+      if (colorRole) {
+        return `#${colorRole.color.toString(16).padStart(6, '0')}`;
+      }
+      return undefined;
+    },
+    [],
+  );
 
   const getPresence = useCallback(
     (userId: string | undefined): Presence | null => {
@@ -117,6 +121,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         case 'READY': {
           const parsed = ReadyEventSchema.parse(data);
           const initialPresences: Record<string, Presence> = {};
+          const initialVoiceStates: Record<string, VoiceState> = {};
 
           sessionId.current = parsed.session_id;
           resumeGatewayUrl.current = parsed.resume_gateway_url ?? null;
@@ -144,6 +149,10 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
               initialPresences[userId] = presence;
             });
+
+            (guild.voice_states ?? []).forEach((vs) => {
+              initialVoiceStates[vs.user_id] = { ...vs, guild_id: guild.id };
+            });
           }); //So spacebar doesnt actually have this like we do on oldcord, some modern discord engineering bullshit - it'll fix itself on op 14 responses dw
           setUser(parsed.user);
           setPrivateChannels(parsed.private_channels ?? []);
@@ -152,6 +161,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           setGuilds(parsed.guilds);
           setSessions(parsed.sessions ?? []);
           setPresences((prev) => ({ ...prev, ...initialPresences }));
+          setVoiceStates(initialVoiceStates);
           setIsReady(true);
           break;
         }
@@ -167,6 +177,20 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         }
 
         case 'VOICE_STATE_UPDATE':
+          const parsed = VoiceStateSchema.parse(data);
+
+          setVoiceStates((prev) => {
+            const newState = { ...prev };
+
+            if (!parsed.channel_id) {
+              delete newState[parsed.user_id];
+            } else {
+              newState[parsed.user_id] = parsed;
+            }
+
+            return newState;
+          });
+
           window.dispatchEvent(new CustomEvent('gateway_voice_state', { detail: data }));
           break;
 
@@ -519,6 +543,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     user_settings: userSettings,
     sessions,
     presences,
+    voiceStates,
     privateChannels,
     requestMembers,
     getMember,

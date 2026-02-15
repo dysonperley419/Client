@@ -1,7 +1,7 @@
 import * as z from 'zod';
 
 import { ChannelSchema } from './channel';
-import { GuildSchema, MemberSchema } from './guilds';
+import { GuildSchema, MemberSchema, VoiceStateSchema } from './guilds';
 import { MessageSchema } from './messages';
 import { PresenceSchema, SessionSchema } from './presences';
 import { RelationshipSchema } from './relationship';
@@ -75,6 +75,7 @@ export const ReadyEventSchema = z.looseObject({
   resume_gateway_url: z.string().nullish(),
   private_channels: z.array(PrivateChannelSchema).default([]),
   presences: z.array(PresenceSchema).optional().default([]),
+  voice_states: z.array(VoiceStateSchema).optional().default([]),
 });
 
 export const MessageCreateSchema = MessageSchema.extend({
@@ -131,7 +132,6 @@ export const PresenceUpdateSchema = PresenceSchema;
 export type MessageCreate = z.infer<typeof MessageCreateSchema>;
 export type MessageUpdate = z.infer<typeof MessageUpdateSchema>;
 export type MessageDelete = z.infer<typeof MessageDeleteSchema>;
-
 export type GatewayPayload = z.infer<typeof GatewayPayloadSchema>;
 export type GuildMemberList = z.infer<typeof GuildMemberListUpdateSchema>;
 export type GuildMemberListUpdate = z.infer<typeof GuildMemberListUpdateSchema>;

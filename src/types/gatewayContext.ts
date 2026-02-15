@@ -1,6 +1,6 @@
 import type { Channel } from './channel';
 import type { GuildMemberListGroup, GuildMemberListOperationItem } from './gateway';
-import type { Guild, Member } from './guilds';
+import type { Guild, Member, VoiceState } from './guilds';
 import type { Presence, Session } from './presences';
 import type { Relationship } from './relationship';
 import type { User } from './users';
@@ -23,6 +23,7 @@ export interface GatewayContextSchema {
   user_settings: UserSettings | null;
   sessions: Session[];
   presences: Record<string, Presence>;
+  voiceStates: Record<string, VoiceState>;
   privateChannels: Channel[] | [];
   requestMembers: (guildId: string, channelId: string, ranges?: number[][]) => void;
   getMember: (

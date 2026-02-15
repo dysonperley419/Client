@@ -6,6 +6,20 @@ import { ChannelSchema } from './channel';
 import { PresenceSchema } from './presences';
 import { UserSchema } from './users';
 
+export const VoiceStateSchema = z.looseObject({
+  guild_id: z.string().optional(),
+  channel_id: z.string().nullable(),
+  user_id: z.string(),
+  session_id: z.string(),
+  deaf: z.boolean(),
+  mute: z.boolean(),
+  self_deaf: z.boolean(),
+  self_mute: z.boolean(),
+  self_stream: z.boolean().optional(),
+  self_video: z.boolean(),
+  suppress: z.boolean(),
+});
+
 export const RoleSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -33,8 +47,10 @@ export const GuildSchema = z.object({
   roles: z.array(RoleSchema),
   channels: z.array(z.lazy(() => ChannelSchema)),
   presences: z.lazy(() => z.array(PresenceUpdateSchema)).optional(),
+  voice_states: z.array(VoiceStateSchema).default([]),
 });
 
 export type Guild = z.infer<typeof GuildSchema>;
 export type Member = z.infer<typeof MemberSchema>;
 export type Role = z.infer<typeof RoleSchema>;
+export type VoiceState = z.infer<typeof VoiceStateSchema>; //okay technically this is not guild only

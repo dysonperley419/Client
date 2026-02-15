@@ -29,7 +29,7 @@ export const ServerProfileModal = ({
   mutual_friends: sharedFriends,
 }: ServerProfileProps): JSX.Element => {
   const { openModal, closeModal, updateModal } = useModal();
-  const { guilds, getPresence } = useGateway();
+  const { guilds, getPresence, user } = useGateway();
   const navigate = useNavigate();
 
   const status = getPresence(member.id)?.status ?? 'offline';
@@ -124,7 +124,7 @@ export const ServerProfileModal = ({
           {member.user.pronouns && <span className='modal-pronouns'>{member.user.pronouns}</span>}
         </div>
 
-        {sharedGuilds !== undefined && (
+        {sharedGuilds !== undefined && member.user.id !== user?.id && (
           <>
             <hr className='popout-separator' />
             <div className='popout-section'>

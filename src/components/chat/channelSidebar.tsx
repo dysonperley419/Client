@@ -5,8 +5,9 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
 import { useGateway } from '@/context/gatewayContext';
+import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
-import type { Guild } from '@/types/guilds';
+import type { Guild, VoiceState } from '@/types/guilds';
 import { del } from '@/utils/api';
 import { getDefaultAvatar } from '@/utils/avatar';
 import { logger } from '@/utils/logger';
@@ -74,13 +75,60 @@ const PrivateChannelItem = ({
   );
 };
 
+const VoiceChannelMember = ({ vs }: { vs: VoiceState }): JSX.Element => {
+  const user = useUserStore((state) => state.users[vs.user_id]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    const handleSpeaking = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId: string; speaking: boolean }>).detail;
+      if (detail.userId === vs.user_id) {
+        setIsSpeaking(detail.speaking);
+      }
+    };
+
+    window.addEventListener('ui_vc_member_speaking', handleSpeaking);
+    return () => {
+      window.removeEventListener('ui_vc_member_speaking', handleSpeaking);
+    };
+  }, [vs.user_id]);
+
+  if (!user) return <></>;
+
+  const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user) ?? ''}.png`);
+  const avatarUrl = user.avatar
+    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${user.id}/${user.avatar}.png`
+    : defaultAvatarUrl;
+
+  return (
+    <div className='voice-channel-member'>
+      <img
+        className={`avatar-img ${isSpeaking ? 'speaking' : ''}`}
+        src={avatarUrl}
+        alt={user.username}
+      ></img>
+      <div className='vc-user-info'>
+        <span>{user.global_name ?? user.username}</span>
+        <div className='voice-control-states'>
+          {(vs.self_mute || vs.mute) && (
+            <span className='material-symbols-rounded vc-icon-state'>mic_off</span>
+          )}
+          {(vs.self_deaf || vs.deaf) && (
+            <span className='material-symbols-rounded vc-icon-state'>headset_off</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ChannelSidebar = ({
   selectedGuild,
   selectedChannel,
   onSelectChannel,
 }: ChannelSidebarProps): JSX.Element => {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
-  const { privateChannels: globalPrivateChannels } = useGateway();
+  const { privateChannels: globalPrivateChannels, voiceStates } = useGateway();
   const [closedChannelIds, setClosedChannelIds] = useState<string[]>([]);
   const navigate = useNavigate();
 
@@ -182,22 +230,37 @@ const ChannelSidebar = ({
     (c: Channel) => !categoryChannels.includes(c) && !categorizedChannels.includes(c),
   );
 
-  const renderChannel = (channel: Channel) => (
-    <button
-      key={channel.id}
-      className={`sidebar-btn ${selectedChannel?.id === channel.id ? 'active' : ''} ${channel.type === 2 ? 'not-selectable' : ''}`}
-      onClick={() => {
-        onSelectChannel(channel);
-      }}
-    >
-      <div className='sidebar-icon'>
-        <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
-          {channel.type === 2 ? 'volume_up' : 'tag'}
-        </span>
-      </div>
-      <span className='sidebar-text'>{channel.name}</span>
-    </button>
-  );
+  const renderChannel = (channel: Channel) => {
+    const membersInThisChannel = Object.values(voiceStates || {}).filter(
+      (vs) => vs.channel_id === channel.id,
+    );
+
+    return (
+      <>
+        <button
+          key={channel.id}
+          className={`sidebar-btn ${selectedChannel?.id === channel.id ? 'active' : ''} ${channel.type === 2 ? 'not-selectable' : ''}`}
+          onClick={() => {
+            onSelectChannel(channel);
+          }}
+        >
+          <div className='sidebar-icon'>
+            <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
+              {channel.type === 2 ? 'volume_up' : 'tag'}
+            </span>
+          </div>
+          <span className='sidebar-text'>{channel.name}</span>
+        </button>
+        {channel.type === 2 && membersInThisChannel.length > 0 && (
+          <div className='voice-channel-members'>
+            {membersInThisChannel.map((vs: VoiceState) => (
+              <VoiceChannelMember key={vs.user_id} vs={vs} />
+            ))}
+          </div>
+        )}
+      </>
+    );
+  };
 
   const toggleCategory = (categoryId: string) => {
     setCollapsedCategories((prev) => ({

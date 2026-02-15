@@ -270,3 +270,45 @@
   color: var(--text-muted);
   font-size: 14px;
 }
+
+.voice-control-states {
+  display: flex;
+  gap: 5px;
+  margin-left: 10px;
+}
+
+.vc-user-info {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.voice-channel-member {
+  display: flex;
+  cursor: pointer;
+  border-radius: 8px;
+  width: 100%;
+  padding: 5px;
+  margin-left: 20px;
+  margin-top: 5px;
+  transition: 0.3s background;
+  padding-left: 10px;
+}
+
+.avatar-img.speaking {
+  border: 2px solid var(--bg-online);
+  box-shadow: 0 0 0 2px var(--bg-online);
+}
+
+.voice-channel-member:hover {
+  background: var(--bg-alt);
+}
+
+.voice-channel-member .avatar-img {
+  width: 20px;
+  height: 20px;
+}
+
+.vc-icon-state {
+  font-size: 20px;
+}

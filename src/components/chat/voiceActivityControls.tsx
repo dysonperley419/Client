@@ -2,7 +2,7 @@ import './voiceActivityControls.css';
 
 import { type JSX, useState } from 'react';
 
-import { useVoice } from '@/hooks/useVoice';
+import { useVoiceContext } from '@/context/voiceContext';
 
 interface VoiceStatusProps {
   status: 'connected' | 'connecting' | 'disconnected';
@@ -23,7 +23,7 @@ const VoiceStatusBar = ({ status, channelName }: VoiceStatusProps) => (
 );
 
 const VoiceActivityControls = (): JSX.Element => {
-  const { connectionStatus, channel } = useVoice();
+  const { connectionStatus, channel } = useVoiceContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
