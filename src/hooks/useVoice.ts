@@ -18,8 +18,8 @@ export const useVoice = () => {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const sessionRef = useRef<{ sessionId?: string; token?: string; endpoint?: string }>({});
-  const webrtcP2P =
-    JSON.parse(localStorage.getItem('developerSettings') ?? '{}').webrtc_p2p ?? false;
+
+  //const webrtcP2P = JSON.parse(localStorage.getItem('developerSettings') ?? '{}').webrtc_p2p ?? false;
 
   let readyToSpeak = false;
   let cachedSsrc = 0;

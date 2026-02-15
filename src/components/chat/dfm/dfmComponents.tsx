@@ -21,7 +21,7 @@ export const MemberMention = ({
   const getUser = useUserStore((state) => state.getUser);
   const contextGuild = guilds.find((x: Guild) => x.id === guild_id);
 
-  const { openUserProfile } = useUserProfileActions(contextGuild);
+  const { openUserProfile } = useUserProfileActions(contextGuild!);
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
 
   const member = getMember(guild_id, user_id);
@@ -48,12 +48,12 @@ export const MemberMention = ({
   let fakeMemberObj: Member = {
     id: user_id,
     user: {
-        id: user_id,
-        username: 'someone',
-        discriminator: '0000'
+      id: user_id,
+      username: 'someone',
+      discriminator: '0000',
     },
     roles: [],
-    joined_at: new Date().toISOString()
+    joined_at: new Date().toISOString(),
   };
 
   if (fetchedUser) {
