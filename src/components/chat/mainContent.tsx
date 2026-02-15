@@ -5,7 +5,7 @@ import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
-import type { Guild } from '@/types/guilds';
+import type { Guild, Member } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
@@ -32,10 +32,10 @@ interface MainContentProps {
 
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
-  const { openUserProfile } = useUserProfileActions(selectedGuild);
+  const { openUserProfile, openFullProfile } = useUserProfileActions(selectedGuild);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const getUser = useUserStore((state) => state.getUser);
-  const { typingUsers, user, getMember, getMemberColor } = useGateway();
+  const { typingUsers, user, getMember, getMemberColor, getPresence } = useGateway();
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatMessage, setChatMessage] = useState('');
   const lastTypingSent = useRef<number>(0);
@@ -279,13 +279,28 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         );
     }
 
-    const AuthorAvatar = ({ msg }: { msg: Message }) => {
+    const AuthorAvatar = ({ msg, member }: { msg: Message; member?: Member }) => {
       const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
         `/assets/${getDefaultAvatar(msg.author) ?? ''}.png`,
       );
       const avatarUrl = msg.author.avatar
         ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${msg.author.id ?? ''}/${msg.author.avatar}.png`
         : defaultAvatarUrl;
+
+      const presence = getPresence(msg.author.id);
+      const status = presence?.status ?? 'offline';
+
+      const memberObj: Member = member ?? {
+        id: msg.author.id!,
+        user: msg.author as User,
+        presence: {
+          user: msg.author as User,
+          status: status,
+          activities: presence?.activities ?? [],
+        },
+        joined_at: new Date().toISOString(),
+        roles: [],
+      };
 
       return (
         <img
@@ -297,7 +312,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
             rollover();
           }}
           onClick={(e) => {
-            openUserProfile(e, msg.author as User);
+            openUserProfile(e, memberObj);
           }}
         />
       );
@@ -374,19 +389,34 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       );
 
       if (isNewGroup) {
-        const member = selectedGuild ? getMember(selectedGuild.id, msg.author.id) : null;
+        const userPresence = getPresence(msg.author.id);
+        const currentStatus = userPresence?.status || 'offline';
+
+        const member = (selectedGuild ? getMember(selectedGuild.id, msg.author.id) : null) ?? {
+          id: msg.author.id!,
+          user: msg.author as User,
+          presence: {
+            user: msg.author as User,
+            status: currentStatus,
+            activities: userPresence?.activities || [],
+          },
+          joined_at: new Date().toISOString(),
+          roles: [],
+        };
+
         const color =
           (member && selectedGuild && getMemberColor(member, selectedGuild)) ?? undefined;
+
         return (
           <div key={msg.id} className='message-group'>
-            <AuthorAvatar msg={msg} />
+            <AuthorAvatar msg={msg} member={member} />
             <div className='message-details'>
               <div className='message-header'>
                 <span
                   className='author-name'
                   style={{ color: color, cursor: 'pointer' }}
                   onClick={(e) => {
-                    openUserProfile(e, msg.author as User);
+                    openUserProfile(e, member);
                   }}
                 >
                   {member?.nick ?? msg.author.global_name ?? msg.author.username}
@@ -493,7 +523,37 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
               {selectedGuild ? 'tag' : 'alternate_email'}
             </span>
           </div>
-          <span className='header-title'>
+          <span
+            className='header-title'
+            onClick={(e) => {
+              if (selectedChannel?.type === 1 && selectedChannel.recipients) {
+                const recipient = selectedChannel.recipients[0];
+                const presence = getPresence(recipient!.id);
+                const status = presence?.status ?? 'offline';
+
+                const memberObj: Member = {
+                  id: recipient?.id!,
+                  user: recipient as User,
+                  presence: {
+                    user: recipient as User,
+                    status: status,
+                    activities: [],
+                  },
+                  joined_at: new Date().toISOString(),
+                  roles: [],
+                };
+
+                openFullProfile(e, memberObj);
+              }
+            }}
+            style={
+              selectedChannel.type === 1
+                ? {
+                    cursor: 'pointer',
+                  }
+                : {}
+            }
+          >
             {selectedChannel.name || selectedChannel?.recipients?.[0]?.username || 'Direct Message'}
           </span>
           {selectedChannel.topic && (

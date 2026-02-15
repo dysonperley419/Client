@@ -39,6 +39,8 @@ const PrivateChannelItem = ({
   selected: boolean;
   onCloseLocal: () => void;
 }) => {
+  const { getPresence } = useGateway();
+
   const recipient = channel.recipients?.[0];
   const { url: defaultAvatarUrl } = useAssetsUrl(
     `/assets/${getDefaultAvatar(recipient) ?? ''}.png`,
@@ -50,6 +52,8 @@ const PrivateChannelItem = ({
     ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${recipient.id}/${recipient.avatar}.png`
     : defaultAvatarUrl;
 
+  const status = getPresence(recipient?.id)?.status ?? 'offline';
+
   return (
     <DmChannel
       key={channel.id}
@@ -57,6 +61,7 @@ const PrivateChannelItem = ({
       subtitle={channel.last_message_id ? 'Message history' : 'No messages yet'}
       icon={avatarUrl}
       selected={selected}
+      status={status}
       onClose={async () => {
         onCloseLocal();
 
@@ -94,12 +99,14 @@ const ChannelSidebar = ({
     };
 
     window.addEventListener('ui_channel_deleted', handleRemoteDelete);
-    return () => window.removeEventListener('ui_channel_deleted', handleRemoteDelete);
+    return () => {
+      window.removeEventListener('ui_channel_deleted', handleRemoteDelete);
+    };
   }, [selectedChannel, navigate, onSelectChannel]);
 
   useEffect(() => {
-    setClosedChannelIds(prev => 
-      prev.filter(id => !globalPrivateChannels.some(c => c.id === id))
+    setClosedChannelIds((prev) =>
+      prev.filter((id) => !globalPrivateChannels.some((c) => c.id === id)),
     );
   }, [globalPrivateChannels]);
 

@@ -24,8 +24,9 @@ const MemberListItem = ({
 }): JSX.Element => {
   const { openContextMenu } = useContextMenu();
   const { openPopup } = usePopup();
+  const { getPresence } = useGateway();
 
-  const status = member.presence?.status ?? 'offline';
+  const status = getPresence(member.id)?.status ?? 'offline';
 
   const MemberAvatar = ({ member, className }: { member: Member; className: string }) => {
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(

@@ -530,6 +530,16 @@ button {
   height: 10px;
   border-radius: 50%;
   outline: 1px solid var(--bg-header-alt);
+} /* maybe we souldnt put absolute positions in here */
+
+.fr-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  position: relative;
+  outline: 1px solid var(--bg-header-alt);
+  left: 30px;
+  bottom: 10px;
 }
 
 .status-dot.online {

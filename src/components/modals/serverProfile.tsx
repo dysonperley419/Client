@@ -29,10 +29,11 @@ export const ServerProfileModal = ({
   mutual_friends: sharedFriends,
 }: ServerProfileProps): JSX.Element => {
   const { openModal, closeModal, updateModal } = useModal();
-  const { guilds } = useGateway();
+  const { guilds, getPresence } = useGateway();
   const navigate = useNavigate();
 
-  const status = member.presence?.status ?? 'offline';
+  const status = getPresence(member.id)?.status ?? 'offline';
+
   const [activeTab, setActiveTab] = useState<'INFO' | 'GUILDS' | 'FRIENDS'>('INFO');
 
   const handleGuildClick = (guildId: string) => {

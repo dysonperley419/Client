@@ -15,7 +15,7 @@ import {
 } from '@/types/gateway';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
 import type { Guild, Member } from '@/types/guilds';
-import { type Session, SessionListSchema } from '@/types/presences';
+import { type Presence, type Session, SessionListSchema } from '@/types/presences';
 import type { Relationship } from '@/types/relationship';
 import type { User } from '@/types/users';
 import type { UserSettings } from '@/types/userSettings';
@@ -101,6 +101,14 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     return undefined;
   }, []);
 
+  const getPresence = useCallback(
+    (userId: string | undefined): Presence | null => {
+      if (!userId) return null;
+      return presences[userId] ?? null;
+    },
+    [presences],
+  );
+
   const handleDispatch = useCallback(
     (type: string, data: unknown) => {
       const { upsertUsers, updatePresence } = useUserStore.getState();
@@ -108,28 +116,42 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
       switch (type) {
         case 'READY': {
           const parsed = ReadyEventSchema.parse(data);
+          const initialPresences: Record<string, Presence> = {};
+
           sessionId.current = parsed.session_id;
           resumeGatewayUrl.current = parsed.resume_gateway_url ?? null;
 
           upsertUsers([parsed.user]);
           upsertUsers(parsed.relationships.map((r) => r.user));
-          parsed.guilds.forEach((guild: Guild) => {
-            const presencesToProcess = guild.presences ?? [];
 
-            presencesToProcess.forEach((presence) => {
+          if (parsed.presences) {
+            parsed.presences.forEach((presence) => {
+              if (presence.user?.id) {
+                initialPresences[presence.user.id] = presence;
+
+                updatePresence(presence.user.id, presence);
+              }
+            });
+          } //So friend statuses are supposed to be sent here, which oldcord does - but spacebar seemingly doesn't?
+
+          parsed.guilds.forEach((guild: Guild) => {
+            (guild.presences ?? []).forEach((presence) => {
               const userId = presence.user.id;
               if (!userId) return;
 
               upsertUsers([presence.user as User]);
               updatePresence(userId, presence);
+
+              initialPresences[userId] = presence;
             });
-          });
+          }); //So spacebar doesnt actually have this like we do on oldcord, some modern discord engineering bullshit - it'll fix itself on op 14 responses dw
           setUser(parsed.user);
           setPrivateChannels(parsed.private_channels ?? []);
           setRelationships(parsed.relationships);
           setUserSettings(parsed.user_settings);
           setGuilds(parsed.guilds);
           setSessions(parsed.sessions ?? []);
+          setPresences((prev) => ({ ...prev, ...initialPresences }));
           setIsReady(true);
           break;
         }
@@ -171,7 +193,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         case 'CHANNEL_CREATE': {
           const newChannel = data as Channel;
           if (newChannel.type === 1 || newChannel.type === 3) {
-            setPrivateChannels(prev => [newChannel, ...prev]);
+            setPrivateChannels((prev) => [newChannel, ...prev]);
           }
           window.dispatchEvent(new CustomEvent('ui_channel_created', { detail: newChannel }));
           break;
@@ -180,7 +202,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         case 'CHANNEL_DELETE': {
           const deleted = data as Channel;
           if (deleted.type === 1 || deleted.type === 3) {
-            setPrivateChannels(prev => prev.filter(c => c.id !== deleted.id));
+            setPrivateChannels((prev) => prev.filter((c) => c.id !== deleted.id));
           }
           window.dispatchEvent(new CustomEvent('ui_channel_deleted', { detail: deleted }));
           break;
@@ -210,22 +232,39 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         case 'GUILD_MEMBER_LIST_UPDATE': {
           const parsed = GuildMemberListUpdateSchema.parse(data);
           const usersToStore: User[] = [];
+          const newPresences: Record<string, Presence> = {};
           parsed.ops.forEach((op) => {
-            if (op.op === 'SYNC') {
-              op.items.forEach((item) => {
-                if (item.member?.user) {
-                  usersToStore.push(item.member.user);
-                }
-              });
-            } else if (op.op === 'INSERT' || op.op === 'UPDATE') {
-              if (op.item.member?.user) {
-                usersToStore.push(op.item.member.user);
+            const processItem = (item: any) => {
+              if (item.member?.user) {
+                usersToStore.push(item.member.user);
               }
+
+              if (item.member?.presence) {
+                const userId = item.member.user?.id || item.member.id;
+
+                if (userId) {
+                  newPresences[userId] = item.member.presence;
+                }
+              }
+            };
+
+            if (op.op === 'SYNC') {
+              op.items.forEach(processItem);
+            } else if (op.op === 'INSERT' || op.op === 'UPDATE') {
+              processItem(op.item);
             }
           });
 
           if (usersToStore.length > 0) {
             upsertUsers(usersToStore);
+          }
+
+          if (Object.keys(newPresences).length > 0) {
+            Object.entries(newPresences).forEach(([id, presence]) => {
+              updatePresence(id, presence);
+            });
+
+            setPresences((prev) => ({ ...prev, ...newPresences }));
           }
 
           setMemberLists((prev) => {
@@ -340,7 +379,14 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           const userId = parsed.user.id;
           if (userId) {
             updatePresence(userId, parsed);
-            setPresences((prev) => ({ ...prev, [userId]: parsed }));
+            setPresences((prev) => ({
+              ...prev,
+              [userId]: {
+                ...(prev[userId] ?? {}),
+                ...parsed,
+                user: { ...(prev[userId]?.user ?? {}), ...parsed.user },
+              },
+            }));
           }
           break;
         }
@@ -477,6 +523,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     requestMembers,
     getMember,
     getMemberColor,
+    getPresence,
     typingUsers,
     memberLists,
     memberListsRef,

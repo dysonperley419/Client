@@ -1,11 +1,11 @@
 import './dfm.css';
 
-import { useEffect, useState, type JSX } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 
 import { useGateway } from '@/context/gatewayContext';
 import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
-import type { Guild, Role } from '@/types/guilds';
+import type { Guild, Member, Role } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { useUserProfileActions } from '@/utils/profileUtils';
 
@@ -16,7 +16,7 @@ export const MemberMention = ({
   guild_id: string | undefined;
   user_id: string;
 }): JSX.Element => {
-  const { getMember, guilds } = useGateway();
+  const { getMember, guilds, getPresence } = useGateway();
   const getUser = useUserStore((state) => state.getUser);
   const contextGuild = guilds.find((x: Guild) => x.id === guild_id)!;
 
@@ -37,16 +37,39 @@ export const MemberMention = ({
     };
 
     loadUser();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [user_id, getUser]);
 
   const name: string = member?.nick || fetchedUser?.global_name || fetchedUser?.username || '...';
+
+  let fakeMemberObj: Member | any = {
+    id: user_id,
+  };
+
+  if (fetchedUser) {
+    const presence = getPresence(fetchedUser.id);
+    const status = presence?.status ?? 'offline';
+
+    fakeMemberObj = {
+      id: fetchedUser.id,
+      user: fetchedUser,
+      presence: {
+        user: fetchedUser,
+        status: status,
+        activities: [],
+      },
+      joined_at: new Date().toISOString(),
+      roles: [],
+    };
+  }
 
   return (
     <strong
       onClick={(e) => {
         if (fetchedUser) {
-          openUserProfile(e, fetchedUser);
+          openUserProfile(e, member! ?? fakeMemberObj);
         }
       }}
       className='user-msg-mention'

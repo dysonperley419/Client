@@ -7,12 +7,14 @@ export const DmChannel = ({
   title,
   subtitle,
   selected,
+  status,
   onClick,
   onClose,
 }: {
   icon: string | JSX.Element;
   title: string;
   selected: boolean;
+  status: string;
   subtitle?: string;
   onClick: () => void;
   onClose: () => void;
@@ -20,6 +22,7 @@ export const DmChannel = ({
   <div className={`dm-card ${selected ? 'selected-dm' : ''}`} onClick={onClick}>
     <div className='dm-card-icon'>
       {typeof icon === 'string' ? <img src={icon} alt='' /> : icon}
+      <div className={`fr-status-dot ${status}`} title={status}></div>
     </div>
     <div className='dm-card-info'>
       <div className='dm-card-title'>{title}</div>

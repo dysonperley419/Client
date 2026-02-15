@@ -119,7 +119,7 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
                   <div className='account-info-section'>
                     <div>
                       <p className='info-label'>ABOUT ME</p>
-                      <p className='info-value'>{user?.bio ?? 'Not set'}</p>
+                      <p className='info-value'>{user?.bio || 'Not set'}</p>
                     </div>
                   </div>
                 </div>

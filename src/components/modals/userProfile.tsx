@@ -10,7 +10,7 @@ import { useGateway } from '../../context/gatewayContext';
 import { usePopup } from '../../context/popupContext';
 
 export const UserProfileModal = (): JSX.Element => {
-  const { user, sessions, presences } = useGateway();
+  const { user, sessions, getPresence } = useGateway();
   const { closePopup } = usePopup();
 
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
@@ -52,7 +52,7 @@ export const UserProfileModal = (): JSX.Element => {
   const switchInstance = noop;
 
   const status =
-    sessions[0]?.status ?? (user?.id ? presences[user.id]?.status : undefined) ?? 'offline';
+    sessions[0]?.status ?? (user?.id ? getPresence(user.id)?.status : undefined) ?? 'offline';
 
   return (
     <div className='user-profile-modal'>

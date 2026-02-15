@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react';
 import type { Member, Role } from '@/types/guilds';
 
 export interface PopupDataMap {
-  USER_PROFILE_POPOUT: { x: number; y: number; member: Member; roles: Role[] };
+  USER_PROFILE_POPOUT: { x: number; y: number; member: Member; roles: Role[] | null };
   CURRENT_USER_PROFILE: { x: number; y: number };
 }
 

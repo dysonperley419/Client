@@ -4,7 +4,6 @@ import { type JSX, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
-import { useUserStore } from '@/stores/userstore';
 import type { Guild } from '@/types/guilds';
 import type { User } from '@/types/users';
 
@@ -24,10 +23,9 @@ const GuildSidebar = ({
   selectedGuildId?: string | null;
   onSelectGuild: (guild: Guild) => void;
 }): JSX.Element => {
-  const storedUsers = useUserStore((state) => state.users);
   const [unreads, setUnreads] = useState<Set<string>>(new Set());
   const [mentions, setMentions] = useState<Map<string, number>>(new Map());
-  const { user, sessions, presences, relationships } = useGateway();
+  const { user, sessions, relationships, getPresence } = useGateway();
   const { openModal } = useModal();
   const { openContextMenu } = useContextMenu();
   const { openPopup, popupType } = usePopup();
@@ -168,11 +166,10 @@ const GuildSidebar = ({
 
   const isHomeSelected = !selectedGuildId;
   const status =
-    sessions[0]?.status ?? (user?.id ? presences[user.id]?.status : undefined) ?? 'offline';
+    sessions[0]?.status ?? (user?.id ? getPresence(user.id)?.status : undefined) ?? 'offline';
 
   const onlineFriendsCount = relationships.filter((r) => {
-    const liveFriend = storedUsers[r.id];
-    const friendStatus = liveFriend?.presence?.status ?? 'offline';
+    const friendStatus = getPresence(r.id)?.status ?? 'offline';
 
     return r.type === 1 && friendStatus !== 'offline' && friendStatus !== 'invisible';
   }).length;

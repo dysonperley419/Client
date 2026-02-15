@@ -74,6 +74,7 @@ export const ReadyEventSchema = z.looseObject({
   session_id: z.string(),
   resume_gateway_url: z.string().nullish(),
   private_channels: z.array(PrivateChannelSchema).default([]),
+  presences: z.array(PresenceSchema).optional().default([]),
 });
 
 export const MessageCreateSchema = MessageSchema.extend({

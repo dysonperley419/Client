@@ -2,19 +2,17 @@ import './popoutProfile.css';
 
 import { type JSX } from 'react';
 
+import { useGateway } from '@/context/gatewayContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import type { Member, Role } from '@/types/guilds';
+import { useUserProfileActions } from '@/utils/profileUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
-import { useModal } from '../../context/modalContext';
-import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
-import { get } from '@/utils/api';
-import { logger } from '@/utils/logger';
 
 interface PopoutProfileProps {
   member: Member;
-  roles: Role[];
+  roles: Role[] | null;
   contextGuildId: string | null;
 }
 
@@ -23,11 +21,10 @@ export const PopoutProfile = ({
   roles,
   contextGuildId,
 }: PopoutProfileProps): JSX.Element => {
-  const { openModal, updateModal } = useModal();
-  const { closePopup } = usePopup();
-
+  const { getPresence } = useGateway();
   const contextPerms = usePermissions(contextGuildId ?? '0');
-  const status = member.presence?.status ?? 'offline';
+  const status = getPresence(member.id)?.status ?? 'offline';
+  const { openFullProfile } = useUserProfileActions(null);
 
   const MemberAvatar = ({ member, className }: { member: Member; className: string }) => {
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
@@ -48,37 +45,6 @@ export const PopoutProfile = ({
         }}
       />
     );
-  };
-
-  const handleProfileOpen = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    closePopup();
-
-    openModal('SERVER_PROFILE', {
-      member: member,
-    });
-
-    try {
-        const query = new URLSearchParams({
-          with_mutual_guilds: 'true',
-          with_mutual_friends: 'true'
-        }).toString();
-
-        const fullProfile = await get(`/users/${member.id ?? member.user.id}/profile?${query}`);
-
-        updateModal<'SERVER_PROFILE'>({
-          mutual_guilds: fullProfile.mutual_guilds,
-          mutual_friends: fullProfile.mutual_friends,
-          connected_accounts: fullProfile.connected_accounts,
-          premium_since: fullProfile.premium_since,
-          premium_type: fullProfile.premium_type
-        });
-    }
-    catch (error) {
-      logger.error(`SERVER_PROFILE`, `Failed to fetch full user profile from API!`, error);
-    }
   };
 
   const getRoleColor = (colorDecimal: number) => {
@@ -123,7 +89,7 @@ export const PopoutProfile = ({
               e.currentTarget.classList.remove('avatar-img-text');
             }}
             onClick={(e) => {
-              handleProfileOpen(e);
+              openFullProfile(e, member);
             }}
           >
             <MemberAvatar member={member} className='avatar-img-large' />
@@ -154,34 +120,36 @@ export const PopoutProfile = ({
           </>
         )}
         <hr className='popout-separator' />
-        <div className='popout-section'>
-          <span className='section-title'>ROLES</span>
-          <div className='roles-container'>
-            {member.roles.map((roleId: string) => {
-              const role = roles.find((r: Role) => r.id === roleId);
+        {roles != null && (
+          <div className='popout-section'>
+            <span className='section-title'>ROLES</span>
+            <div className='roles-container'>
+              {member.roles.map((roleId: string) => {
+                const role = roles.find((r: Role) => r.id === roleId);
 
-              if (!role) return null;
+                if (!role) return null;
 
-              const color = getRoleColor(role.color);
+                const color = getRoleColor(role.color);
 
-              return (
-                <div
-                  key={roleId}
-                  className='role-pill role-emphasis-border'
-                  style={{
-                    borderColor: color,
-                    outlineColor: color,
-                    background: `${color}22`,
-                  }}
-                >
-                  {contextPerms.canManageRoles && <span className='role-removal-btn'>×</span>}{' '}
-                  {role.name}
-                </div>
-              );
-            })}
-            {contextPerms.canManageRoles && <div className='add-role-btn'>+</div>}
+                return (
+                  <div
+                    key={roleId}
+                    className='role-pill role-emphasis-border'
+                    style={{
+                      borderColor: color,
+                      outlineColor: color,
+                      background: `${color}22`,
+                    }}
+                  >
+                    {contextPerms.canManageRoles && <span className='role-removal-btn'>×</span>}{' '}
+                    {role.name}
+                  </div>
+                );
+              })}
+              {contextPerms.canManageRoles && <div className='add-role-btn'>+</div>}
+            </div>
           </div>
-        </div>
+        )}
         <div className='popout-section'>
           <span className='section-title'>NOTE</span>
           <textarea className='note-input' placeholder='Click to add a note' />

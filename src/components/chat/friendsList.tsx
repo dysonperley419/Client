@@ -1,17 +1,16 @@
 import './friendsList.css';
 
 import { type JSX, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { type UserStore, useUserStore } from '@/stores/userstore';
+import { useGateway } from '@/context/gatewayContext';
+import type { Channel } from '@/types/channel';
 import type { Relationship } from '@/types/relationship';
 import { del, post, put } from '@/utils/api';
+import { logger } from '@/utils/logger';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { getDefaultAvatar } from '../../utils/avatar';
-import { useGateway } from '@/context/gatewayContext';
-import type { Channel } from '@/types/channel';
-import { logger } from '@/utils/logger';
-import { useNavigate } from 'react-router-dom';
 
 interface FriendsListProps {
   friends: Relationship[];
@@ -24,16 +23,14 @@ export const FriendsList = ({
   onRequestUpdate,
   onRequestDelete,
 }: FriendsListProps): JSX.Element => {
-  const storedUsers = useUserStore((state: UserStore) => state.users);
   const navigate = useNavigate();
-  const { privateChannels, user } = useGateway();
+  const { privateChannels, getPresence } = useGateway();
   const [filter, setFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const getFilteredFriends = () => {
     const filtered = friends.filter((friend) => {
-      const livePresence = storedUsers[friend.id];
-      const currentStatus = livePresence?.presence?.status ?? 'offline';
+      const currentStatus = getPresence(friend.id)?.status;
 
       if (searchQuery && !friend.user.username.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
@@ -104,14 +101,14 @@ export const FriendsList = ({
   };
 
   const openDMChannel = async (userId: string) => {
-     let dmChannel = (privateChannels as Channel[]).find(
-      (c) => c.type === 1 && c.recipients?.some((r) => r.id === userId)
+    let dmChannel = (privateChannels as Channel[]).find(
+      (c) => c.type === 1 && c.recipients?.some((r) => r.id === userId),
     );
 
     if (!dmChannel) {
       try {
         const newDMChannel = await post(`/users/@me/channels`, {
-          recipients: [userId]
+          recipients: [userId],
         });
 
         dmChannel = newDMChannel as Channel;
@@ -122,7 +119,7 @@ export const FriendsList = ({
     }
 
     if (dmChannel?.id) {
-        void navigate(`/channels/@me/${dmChannel.id}`);
+      void navigate(`/channels/@me/${dmChannel.id}`);
     }
   };
 
@@ -206,15 +203,20 @@ export const FriendsList = ({
           </div>
           <div className='friends-scroller'>
             {displayFriends.map((friend) => {
-              const liveUser = storedUsers[friend.id];
-              const liveStatus = liveUser?.presence?.status ?? 'offline';
+              const liveStatus = getPresence(friend.id)?.status ?? 'offline';
 
               return (
-                <div key={friend.id} className='friend-item-row' onClick={() => openDMChannel(friend.id)}>
+                <div
+                  key={friend.id}
+                  className='friend-item-row'
+                  onClick={() => openDMChannel(friend.id)}
+                >
                   <div className='friend-info'>
                     <div className='avatar-wrapper'>
                       <FriendAvatar friend={friend} />
-                      {friend.type === 1 && <div className={`status-dot ${liveStatus}`} />}
+                      {friend.type === 1 && (
+                        <div className={`status-dot ${liveStatus}`} title={liveStatus} />
+                      )}
                     </div>
                     <div className='friend-text'>
                       <div className='friend-name-row'>

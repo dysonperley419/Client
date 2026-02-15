@@ -30,6 +30,7 @@ export interface GatewayContextSchema {
     user_id: string | null | undefined,
   ) => Member | null;
   getMemberColor: (member: Member, guild?: Guild | null) => string | undefined;
+  getPresence: (userId: string | undefined) => Presence | null;
   typingUsers: Record<string, Record<string, number>>;
   memberLists?: Record<string, GuildMemberListState>;
   memberListsRef?: React.RefObject<Record<string, GuildMemberListState> | undefined>;
