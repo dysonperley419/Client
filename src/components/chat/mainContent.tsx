@@ -49,7 +49,6 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   const scrollerRef = useRef<HTMLDivElement>(null);
   const getUser = useUserStore((state) => state.getUser);
   const { typingUsers, user, getMember, getMemberColor, getPresence } = useGateway();
-  const [fakeSentMsgs, setFakeSentMsgs] = useState<Message[]>([]);
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [chatMessage, setChatMessage] = useState('');
   const lastTypingSent = useRef<number>(0);
@@ -175,7 +174,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       content: chatMessage,
       author: user!,
       timestamp: new Date().toISOString(),
-      attachments: attachments.map((at, i) => ({
+      attachments: attachments.map((at) => ({
         id: at.id,
         filename: at.file.name,
         url: at.preview,
@@ -187,8 +186,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       pinned: false,
       tts: false,
       type: 0,
-      state: 0, //0 = sending (1 = sent, -1 = failed)
-    } as unknown as Message;
+      state: MESSAGE_STATE.PENDING, //0 = sending (1 = sent, -1 = failed)
+    } as LocalMessage;
 
     const payload = {
       content: chatMessage,
@@ -203,7 +202,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       formData.append(`files[${index.toString()}]`, at.file);
     });
 
-    setFakeSentMsgs((prev) => [...prev, ghostMessage]);
+    setMessages((prev) => [...prev, ghostMessage]);
     setChatMessage('');
 
     const toCleanup = [...attachments];
@@ -219,8 +218,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     } catch (error) {
       console.error('Error sending message:', error);
 
-      setFakeSentMsgs((prev) =>
-        prev.map((m) => (m.id === ghostMessage.id ? { ...m, state: MESSAGE_STATE.FAILED } : m)),
+      setMessages((prev) =>
+        prev.map((m) => (m.nonce === nonce ? { ...m, state: MESSAGE_STATE.FAILED } : m)),
       );
     }
 
@@ -311,22 +310,20 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
       if (newMessage.channel_id !== selectedChannel.id) return;
 
-      if (newMessage.nonce) {
-        const nonceStr = String(newMessage.nonce);
-
-        setFakeSentMsgs((prev) => prev.filter((m) => String(m.nonce) !== nonceStr));
-      }
-
       setMessages((prev) => {
-        const isDup = prev.some(
+        const matchIdx = prev.findIndex(
           (m) =>
-            m.id === newMessage.id ||
-            (newMessage.nonce && String(m.nonce) === String(newMessage.nonce)),
+            (newMessage.nonce && String(m.nonce) === String(newMessage.nonce)) ||
+            m.id === newMessage.id,
         );
 
-        if (isDup) return prev;
+        if (matchIdx !== -1) {
+          const copy = [...prev];
+          copy[matchIdx] = { ...newMessage, state: MESSAGE_STATE.SENT };
+          return copy;
+        }
 
-        return [...prev, newMessage];
+        return [...prev, { ...newMessage, state: MESSAGE_STATE.SENT }];
       });
 
       scrollToBottom();
@@ -336,12 +333,6 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       const updatedMessage = event.detail as LocalMessage;
 
       if (updatedMessage.channel_id !== selectedChannel.id) return;
-
-      if (updatedMessage.nonce) {
-        const nonceStr = String(updatedMessage.nonce);
-
-        setFakeSentMsgs((prev) => prev.filter((m) => String(m.nonce) !== nonceStr));
-      }
 
       setMessages((prev) => {
         const exists = prev.some((m) => m.id === updatedMessage.id);
@@ -376,24 +367,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   }, [selectedChannel.id]);
 
   const renderMessages = () => {
-    const rawAllMessages = [...messages, ...fakeSentMsgs];
-    const merged = new Map<string, LocalMessage>();
-
-    rawAllMessages.forEach((msg: LocalMessage) => {
-      const key = msg.nonce ? String(msg.nonce) : msg.id;
-      const existing = merged.get(key);
-
-      if (
-        !existing ||
-        (existing.state == MESSAGE_STATE.PENDING && msg.state != MESSAGE_STATE.PENDING)
-      ) {
-        merged.set(key, msg);
-      }
-    });
-
-    const allMessages = Array.from(merged.values()).sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-    );
+    const allMessages = messages;
 
     if (allMessages.length === 0) {
       if (firstLoad)
