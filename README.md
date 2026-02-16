@@ -4,10 +4,21 @@ WIP Spacebar compatible (themed as comfy lavender) client that also works with O
 
 ## Implemented Features
 
-- Creating/joining guilds
-- Creating/fetching messages/WIP attachment media
-- Fetching member lists
-- Basic right click server context menu ( Leave Server / Delete Server )
+ - Messaging, of which:
+     * Creating messages, fetching messages, and uploading attachment media - Including ghost messages for currently sending messages/attachments
+       
+ - Guilds, of which:
+    * Creation, joining
+    * Member list & User Popout Profiles
+  
+- Channels, of which:
+    * Voice state tracking, and vc member list
+    * DM Channels (Groups not tested yet)
+
+- WEBRTC Voice (WIP), of which:
+    * Can join an oldcord instance VC locally on firefox/waterfox can speak/hear from Chrome and/to other Firefox
+    * Chrome cannot speak yet for some odd reason
+
 
 ## Setup
 
