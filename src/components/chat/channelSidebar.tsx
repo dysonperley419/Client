@@ -294,6 +294,14 @@ const ChannelSidebar = ({
       </div>
 
       <div className='scroller_hide'>
+         {nonCategorizedChannels.map((channel: Channel) => (
+          <div key={`wrapper-${channel.id}`} className='category-children' style={{
+            marginBottom: '10px'
+          }}>
+            {renderChannel(channel)}
+          </div>
+        ))}
+
         {categoryChannels
           .sort((a: Channel, b: Channel) => a.position - b.position)
           .map((category: Channel) => {
@@ -324,12 +332,6 @@ const ChannelSidebar = ({
               </div>
             );
           })}
-
-        {nonCategorizedChannels.map((channel: Channel) => (
-          <div key={`wrapper-${channel.id}`} className='category-children'>
-            {renderChannel(channel)}
-          </div>
-        ))}
       </div>
 
       <VoiceActivityControls />

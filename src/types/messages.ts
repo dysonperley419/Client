@@ -137,7 +137,7 @@ export const MessageSchema = z.object({
   attachments: z.array(AttachmentSchema).default([]),
   embeds: z.array(EmbedSchema).default([]),
   reactions: z.array(ReactionSchema).nullish(),
-  nonce: z.union([z.coerce.number().int(), z.string()]).nullable().nullish(),
+  nonce: z.coerce.string().nullable().nullish(),
   pinned: z.boolean().nullish(),
   webhook_id: z.string().nullish(),
   type: z.coerce.number().int(),
@@ -164,6 +164,7 @@ export const MessageSchema = z.object({
   components: z.array(z.any()).nullish(),
   sticker_items: z.array(z.any()).nullish(),
   poll: PollSchema.nullish(),
+  is_pending: z.boolean().optional().default(false), //for local msgs on flicker
 });
 
 export const MessageListSchema = z.array(MessageSchema);

@@ -285,3 +285,81 @@
   border-radius: 8px;
   max-height: 400px;
 }
+
+.message-pending {
+  opacity: 0.4 !important;
+  filter: grayscale(100%) brightness(0.7);
+  cursor: wait;
+}
+
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border: 1px dashed var(--accent-primary);
+  border-radius: 8px;
+  animation: overlayPulse 8s cubic-bezier(0.68, -0.6, 0.32, 1.6) infinite;
+  backdrop-filter: blur(0px);
+  transition: backdrop-filter 0.3s ease;
+}
+
+@keyframes overlayPulse {
+  0%, 60% {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+  }
+  70% {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+  }
+  80% {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+  }
+  100% {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+  }
+}
+
+.drag-content {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.drag-content span {
+  font-size: 84px;
+  display: inline-block;
+  color: white;
+  filter: drop-shadow(4px 4px 10px rgba(0, 0, 0, 0.3));
+  animation: dropthefilebro 8s cubic-bezier(0.68, -0.6, 0.32, 1.6) infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+@keyframes dropthefilebro {
+  0% {
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+  }
+  60% {
+    transform: perspective(1000px) rotateX(10deg) rotateY(180deg) scale(1.1);
+  }
+  70% {
+    transform: perspective(1000px) rotateX(-20deg) rotateY(225deg) rotateZ(15deg) scale(1.3);
+    filter: drop-shadow(-20px 10px 30px rgba(0, 0, 0, 0.8));
+    color: var(--accent-primary);
+  }
+  80% {
+    transform: perspective(1000px) rotateX(5deg) rotateY(170deg) scale(0.95);
+  }
+  100% {
+    transform: perspective(1000px) rotateX(0deg) rotateY(360deg);
+  }
+}

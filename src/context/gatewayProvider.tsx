@@ -200,6 +200,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
         case 'MESSAGE_CREATE': {
           const parsed = MessageCreateSchema.parse(data);
+
           upsertUsers([parsed.author as User]);
 
           window.dispatchEvent(new CustomEvent('gateway_message_create', { detail: parsed }));

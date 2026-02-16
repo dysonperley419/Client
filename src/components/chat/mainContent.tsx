@@ -31,13 +31,16 @@ interface MainContentProps {
   selectedGuild: Guild | null;
 }
 
+type LocalMessage = Message & { is_pending?: boolean };
+
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
   const { openUserProfile, openFullProfile } = useUserProfileActions(selectedGuild);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const getUser = useUserStore((state) => state.getUser);
   const { typingUsers, user, getMember, getMemberColor, getPresence } = useGateway();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [fakeSentMsgs, setFakeSentMsgs] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [chatMessage, setChatMessage] = useState('');
   const lastTypingSent = useRef<number>(0);
   const isloadingMore = useRef(false);
@@ -46,19 +49,47 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const addFiles = (files: File[]) => {
+    const newAttachments: MediaAttachment[] = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      id: crypto.randomUUID(),
+    }));
+
+    setAttachments((prev) => [...prev, ...newAttachments]);
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setIsDragging(true);
+    } else if (e.type === "dragleave") {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = Array.from(e.dataTransfer.files);
+      
+      addFiles(files);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
     const files = Array.from(e.target.files);
-    const newAttachments: MediaAttachment[] = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-      id: Math.random().toString(36).substring(7),
-    }));
-
-    setAttachments((prev) => [...prev, ...newAttachments]);
-
+    
+    addFiles(files);
     e.target.value = '';
   };
 
@@ -85,6 +116,20 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     if (autoScroll.current) scrollToBottom();
   }, [messages]);
 
+    useEffect(() => {
+      const handlePaste = (e: ClipboardEvent) => {
+        if (e.clipboardData && e.clipboardData.files.length > 0) {
+          const files = Array.from(e.clipboardData.files);
+          
+          addFiles(files);
+          e.preventDefault();
+        }
+      };
+
+      window.addEventListener('paste', handlePaste);
+      return () => window.removeEventListener('paste', handlePaste);
+    }, []);
+
   const fetchMessages = useCallback(
     async (limit: number, before?: string) => {
       const url = `/channels/${selectedChannel.id}/messages?limit=${String(limit)}${before ? `&before=${before}` : ''}`;
@@ -109,9 +154,33 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
     const formData = new FormData();
 
+    const nonce = Math.floor(Math.random() * 1000000000).toString();
+
+    const ghostMessage: Message = {
+      id: `temp-${nonce}`,
+      nonce: nonce,
+      channel_id: selectedChannel.id,
+      content: chatMessage,
+      author: user!,
+      timestamp: new Date().toISOString(),
+      attachments: attachments.map((at, i) => ({
+        id: at.id,
+        filename: at.file.name,
+        url: at.preview,
+        size: at.file.size,
+        proxy_url: at.preview,
+      })),
+      embeds: [],
+      mentions: [],
+      pinned: false,
+      tts: false,
+      type: 0,
+      is_pending: true,
+    } as unknown as Message;
+
     const payload = {
       content: chatMessage,
-      nonce: Math.floor(Math.random() * 1000000000).toString(),
+      nonce: nonce,
       tts: false,
       embeds: [],
     };
@@ -122,6 +191,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       formData.append(`files[${index.toString()}]`, at.file);
     });
 
+    setFakeSentMsgs((prev) => [...prev, ghostMessage])
     setChatMessage('');
 
     const toCleanup = [...attachments];
@@ -221,29 +291,54 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
   useEffect(() => {
     const handleNewMessage = (event: CustomEvent<MessageCreate>) => {
-      const newMessage = event.detail;
+      const newMessage = event.detail as LocalMessage;
 
-      if (newMessage.channel_id === selectedChannel.id) {
-        setMessages((prev) => {
-          if (prev.find((m) => m.id === newMessage.id)) return prev;
-          return [...prev, MessageSchema.parse(newMessage)];
-        });
+      if (newMessage.channel_id !== selectedChannel.id) return;
 
-        scrollToBottom();
+      if (newMessage.nonce) {
+        const nonceStr = String(newMessage.nonce);
+
+        setFakeSentMsgs((prev) => prev.filter((m) => String(m.nonce) !== nonceStr));
       }
+
+     setMessages((prev) => {
+        const isDup = prev.some(m => 
+          m.id === newMessage.id || 
+          (newMessage.nonce && String(m.nonce) === String(newMessage.nonce))
+        );
+
+        if (isDup) return prev;
+
+        return [...prev, newMessage];
+      });
+
+      scrollToBottom();
     };
     //MessageCreate, MessageUpdate and MessageDelete need types
     const handleUpdateMessage = (event: CustomEvent<MessageUpdate>) => {
-      const updatedMessage = event.detail;
+      const updatedMessage = event.detail as LocalMessage;
+      
+      if (updatedMessage.channel_id !== selectedChannel.id) return;
 
-      if (updatedMessage.channel_id === selectedChannel.id) {
-        setMessages((prev) =>
-          prev.map((old) =>
-            old.id === updatedMessage.id ? MessageSchema.parse(updatedMessage) : old,
-          ),
-        );
+      if (updatedMessage.nonce) {
+        const nonceStr = String(updatedMessage.nonce);
+        
+        setFakeSentMsgs((prev) => prev.filter((m) => String(m.nonce) !== nonceStr));
       }
+
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === updatedMessage.id);
+
+        if (exists) {
+         return prev.map((old) =>
+            old.id === updatedMessage.id ? { ...old, ...updatedMessage } : old,
+          );
+        }
+
+        return [...prev, MessageSchema.parse(updatedMessage)];
+      });
     };
+
     const handleDeleteMessage = (event: CustomEvent<MessageDelete>) => {
       const deletedMessage = event.detail;
 
@@ -264,7 +359,23 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   }, [selectedChannel.id]);
 
   const renderMessages = () => {
-    if (messages.length === 0) {
+    const rawAllMessages = [...messages, ...fakeSentMsgs];
+    const merged = new Map<string, LocalMessage>();
+
+    rawAllMessages.forEach((msg: LocalMessage) => {
+      const key = (msg.nonce ? String(msg.nonce) : msg.id);
+      const existing = merged.get(key);
+
+      if (!existing || (existing.is_pending && !msg.is_pending)) {
+        merged.set(key, msg);
+      }
+    });
+
+    const allMessages = Array.from(merged.values()).sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    if (allMessages.length === 0) {
       if (firstLoad)
         return (
           <div className='no-messages'>
@@ -319,12 +430,17 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       );
     };
 
-    return messages.map((msg: Message, index: number) => {
-      const prevMsg = messages[index - 1];
+    return allMessages.map((msg: LocalMessage, index: number) => {
+      const messageKey = msg.nonce || msg.id;
+
+      const prevMsg = allMessages[index - 1];
       const isNewGroup =
         prevMsg?.author.id !== msg.author.id ||
         new Date(msg.timestamp).getTime() - new Date(prevMsg?.timestamp ?? '').getTime() > 420000;
 
+        const pendingClass = msg.is_pending ? 'message-pending' : '';
+        const pendingStyle = msg.is_pending ? { opacity: 0.5, filter: 'grayscale(100%)' } : {};
+    
       const msgContent = (
         <>
           <div className='message-content'>
@@ -406,9 +522,9 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         };
 
         const color = getMemberColor(member, selectedGuild);
-
+        
         return (
-          <div key={msg.id} className='message-group'>
+          <div key={messageKey} className={`message-group ${pendingClass}`} style={pendingStyle}>
             <AuthorAvatar msg={msg} member={member} />
             <div className='message-details'>
               <div className='message-header'>
@@ -430,7 +546,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       }
 
       return (
-        <div key={msg.id} className='message-details message-sub'>
+        <div key={messageKey} className={`message-details message-sub ${pendingClass}`} style={pendingStyle}>
           {msgContent}
         </div>
       );
@@ -527,7 +643,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   };
 
   return (
-    <main className='chat-main'>
+    <main className='chat-main' onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop}>
       <header className='header'>
         <div className='header-left'>
           <div className='header-icon'>
@@ -608,6 +724,15 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         </div>
       </header>
 
+    {isDragging && (
+        <div className="drag-overlay">
+          <div className="drag-content">
+            <span className="material-symbols-rounded">attach_file_add</span>
+            <p>Drop files to upload</p>
+          </div>
+        </div>
+      )}
+
       <div className='chat-content-row'>
         <div className='chat-view'>
           <div
@@ -628,24 +753,34 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
             <div className='input-wrapper'>
               {attachments.length > 0 && (
                 <div className='attachment-shelf'>
-                  {attachments.map((at) => (
-                    <div key={at.id} className='attachment-container'>
-                      <img
-                        src={at.preview}
-                        className='attachment-preview'
-                        alt='Attachment preview'
-                      />
-                      <button
-                        type='button'
-                        className='attachment-remove'
-                        onClick={() => {
-                          removeAttachment(at.id);
-                        }}
-                      >
-                        X
-                      </button>
-                    </div>
-                  ))}
+                  {attachments.map((at) => {
+                    const isVideo = at.file.type.startsWith('video/');
+
+                    return (
+                      <div key={at.id} className='attachment-container'>
+                        {isVideo ? (
+                          <video 
+                            src={at.preview} 
+                            className='attachment-preview' 
+                            muted 
+                          />
+                        ) : (
+                          <img
+                            src={at.preview}
+                            className='attachment-preview'
+                            alt='Attachment preview'
+                          />
+                        )}
+                        <button
+                          type='button'
+                          className='attachment-remove'
+                          onClick={() => removeAttachment(at.id)}
+                        >
+                          X
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               <div className='input-row'>
