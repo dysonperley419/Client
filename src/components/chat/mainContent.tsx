@@ -486,8 +486,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
     const channelTypingMap = typingUsers[selectedChannel.id] ?? {};
     let typingIds: string[] = Object.keys(channelTypingMap);
-    if (user != null)
-      typingIds = typingIds.filter((id) => id !== user.id);
+    if (user != null) typingIds = typingIds.filter((id) => id !== user.id);
 
     if (typingIds.length === 0) return null;
 
@@ -518,7 +517,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     if (!typingId3) {
       return (
         <p>
-          <TypingName userId={typingId0} />, <TypingName userId={typingId1} /> and <TypingName userId={typingId2} /> are typing...
+          <TypingName userId={typingId0} />, <TypingName userId={typingId1} /> and{' '}
+          <TypingName userId={typingId2} /> are typing...
         </p>
       );
     }
@@ -537,7 +537,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
           </div>
           <span
             className='header-title'
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               if (selectedChannel?.type === 1 && selectedChannel.recipients) {
                 const recipient = selectedChannel.recipients[0];
                 const presence = getPresence(recipient!.id);

@@ -49,7 +49,7 @@ const MemberListItem = ({
     );
   };
 
-  const handleRightClick = (e: React.MouseEvent) => {
+  const handleRightClick = (e: React.MouseEvent, member: Member) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -68,7 +68,14 @@ const MemberListItem = ({
         <div className='button'>Profile</div>
         <div className='button'>Message</div>
         <div className='button'>Change Nickname</div>
-        <div className='button'>Copy ID</div>
+        <div
+          className='button'
+          onClick={() => {
+            void navigator.clipboard.writeText(member.id);
+          }}
+        >
+          Copy ID
+        </div>
       </div>,
     );
   };
@@ -93,7 +100,7 @@ const MemberListItem = ({
     <button
       className={`member-list-item ${status === 'offline' ? 'offline-member' : ''}`}
       onContextMenu={(e) => {
-        handleRightClick(e);
+        handleRightClick(e, member);
       }}
       onClick={(e) => {
         showProfilePopout(e);

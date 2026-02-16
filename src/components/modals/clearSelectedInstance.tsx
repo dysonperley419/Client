@@ -11,7 +11,8 @@ export const ClearSelectedInstanceModal = (): JSX.Element => {
     localStorage.removeItem('selectedCdnUrl');
     localStorage.removeItem('selectedAssetsUrl');
     localStorage.removeItem('defaultApiVersion');
-    localStorage.removeItem('Authorization');
+    localStorage.removeItem('selectedAuthorization');
+    localStorage.removeItem('selectedEmail');
 
     closeModal();
 

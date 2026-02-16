@@ -56,13 +56,13 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
   const handleLogout = () => {
     openModal('DANGER_CONFIRMATION', {
       title: 'Are you sure you want to logout?',
-      body: 'We are working on a way to easily switch the instance without requiring this!',
+      body: 'You will remain on the same instance unless configured in the signup or login page.',
       onCancel: () => {
         closeModal();
       },
       onConfirm: () => {
-        localStorage.removeItem('Authorization');
-        localStorage.removeItem('email');
+        localStorage.removeItem('selectedAuthorization');
+        localStorage.removeItem('selectedEmail');
         location.reload();
       },
     });

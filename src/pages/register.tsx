@@ -35,7 +35,7 @@ function Register(): JSX.Element {
     void checkInstance(selectedUrl);
   };
 
-  if (localStorage.getItem('Authorization')) return <Navigate to='/' />;
+  if (localStorage.getItem('selectedAuthorization')) return <Navigate to='/' />;
 
   const handleSignup = async () => {
     setUsernameStatus(null);
@@ -54,8 +54,19 @@ function Register(): JSX.Element {
       const response = await post(`/auth/register`, registerRequest);
       const parsed = RegisterResponseSchema.parse(response);
 
-      localStorage.setItem('Authorization', parsed.token);
-      localStorage.setItem('email', email);
+      localStorage.setItem('selectedAuthorization', parsed.token);
+      localStorage.setItem('selectedEmail', email);
+
+      if (!localStorage.getItem('Authorizations')) {
+        localStorage.setItem('Authorizations', JSON.stringify([parsed.token]));
+      } else {
+        const currentAuths =
+          (JSON.parse(localStorage.getItem('Authorizations') ?? '') as string[]) ?? [];
+        currentAuths.push(parsed.token);
+
+        localStorage.setItem('Authorizations', JSON.stringify(currentAuths));
+      }
+
       window.location.href = '/';
     } catch (err: any) {
       try {

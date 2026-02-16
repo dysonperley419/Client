@@ -41,7 +41,7 @@ function App(): JSX.Element {
         localStorage.setItem('instances', JSON.stringify(defaultInstances));
       }
 
-      const token = localStorage.getItem('Authorization');
+      const token = localStorage.getItem('selectedAuthorization');
       const publicPaths = ['/login', '/register'];
       const isPublicPath = publicPaths.includes(location.pathname);
 

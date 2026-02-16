@@ -31,7 +31,7 @@ function Login(): JSX.Element {
     void checkInstance(selectedUrl);
   };
 
-  if (localStorage.getItem('Authorization')) return <Navigate to='/' />;
+  if (localStorage.getItem('selectedAuthorization')) return <Navigate to='/' />;
 
   const handleSignin = async () => {
     try {
@@ -52,7 +52,18 @@ function Login(): JSX.Element {
         return;
       }
 
-      localStorage.setItem('Authorization', data.token);
+      localStorage.setItem('selectedAuthorization', data.token);
+      localStorage.setItem('selectedEmail', email);
+
+      if (!localStorage.getItem('Authorizations')) {
+        localStorage.setItem('Authorizations', JSON.stringify([data.token]));
+      } else {
+        const currentAuths =
+          (JSON.parse(localStorage.getItem('Authorizations') ?? '') as string[]) ?? [];
+        currentAuths.push(data.token);
+
+        localStorage.setItem('Authorizations', JSON.stringify(currentAuths));
+      }
       window.location.href = '/';
     } catch (err) {
       setCredentialsStatus('neterror');

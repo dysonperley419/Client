@@ -431,7 +431,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   }, []);
 
   const connect = useCallback(() => {
-    const token = localStorage.getItem('Authorization') ?? '';
+    const token = localStorage.getItem('selectedAuthorization') ?? '';
     const gatewayUrl = resumeGatewayUrl.current ?? localStorage.getItem('selectedGatewayUrl');
 
     if (gatewayUrl && gatewayUrl.length > 0 && token && token.length > 0) {

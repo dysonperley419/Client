@@ -2,8 +2,11 @@ import './userProfile.css';
 
 import { type JSX, useState } from 'react';
 
+import { useModal } from '@/context/modalContext';
+import type { Member } from '@/types/guilds';
+import type { User } from '@/types/users';
 import { getDefaultAvatar } from '@/utils/avatar';
-import { noop } from '@/utils/noop';
+import { useUserProfileActions } from '@/utils/profileUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -12,6 +15,8 @@ import { usePopup } from '../../context/popupContext';
 export const UserProfileModal = (): JSX.Element => {
   const { user, sessions, getPresence } = useGateway();
   const { closePopup } = usePopup();
+  const { openModal, closeModal } = useModal();
+  const { openFullProfile } = useUserProfileActions(null);
 
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
     `/assets/${getDefaultAvatar(user) ?? ''}.png`,
@@ -29,6 +34,16 @@ export const UserProfileModal = (): JSX.Element => {
     setAvatarSrc(currentAvatarUrl);
   }
 
+  function getInstance() {
+    try {
+      const fullApiUrl = localStorage.getItem('selectedInstanceUrl');
+      const urlObj = new URL(fullApiUrl ?? '');
+      return urlObj.host;
+    } catch {
+      return '';
+    }
+  }
+
   const bannerUrl = user?.banner
     ? `url('${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${user.id}/${user.banner}.png')`
     : 'none';
@@ -39,6 +54,7 @@ export const UserProfileModal = (): JSX.Element => {
 
   const handleCopyUserId = () => {
     if (user?.id) {
+      closePopup();
       void navigator.clipboard.writeText(user.id);
     }
   };
@@ -48,8 +64,50 @@ export const UserProfileModal = (): JSX.Element => {
     closePopup();
   };
 
-  const switchAccount = noop;
-  const switchInstance = noop;
+  const switchAccount = () => {};
+
+  const switchInstance = () => {
+    closePopup();
+    openModal('DANGER_CONFIRMATION', {
+      title: 'Switch instance?',
+      body: 'Switching to a new instance will sign you out of your current account.',
+      onCancel: () => {
+        closeModal();
+      },
+      onConfirm: () => {
+        localStorage.removeItem('selectedAssetsUrl');
+        localStorage.removeItem('selectedCdnUrl');
+        localStorage.removeItem('selectedGatewayUrl');
+        localStorage.removeItem('selectedInstanceUrl');
+        localStorage.removeItem('selectedAuthorization');
+        localStorage.removeItem('selectedEmail');
+        location.reload();
+      },
+    });
+  };
+
+  const viewUserProfile = (e: React.MouseEvent, user: User) => {
+    if (user?.id) {
+      closePopup();
+
+      const presence = getPresence(user.id);
+      const status = presence?.status ?? 'offline';
+
+      const memberObj: Member = {
+        id: user?.id,
+        user: user,
+        presence: {
+          user: user,
+          status: status,
+          activities: [],
+        },
+        joined_at: new Date().toISOString(),
+        roles: [],
+      };
+
+      void openFullProfile(e, memberObj);
+    }
+  };
 
   const status =
     sessions[0]?.status ?? (user?.id ? getPresence(user.id)?.status : undefined) ?? 'offline';
@@ -113,7 +171,13 @@ export const UserProfileModal = (): JSX.Element => {
               hard_drive
             </span>
           </div>
-          <div className='icon-btn-small' title={`View user profile`}>
+          <div
+            className='icon-btn-small'
+            title={`View user profile`}
+            onClick={(e: any) => {
+              viewUserProfile(e, user!);
+            }}
+          >
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
               chevron_right
             </span>
@@ -124,6 +188,9 @@ export const UserProfileModal = (): JSX.Element => {
             <span className='pronouns'>{user.pronouns}</span>
           </div>
         )}
+        <div className='pronouns-row-profile'>
+          <span className='discriminator'>{getInstance()}</span>
+        </div>
       </div>
 
       <div className='profile-actions'>

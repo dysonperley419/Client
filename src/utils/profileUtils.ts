@@ -63,7 +63,7 @@ export const useUserProfileActions = (selectedGuild: Guild | null) => {
     });
   };
 
-  const openFullProfile = async (e: React.MouseEvent<HTMLElement>, user: Member) => {
+  const openFullProfile = async (e: React.MouseEvent, user: Member) => {
     e.preventDefault();
     e.stopPropagation();
 

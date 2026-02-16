@@ -1,7 +1,7 @@
 import './channelSidebar.css';
 
 import { type JSX, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { type NavigateFunction, useNavigate } from 'react-router-dom';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
 import { useGateway } from '@/context/gatewayContext';
@@ -36,7 +36,7 @@ const PrivateChannelItem = ({
   onCloseLocal,
 }: {
   channel: Channel;
-  navigate: any;
+  navigate: NavigateFunction;
   selected: boolean;
   onCloseLocal: () => void;
 }) => {

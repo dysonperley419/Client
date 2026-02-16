@@ -88,7 +88,7 @@ export const PopoutProfile = ({
             onMouseLeave={(e) => {
               e.currentTarget.classList.remove('avatar-img-text');
             }}
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               openFullProfile(e, member);
             }}
           >
