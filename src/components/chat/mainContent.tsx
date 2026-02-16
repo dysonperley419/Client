@@ -31,7 +31,17 @@ interface MainContentProps {
   selectedGuild: Guild | null;
 }
 
-type LocalMessage = Message & { is_pending?: boolean };
+export const MESSAGE_STATE = Object.freeze({
+  PENDING: 0,
+  SENT: 1,
+  FAILED: -1,
+
+  0: 'Pending',
+  1: 'Sent',
+  '-1': 'Failed',
+}); //Should I put this somewhere else?
+
+type LocalMessage = Message & { state: number };
 
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
@@ -64,10 +74,10 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (e.type === "dragenter" || e.type === "dragover") {
+
+    if (e.type === 'dragenter' || e.type === 'dragover') {
       setIsDragging(true);
-    } else if (e.type === "dragleave") {
+    } else if (e.type === 'dragleave') {
       setIsDragging(false);
     }
   };
@@ -79,7 +89,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files);
-      
+
       addFiles(files);
     }
   };
@@ -88,7 +98,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     if (!e.target.files) return;
 
     const files = Array.from(e.target.files);
-    
+
     addFiles(files);
     e.target.value = '';
   };
@@ -116,19 +126,21 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     if (autoScroll.current) scrollToBottom();
   }, [messages]);
 
-    useEffect(() => {
-      const handlePaste = (e: ClipboardEvent) => {
-        if (e.clipboardData && e.clipboardData.files.length > 0) {
-          const files = Array.from(e.clipboardData.files);
-          
-          addFiles(files);
-          e.preventDefault();
-        }
-      };
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (e.clipboardData && e.clipboardData.files.length > 0) {
+        const files = Array.from(e.clipboardData.files);
 
-      window.addEventListener('paste', handlePaste);
-      return () => window.removeEventListener('paste', handlePaste);
-    }, []);
+        addFiles(files);
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => {
+      window.removeEventListener('paste', handlePaste);
+    };
+  }, []);
 
   const fetchMessages = useCallback(
     async (limit: number, before?: string) => {
@@ -175,7 +187,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       pinned: false,
       tts: false,
       type: 0,
-      is_pending: true,
+      state: 0, //0 = sending (1 = sent, -1 = failed)
     } as unknown as Message;
 
     const payload = {
@@ -191,7 +203,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       formData.append(`files[${index.toString()}]`, at.file);
     });
 
-    setFakeSentMsgs((prev) => [...prev, ghostMessage])
+    setFakeSentMsgs((prev) => [...prev, ghostMessage]);
     setChatMessage('');
 
     const toCleanup = [...attachments];
@@ -206,6 +218,10 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       });
     } catch (error) {
       console.error('Error sending message:', error);
+
+      setFakeSentMsgs((prev) =>
+        prev.map((m) => (m.id === ghostMessage.id ? { ...m, state: MESSAGE_STATE.FAILED } : m)),
+      );
     }
 
     lastTypingSent.current = 0;
@@ -301,10 +317,11 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         setFakeSentMsgs((prev) => prev.filter((m) => String(m.nonce) !== nonceStr));
       }
 
-     setMessages((prev) => {
-        const isDup = prev.some(m => 
-          m.id === newMessage.id || 
-          (newMessage.nonce && String(m.nonce) === String(newMessage.nonce))
+      setMessages((prev) => {
+        const isDup = prev.some(
+          (m) =>
+            m.id === newMessage.id ||
+            (newMessage.nonce && String(m.nonce) === String(newMessage.nonce)),
         );
 
         if (isDup) return prev;
@@ -317,12 +334,12 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     //MessageCreate, MessageUpdate and MessageDelete need types
     const handleUpdateMessage = (event: CustomEvent<MessageUpdate>) => {
       const updatedMessage = event.detail as LocalMessage;
-      
+
       if (updatedMessage.channel_id !== selectedChannel.id) return;
 
       if (updatedMessage.nonce) {
         const nonceStr = String(updatedMessage.nonce);
-        
+
         setFakeSentMsgs((prev) => prev.filter((m) => String(m.nonce) !== nonceStr));
       }
 
@@ -330,7 +347,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         const exists = prev.some((m) => m.id === updatedMessage.id);
 
         if (exists) {
-         return prev.map((old) =>
+          return prev.map((old) =>
             old.id === updatedMessage.id ? { ...old, ...updatedMessage } : old,
           );
         }
@@ -363,16 +380,19 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     const merged = new Map<string, LocalMessage>();
 
     rawAllMessages.forEach((msg: LocalMessage) => {
-      const key = (msg.nonce ? String(msg.nonce) : msg.id);
+      const key = msg.nonce ? String(msg.nonce) : msg.id;
       const existing = merged.get(key);
 
-      if (!existing || (existing.is_pending && !msg.is_pending)) {
+      if (
+        !existing ||
+        (existing.state == MESSAGE_STATE.PENDING && msg.state != MESSAGE_STATE.PENDING)
+      ) {
         merged.set(key, msg);
       }
     });
 
     const allMessages = Array.from(merged.values()).sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
 
     if (allMessages.length === 0) {
@@ -438,12 +458,15 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         prevMsg?.author.id !== msg.author.id ||
         new Date(msg.timestamp).getTime() - new Date(prevMsg?.timestamp ?? '').getTime() > 420000;
 
-        const pendingClass = msg.is_pending ? 'message-pending' : '';
-        const pendingStyle = msg.is_pending ? { opacity: 0.5, filter: 'grayscale(100%)' } : {};
-    
+      const pendingClass = msg.state == MESSAGE_STATE.PENDING ? 'message-pending' : '';
+      const pendingStyle =
+        msg.state == MESSAGE_STATE.PENDING ? { opacity: 0.5, filter: 'grayscale(100%)' } : {};
+
       const msgContent = (
         <>
-          <div className='message-content'>
+          <div
+            className={`message-content ${msg.state === MESSAGE_STATE.FAILED ? 'message-failed' : ''}`}
+          >
             {renderDfm(msg.content, selectedGuild?.id)}
             {msg.attachments.length > 0 && (
               <div className='message-attachments'>
@@ -522,7 +545,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         };
 
         const color = getMemberColor(member, selectedGuild);
-        
+
         return (
           <div key={messageKey} className={`message-group ${pendingClass}`} style={pendingStyle}>
             <AuthorAvatar msg={msg} member={member} />
@@ -546,7 +569,11 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
       }
 
       return (
-        <div key={messageKey} className={`message-details message-sub ${pendingClass}`} style={pendingStyle}>
+        <div
+          key={messageKey}
+          className={`message-details message-sub ${pendingClass}`}
+          style={pendingStyle}
+        >
           {msgContent}
         </div>
       );
@@ -643,7 +670,13 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   };
 
   return (
-    <main className='chat-main' onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop}>
+    <main
+      className='chat-main'
+      onDragEnter={handleDrag}
+      onDragOver={handleDrag}
+      onDragLeave={handleDrag}
+      onDrop={handleDrop}
+    >
       <header className='header'>
         <div className='header-left'>
           <div className='header-icon'>
@@ -724,10 +757,10 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         </div>
       </header>
 
-    {isDragging && (
-        <div className="drag-overlay">
-          <div className="drag-content">
-            <span className="material-symbols-rounded">attach_file_add</span>
+      {isDragging && (
+        <div className='drag-overlay'>
+          <div className='drag-content'>
+            <span className='material-symbols-rounded'>attach_file_add</span>
             <p>Drop files to upload</p>
           </div>
         </div>
@@ -759,11 +792,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                     return (
                       <div key={at.id} className='attachment-container'>
                         {isVideo ? (
-                          <video 
-                            src={at.preview} 
-                            className='attachment-preview' 
-                            muted 
-                          />
+                          <video src={at.preview} className='attachment-preview' muted />
                         ) : (
                           <img
                             src={at.preview}
@@ -774,7 +803,9 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                         <button
                           type='button'
                           className='attachment-remove'
-                          onClick={() => removeAttachment(at.id)}
+                          onClick={() => {
+                            removeAttachment(at.id);
+                          }}
                         >
                           X
                         </button>

@@ -164,7 +164,7 @@ export const MessageSchema = z.object({
   components: z.array(z.any()).nullish(),
   sticker_items: z.array(z.any()).nullish(),
   poll: PollSchema.nullish(),
-  is_pending: z.boolean().optional().default(false), //for local msgs on flicker
+  state: z.number().optional().default(1), //for local msgs on flicker
 });
 
 export const MessageListSchema = z.array(MessageSchema);
