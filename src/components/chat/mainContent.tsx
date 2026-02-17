@@ -366,6 +366,29 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     };
   }, [selectedChannel.id]);
 
+  const ReplyPreview = ({ referencedMessage }: { referencedMessage: Message }) => {
+    const { url: defaultAvatarUrl } = useAssetsUrl(
+      `/assets/${getDefaultAvatar(referencedMessage.author) ?? ''}.png`,
+    );
+
+    const avatarUrl = referencedMessage.author.avatar
+      ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${referencedMessage.author.id}/${referencedMessage.author.avatar}.png`
+      : defaultAvatarUrl;
+
+    return (
+      <div className='message-reply-preview'>
+        <div className='reply-spine'></div>
+        <img src={avatarUrl} className='reply-avatar avatar-img' alt='' />
+        <span className='reply-author'>
+          {referencedMessage.author.global_name ?? referencedMessage.author.username}
+        </span>
+        <div className='reply-content'>
+          {renderDfm(referencedMessage.content, selectedGuild?.id)}
+        </div>
+      </div>
+    );
+  };
+
   const renderMessages = () => {
     const allMessages = messages;
 
@@ -426,9 +449,10 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
     return allMessages.map((msg: LocalMessage, index: number) => {
       const messageKey = msg.nonce || msg.id;
-
       const prevMsg = allMessages[index - 1];
+
       const isNewGroup =
+        msg.referenced_message ||
         prevMsg?.author.id !== msg.author.id ||
         new Date(msg.timestamp).getTime() - new Date(prevMsg?.timestamp ?? '').getTime() > 420000;
 
@@ -521,24 +545,29 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
         const color = getMemberColor(member, selectedGuild);
 
         return (
-          <div key={messageKey} className={`message-group ${pendingClass}`} style={pendingStyle}>
-            <AuthorAvatar msg={msg} member={member} />
-            <div className='message-details'>
-              <div className='message-header'>
-                <span
-                  className='author-name'
-                  style={{ color: color, cursor: 'pointer' }}
-                  onClick={(e) => {
-                    void openUserProfile(e, member);
-                  }}
-                >
-                  {member.nick ?? msg.author.global_name ?? msg.author.username}
-                </span>
-                <span className='timestamp'>{formatTimestamp(msg.timestamp)}</span>
+          <>
+            {msg.referenced_message && (
+              <ReplyPreview referencedMessage={msg.referenced_message as Message} />
+            )}
+            <div key={messageKey} className={`message-group ${pendingClass}`} style={pendingStyle}>
+              <AuthorAvatar msg={msg} member={member} />
+              <div className='message-details'>
+                <div className='message-header'>
+                  <span
+                    className='author-name'
+                    style={{ color: color, cursor: 'pointer' }}
+                    onClick={(e) => {
+                      void openUserProfile(e, member);
+                    }}
+                  >
+                    {member.nick ?? msg.author.global_name ?? msg.author.username}
+                  </span>
+                  <span className='timestamp'>{formatTimestamp(msg.timestamp)}</span>
+                </div>
+                {msgContent}
               </div>
-              {msgContent}
             </div>
-          </div>
+          </>
         );
       }
 

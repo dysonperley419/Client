@@ -372,3 +372,63 @@
 .message-failed {
   color: var(--bg-dnd);
 }
+
+.message-reply-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: -5px;
+  margin-left: 20px;
+  opacity: 0.8;
+  font-size: 0.85rem;
+  position: relative;
+  padding-left: 20px;
+  cursor: pointer;
+  transition: 0.3s background;
+}
+
+.message-reply-preview:hover {
+  background: var(--bg-alt);
+  border-radius: 8px;
+}
+
+.message-reply-preview:active {
+  background: var(--bg-bright);
+}
+
+.reply-spine {
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  width: 35px;
+  height: 20px;
+  border-left: 3px solid var(--text-dim);
+  border-top: 3px solid var(--text-dim);
+  border-top-left-radius: 10px;
+  z-index: -1;
+}
+
+.reply-avatar {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  border-radius: 50%;
+}
+
+.reply-avatar.avatar-img {
+  margin-right: 0;
+}
+
+.reply-author {
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-bright);
+}
+
+.reply-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted, #b5bac1);
+}
