@@ -312,3 +312,32 @@
 .vc-icon-state {
   font-size: 20px;
 }
+
+.sidebar-btn.unread .sidebar-text {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+.sidebar-btn.unread::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  width: 7px;
+  height: 12px;
+  background: var(--bg-offline);
+  border-radius: 0 4px 4px 0;
+}
+
+.channel-mention-badge {
+  background-color: var(--bg-dnd);
+  font-size: 12px;
+  font-weight: bold;
+  padding: 0 6px;
+  border-radius: 10px;
+  margin-left: auto;
+  height: 18px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

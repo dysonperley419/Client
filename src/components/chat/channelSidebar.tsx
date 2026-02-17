@@ -17,6 +17,8 @@ import VoiceActivityControls from './voiceActivityControls';
 
 interface ChannelSidebarProps {
   selectedGuild?: Guild | null;
+  unreads?: any;
+  mentions?: any;
   selectedChannel?: Channel | null;
   onSelectChannel: (channel: Channel | null) => void;
 }
@@ -124,6 +126,8 @@ const VoiceChannelMember = ({ vs }: { vs: VoiceState }): JSX.Element => {
 
 const ChannelSidebar = ({
   selectedGuild,
+  unreads,
+  mentions,
   selectedChannel,
   onSelectChannel,
 }: ChannelSidebarProps): JSX.Element => {
@@ -222,6 +226,7 @@ const ChannelSidebar = ({
   const allChannels = selectedGuild.channels;
   allChannels.sort((a: Channel, b: Channel) => a.position - b.position);
 
+  //to-do: no magic numbers
   const categoryChannels = allChannels.filter((c: Channel) => c.type === 4); //Text Channels, Voice Channels, other channels..
   const categorizedChannels = allChannels.filter(
     (c: Channel) => c.parent_id !== null && allChannels.some((c2) => c.parent_id === c2.id),
@@ -235,21 +240,34 @@ const ChannelSidebar = ({
       (vs) => vs.channel_id === channel.id,
     );
 
+    const isSelected = selectedChannel?.id === channel.id;
+    const hasUnread = !isSelected && unreads?.get(selectedGuild.id)?.has(channel.id);
+    const mentionCount = !isSelected ? (mentions?.get(selectedGuild.id)?.get(channel.id) ?? 0) : 0;
+
     return (
       <>
         <button
           key={channel.id}
-          className={`sidebar-btn ${selectedChannel?.id === channel.id ? 'active' : ''} ${channel.type === 2 ? 'not-selectable' : ''}`}
+          className={`sidebar-btn 
+            ${selectedChannel?.id === channel.id ? 'active' : ''} 
+            ${hasUnread ? 'unread' : ''} 
+            ${channel.type === 2 ? 'not-selectable' : ''}`
+          }
           onClick={() => {
             onSelectChannel(channel);
           }}
         >
           <div className='sidebar-icon'>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
-              {channel.type === 2 ? 'volume_up' : 'tag'}
+              {channel.type === 2 ? 'volume_up' : (channel.nsfw ? 'lock' : 'tag')}
             </span>
           </div>
           <span className='sidebar-text'>{channel.name}</span>
+          {mentionCount > 0 && (
+            <div className="channel-mention-badge">
+              {mentionCount}
+            </div>
+          )}
         </button>
         {channel.type === 2 && membersInThisChannel.length > 0 && (
           <div className='voice-channel-members'>

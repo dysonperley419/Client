@@ -125,6 +125,7 @@ export const ReactionSchema = z.object({
 export const MessageSchema = z.object({
   id: z.string(),
   channel_id: z.string(),
+  guild_id: z.string().nullish(),
   author: UserSchema.partial(),
   content: z.string().nullable().optional(),
   timestamp: z.iso.datetime({ offset: true }),
