@@ -46,9 +46,12 @@ type LocalMessage = Message & { state: number };
 const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
   const { openUserProfile, openFullProfile } = useUserProfileActions(selectedGuild);
+  const [suggestionTrigger, setSuggestionTrigger] = useState<{ type: 'user' | 'role' | 'channel'; query: string; startIndex: number } | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const getUser = useUserStore((state) => state.getUser);
-  const { typingUsers, user, getMember, getMemberColor, getPresence } = useGateway();
+  const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists } = useGateway();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [chatMessage, setChatMessage] = useState('');
   const lastTypingSent = useRef<number>(0);
@@ -126,6 +129,10 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   }, [messages]);
 
   useEffect(() => {
+    setSelectedIndex(0);
+  }, [filteredSuggestions]);
+
+  useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       if (e.clipboardData && e.clipboardData.files.length > 0) {
         const files = Array.from(e.clipboardData.files);
@@ -157,6 +164,51 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     },
     [selectedChannel.id],
   );
+
+  const resolveMentions = (text: string): string => {
+    if (!selectedGuild) return text;
+
+    let resolvedText = text;
+
+    const channels = selectedGuild.channels || [];
+
+    channels.forEach((ch: Channel) => {
+      const escapedName = ch.name!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`#${escapedName}\\b`, 'g');
+
+      resolvedText = resolvedText.replace(regex, `<#${ch.id}>`);
+    });
+
+    const roles = selectedGuild.roles || [];
+
+    roles.forEach(role => {
+      const escapedName = role.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`@${escapedName}\\b`, 'g');
+
+      resolvedText = resolvedText.replace(regex, `<@&${role.id}>`);
+    }); //yeah uh role mentions dont really work with spaces
+
+    const memberState = memberLists![selectedGuild.id];
+    const listItems = Array.isArray(memberState) ? memberState : (memberState?.items || []);
+    const members: Member[] = listItems
+      .filter((item: any) => !!item.member)
+      .map((item: any) => item.member);
+
+    members.forEach(m => {
+      const names = [m.user.username, m.nick, m.user.global_name].filter(Boolean);
+
+      names.forEach(name => {
+        const escapedName = name!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`@${escapedName}\\b`, 'g');
+
+        resolvedText = resolvedText.replace(regex, `<@${m.user.id}>`);
+      });
+    });
+
+    resolvedText = resolvedText.replace(/#\d{1,4}\b/g, '');
+
+    return resolvedText;
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,7 +242,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     } as LocalMessage;
 
     const payload = {
-      content: chatMessage,
+      content: resolveMentions(chatMessage),
       nonce: nonce,
       tts: false,
       embeds: [],
@@ -583,8 +635,97 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     });
   };
 
+  const filterSuggestions = (type: 'user' | 'role' | 'channel', query: string) => {
+    const q = query.toLowerCase();
+
+    if (type === 'user') {
+      const memberState = selectedGuild ? memberLists![selectedGuild.id] : null;
+      const listItems = Array.isArray(memberState) ? memberState : (memberState?.items || []);
+      
+      const guildMembers: Member[] = listItems
+        .filter((item: any) => !!item.member)
+        .map((item: any) => item.member);
+
+      const guildRoles = selectedGuild?.roles || [];
+      const recentSpeakerIds = Array.from(new Set(messages.map(m => m.author.id))).reverse();
+
+     const filteredUsers = guildMembers.filter((m: Member) =>
+        m.user.username.toLowerCase().includes(q) ||
+        (m.nick && m.nick.toLowerCase().includes(q)) ||
+        (m.user.global_name && m.user.global_name.toLowerCase().includes(q))
+      ).map(m => ({ ...m, suggestionType: 'user' }));
+
+      const filteredRoles = guildRoles.filter((role: any) => role.name.toLowerCase().includes(q) && role.name !== "@everyone").map(r => ({ ...r, suggestionType: 'role' }));
+
+      const combined = [...filteredUsers, ...filteredRoles].sort((a: any, b: any) => {
+        const getName = (item: any) => {
+          if (item.suggestionType === 'user') {
+            return (item.nick || item.user.global_name || item.user.username).toLowerCase();
+          }
+
+          return item.name.toLowerCase();
+        };
+
+        const nameA = getName(a);
+        const nameB = getName(b);
+
+        const startsA = nameA.startsWith(q);
+        const startsB = nameB.startsWith(q);
+
+        if (startsA && !startsB) return -1;
+        if (!startsA && startsB) return 1;
+
+        if (a.suggestionType === 'user' && b.suggestionType === 'user') {
+          const indexA = recentSpeakerIds.indexOf(a.user.id);
+          const indexB = recentSpeakerIds.indexOf(b.user.id);
+
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+        }
+
+        return nameA.localeCompare(nameB);
+      }).slice(0, 8);
+
+      setFilteredSuggestions(combined);
+    } else {
+      if (!selectedGuild?.channels) {
+        setFilteredSuggestions([]);
+        return;
+      }
+
+      const filteredChannels = selectedGuild.channels
+        .filter((c: any) => c.name.toLowerCase().includes(q) && c.type !== 4)
+        .map(c => ({ ...c, suggestionType: 'channel' }))
+        .sort((a: Channel, b: Channel) => {
+          const startsA = a.name!.toLowerCase().startsWith(q);
+          const startsB = b.name!.toLowerCase().startsWith(q);
+          if (startsA && !startsB) return -1;
+          if (!startsA && startsB) return 1;
+          return a.name!.localeCompare(b.name!);
+        })
+        .slice(0, 8);
+
+      setFilteredSuggestions(filteredChannels);
+    }
+  };
+
   const updateChat = (message: string) => {
     setChatMessage(message);
+
+    const mentionMatch = /(@|<@!?|#)([\w\s]*)$/.exec(message);
+
+    if (mentionMatch) {
+      const symbol = mentionMatch[1]!;
+      const query = mentionMatch[2]!;
+      const type = symbol!.includes('#') ? 'channel' : 'user'; //or role but you know.. we do that logic later
+      
+      setSuggestionTrigger({ type, query, startIndex: mentionMatch.index });
+      filterSuggestions(type, query);
+    } else {
+      setSuggestionTrigger(null);
+      setFilteredSuggestions([]);
+    }
 
     const now = Date.now();
 
@@ -670,6 +811,28 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     }
 
     return <p>Several people are typing...</p>;
+  };
+
+  const applySuggestion = (item: any) => {
+    if (!suggestionTrigger) return;
+    
+    const before = chatMessage.substring(0, suggestionTrigger.startIndex);
+    const queryLength = suggestionTrigger.query.length + 1;
+    const after = chatMessage.substring(suggestionTrigger.startIndex + queryLength);
+    
+    let insertion = "";
+    
+    if (item.suggestionType === 'user') {
+      insertion = `@${item.user.username}#${item.user.discriminator} `;
+    } else if (item.suggestionType === 'role') {
+      insertion = `@${item.name} `;
+    } else {
+      insertion = `#${item.name} `;
+    }
+
+    setChatMessage(before + insertion + after);
+    setSuggestionTrigger(null);
+    setFilteredSuggestions([]);
   };
 
   return (
@@ -786,6 +949,65 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
               void handleSendMessage(e);
             }}
           >
+            {suggestionTrigger != null && filteredSuggestions.length > 0 && (
+              <>
+              <div className='input-wrapper' key={'SuggestionsBar'}>
+                <div className='input-row'>
+                    {suggestionTrigger != null && filteredSuggestions.length > 0 && (
+                      <>
+                        <div className='chat-suggestions-wrapper'>
+                          {filteredSuggestions.map((item, index) => {
+                            const isUser = item.suggestionType === 'user';
+                            const isRole = item.suggestionType === 'role';
+                            
+                            let prefix = isUser || isRole ? "@" : "#";
+                            let name = "";
+                            let subtext = "";
+
+                            if (isUser) {
+                              name = item.nick || item.user.username;
+                              subtext = item.user.discriminator !== "0" ? `${item.user.username}#${item.user.discriminator}` : item.user.username;
+                            } else if (isRole) {
+                              name = item.name;
+                              subtext = "Role";
+                            } else {
+                              let topic = item.topic || "Channel";
+                              let maxTopicLength = 50;
+
+                              name = item.name;
+                              subtext = topic.length > maxTopicLength ? `${topic.substring(0, maxTopicLength)}...` : topic;
+                            }
+
+                            return (
+                              <div
+                                key={item.id}
+                                className={`chat-suggestion ${index === selectedIndex ? 'active' : ''}`}
+                                style={{ '--prefix': `"${prefix}"` } as React.CSSProperties}
+                                onClick={() => applySuggestion(item)}
+                                onMouseEnter={() => setSelectedIndex(index)}
+                              >
+                                {isUser && item.user.avatar ? (
+                                  <img
+                                    src={`${localStorage.getItem('selectedCdnUrl')}/avatars/${item.user.id}/${item.user.avatar}.png`}
+                                    className='avatar-img suggested-item-avi'
+                                  />
+                                ) : (
+                                  <div className='suggested-item-avi' />
+                                )}
+                                <div className='chat-suggestion-item'>
+                                  <span>{name}</span>
+                                  <span>{subtext}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                </div>
+              </div>
+              </>
+            )}
             <div className='input-wrapper'>
               {attachments.length > 0 && (
                 <div className='attachment-shelf'>
