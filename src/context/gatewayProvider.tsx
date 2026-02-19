@@ -444,13 +444,34 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
         case 'TYPING_START': {
           const parsed = TypingStartSchema.parse(data);
+          const startTime = Date.now();
+
           setTypingUsers((prev) => ({
             ...prev,
             [parsed.channel_id]: {
               ...(prev[parsed.channel_id] ?? {}),
-              [parsed.user_id]: Date.now(),
+              [parsed.user_id]: startTime,
             },
           }));
+
+          setTimeout(() => {
+            setTypingUsers(currentTyping => {
+              const channel = currentTyping[parsed.channel_id];
+
+              if (channel && channel[parsed.user_id] === startTime) {
+                const newChannel = { ...channel };
+                
+                delete newChannel[parsed.user_id];
+
+                return {
+                  ...currentTyping,
+                  [parsed.channel_id]: newChannel
+                };
+              }
+
+              return currentTyping;
+            });
+          }, 10000);
           break;
         }
 
