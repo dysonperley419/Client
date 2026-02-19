@@ -562,7 +562,10 @@ const MainContent = ({
                           src={attachment.url}
                           controls
                           className='chat-video'
-                          style={{ width: '50%' }}
+                          style={{
+                            maxWidth: '400px',
+                            minWidth: '200px'
+                          }}
                         >
                           <track kind='captions' />
                         </video>
