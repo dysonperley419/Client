@@ -28,7 +28,6 @@ const ChatApp = (): JSX.Element => {
     relationships,
     requestMembers,
     privateChannels,
-    readStates,
     updateReadState,
   }: GatewayContextSchema = useGateway();
   const { guildId, channelId } = useParams();
@@ -113,38 +112,6 @@ const ChatApp = (): JSX.Element => {
       setPassedGuilds(guilds);
     }
   }, [guilds]);
-
-  useEffect(() => {
-    if (readStates && guilds.length > 0) {
-      const newUnreads = new Map<string, Set<string>>();
-      const newMentions = new Map<string, Map<string, number>>();
-
-      readStates.forEach((state: any) => {
-        const { channel_id, mention_count, last_message_id: ackId } = state;
-
-        if (channel_id === channelId) return;
-
-        const guild = guilds.find((g) => g.channels.some((c) => c.id === channel_id));
-        const channel = guild?.channels.find((c) => c.id === channel_id);
-        const key = guild?.id || 'direct_messages';
-
-        if (channel?.last_message_id && BigInt(channel.last_message_id) !== BigInt(ackId)) {
-          if (!newUnreads.has(key)) newUnreads.set(key, new Set());
-          newUnreads.get(key)?.add(channel_id);
-        }
-
-        if (mention_count > 0) {
-          if (!newMentions.has(key)) {
-            if (!newMentions.has(key)) newMentions.set(key, new Map());
-            newMentions.get(key)?.set(channel_id, mention_count);
-          }
-        }
-      });
-
-      setUnreads(newUnreads);
-      setMentions(newMentions);
-    }
-  }, [readStates, guilds, channelId]);
 
   useEffect(() => {
     setLocalFriends(relationships);
@@ -531,8 +498,6 @@ const ChatApp = (): JSX.Element => {
             <MainContent
               selectedChannel={selectedChannel}
               selectedGuild={selectedGuild}
-              unreads={unreads}
-              mentions={mentions}
               onChannelSeen={clearChannelReadState}
             />
           ) : !selectedGuild ? (
