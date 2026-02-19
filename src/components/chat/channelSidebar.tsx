@@ -18,8 +18,8 @@ import { useContextMenu } from '@/context/contextMenuContext';
 
 interface ChannelSidebarProps {
   selectedGuild?: Guild | null;
-  unreads?: any;
-  mentions?: any;
+  unreads?: Map<string, Set<string>>;
+  mentions?: Map<string, Map<string, number>>;
   selectedChannel?: Channel | null;
   onSelectChannel: (channel: Channel | null) => void;
 }
@@ -245,7 +245,7 @@ const ChannelSidebar = ({
       e.clientY,
       <div className='context-menu-out guild-context-menu'>
         <div className='button' onClick={() => {
-          
+
         }}>
           Mark as read
         </div>
