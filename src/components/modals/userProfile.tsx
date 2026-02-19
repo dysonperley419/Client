@@ -6,7 +6,7 @@ import { useModal } from '@/context/modalContext';
 import type { Member } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { getDefaultAvatar } from '@/utils/avatar';
-import { useUserProfileActions } from '@/utils/profileUtils';
+import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -16,7 +16,7 @@ export const UserProfileModal = (): JSX.Element => {
   const { user, sessions, getPresence } = useGateway();
   const { closePopup } = usePopup();
   const { openModal, closeModal } = useModal();
-  const { openFullProfile } = useUserProfileActions(null);
+  const { openFullProfile } = useUiUtilityActions(null);
 
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
     `/assets/${getDefaultAvatar(user) ?? ''}.png`,

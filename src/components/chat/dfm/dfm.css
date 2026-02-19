@@ -104,3 +104,40 @@
   background-color: var(--bg-dark-alt);
   color: var(--text-brightness);
 }
+
+
+.emoji-popout {
+  background: var(--bg-sidebar);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: var(--shadow-dark);
+  border: 1px solid var(--outline-color-gray);
+  min-width: 220px;
+}
+
+.emoji-popout-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.emoji-popout-header span {
+  color: var(--text-alt);
+  font-size: 13px;
+}
+
+.emoji-popout-origin h4 {
+  color: var(--text-bright);
+  font-size: 14px;
+  margin: 0;
+}
+
+.emoji-popout-origin p {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 0;
+}

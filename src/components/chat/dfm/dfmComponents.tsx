@@ -8,7 +8,7 @@ import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
 import type { User } from '@/types/users';
-import { useUserProfileActions } from '@/utils/profileUtils';
+import { useUiUtilityActions } from '@/utils/uiUtils';
 
 export const MemberMention = ({
   guild_id,
@@ -21,7 +21,7 @@ export const MemberMention = ({
   const getUser = useUserStore((state) => state.getUser);
   const contextGuild = guilds.find((x: Guild) => x.id === guild_id);
 
-  const { openUserProfile } = useUserProfileActions(contextGuild!);
+  const { openUserProfile } = useUiUtilityActions(contextGuild!);
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
 
   const member = getMember(guild_id, user_id);
@@ -133,10 +133,22 @@ export const ChannelMention = ({
   return render(channel);
 };
 
-export const Emoji = ({ name, emoji_id }: { name: string; emoji_id: string }): JSX.Element => {
+export const EmojiMention = ({ name, emoji_id }: { name: string; emoji_id: string }): JSX.Element => {
+  const { guilds } = useGateway();
+  const contextGuild = guilds.find((g) => g.emojis?.some((e) => e.id === emoji_id));
+  const { openEmojiPopout } = useUiUtilityActions(contextGuild || null);
+
   const invalid = /\D/.test(emoji_id);
-  if (invalid) return <></>; //Invalid and probably dangerous. Do not render.
+  if (invalid) return <></>;
 
   const emojiUrl = `${localStorage.getItem('selectedCdnUrl') ?? ''}/emojis/${emoji_id}.png`;
-  return <img className='emoji' alt={name} src={emojiUrl}></img>;
+
+  return (
+    <img 
+      className='emoji' 
+      alt={name} 
+      src={emojiUrl} 
+      onClick={(e) => openEmojiPopout(e, { name, id: emoji_id })} 
+    />
+  );
 };

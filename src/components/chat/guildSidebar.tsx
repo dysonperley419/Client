@@ -165,6 +165,7 @@ const GuildSidebar = ({
       <div className='server-section'>
         {guilds.map((guild: Guild) => {
           const guildMentionsMap = mentions.get(guild.id);
+          
           let totalMentions = 0;
 
           if (guildMentionsMap) {

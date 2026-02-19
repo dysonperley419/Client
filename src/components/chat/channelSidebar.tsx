@@ -14,6 +14,7 @@ import { logger } from '@/utils/logger';
 
 import { DmChannel } from './dmChannel';
 import VoiceActivityControls from './voiceActivityControls';
+import { useContextMenu } from '@/context/contextMenuContext';
 
 interface ChannelSidebarProps {
   selectedGuild?: Guild | null;
@@ -133,6 +134,7 @@ const ChannelSidebar = ({
 }: ChannelSidebarProps): JSX.Element => {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const { privateChannels: globalPrivateChannels, voiceStates } = useGateway();
+  const { openContextMenu, closeContextMenu } = useContextMenu();
   const [closedChannelIds, setClosedChannelIds] = useState<string[]>([]);
   const navigate = useNavigate();
 
@@ -235,6 +237,34 @@ const ChannelSidebar = ({
     (c: Channel) => !categoryChannels.includes(c) && !categorizedChannels.includes(c),
   );
 
+  const handleRightClick = (e: React.MouseEvent, channel: Channel) => {
+    e.preventDefault();
+
+    openContextMenu(
+      e.clientX,
+      e.clientY,
+      <div className='context-menu-out guild-context-menu'>
+        <div className='button' onClick={() => {
+          
+        }}>
+          Mark as read
+        </div>
+        <div className='button'>
+          Make invite
+        </div>
+        <hr />
+        <div className='button' onClick={() => {
+          if (channel.id) {
+            closeContextMenu();
+            void navigator.clipboard.writeText(channel.id);
+          }
+        }}>
+          Copy ID
+        </div>
+      </div>
+    );
+  };
+
   const renderChannel = (channel: Channel) => {
     const membersInThisChannel = Object.values(voiceStates || {}).filter(
       (vs) => vs.channel_id === channel.id,
@@ -255,6 +285,9 @@ const ChannelSidebar = ({
           }
           onClick={() => {
             onSelectChannel(channel);
+          }}
+          onContextMenu={(e) => {
+            handleRightClick(e, channel);
           }}
         >
           <div className='sidebar-icon'>

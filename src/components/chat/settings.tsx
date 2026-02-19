@@ -15,11 +15,13 @@ interface SettingsProps {
 interface DevSettings {
   log_gateway: boolean;
   webrtc_p2p: boolean;
+  popout_console: boolean;
 }
 
 const DefaultDevSettings: DevSettings = {
   log_gateway: false,
   webrtc_p2p: false,
+  popout_console: false
 };
 
 const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
@@ -147,6 +149,42 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
             <div className='account-card'>
               <div className='account-info-grid'>
                 <div className='account-info-wrapper'>
+                  <div key='popout-console'>
+                    <div className='account-info-section'>
+                      <p className='info-label'>Popout console</p>
+                      <p className='info-value'>
+                        <input
+                          type={'checkbox'}
+                          className='info-checkbox'
+                          checked={devSettings.popout_console}
+                          onChange={(e) => {
+                            const updatedSettings = {
+                              ...devSettings,
+                              popout_console: e.target.checked,
+                            };
+
+                            setDevSettings(updatedSettings);
+
+                            localStorage.setItem(
+                              'developerSettings',
+                              JSON.stringify(updatedSettings),
+                            );
+                          }}
+                        ></input>
+                      </p>
+                    </div>
+                    <div className='account-info-section'>
+                      <p
+                        className='info-value'
+                        style={{
+                          fontWeight: '400',
+                          marginTop: '10px',
+                        }}
+                      >
+                        Displays a console for easy logging that pops out of the client, and can be dragged/resized at will.
+                      </p>
+                    </div>
+                  </div>
                   <div key='log-gateway'>
                     <div className='account-info-section'>
                       <p className='info-label'>Log Gateway</p>

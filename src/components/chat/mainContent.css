@@ -451,7 +451,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-muted, #b5bac1);
+  display: flex;
+  align-content: center;
+  align-items: center;
 }
+
+.reply-content > img {
+  max-width: 24px;
+  max-height: 24px;
+} /* fix emojis from fucking destroying the client */
 
 .suggested-item-avi {
   opacity: 0.3;

@@ -1,10 +1,19 @@
 import { createContext, useContext } from 'react';
 
-import type { Member, Role } from '@/types/guilds';
+import type { Emoji, Member, Role } from '@/types/guilds';
 
 export interface PopupDataMap {
   USER_PROFILE_POPOUT: { x: number; y: number; member: Member; roles: Role[] | null };
   CURRENT_USER_PROFILE: { x: number; y: number };
+  EMOJI_DETAILS_POPOUT: {
+    x: number;
+    y: number;
+    emoji: Emoji;
+    guildIcon?: string;
+    guildId: string;
+    guildName: string;
+    isPrivate: boolean;
+  }
 }
 
 export type PopupType = keyof PopupDataMap;

@@ -10,7 +10,7 @@ import type { Guild, Member } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
-import { useUserProfileActions } from '@/utils/profileUtils';
+import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
@@ -54,7 +54,7 @@ const MainContent = ({
   onChannelSeen,
 }: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
-  const { openUserProfile, openFullProfile } = useUserProfileActions(selectedGuild);
+  const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
   const [suggestionTrigger, setSuggestionTrigger] = useState<{
     type: 'user' | 'role' | 'channel';
     query: string;

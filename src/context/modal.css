@@ -114,6 +114,9 @@
 .modal-container.modal-container-image-preview {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
   padding: 0;
   background: transparent;
   outline: none;
@@ -121,4 +124,7 @@
   min-width: auto;
   border-radius: 0;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

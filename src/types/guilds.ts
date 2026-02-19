@@ -28,6 +28,18 @@ export const RoleSchema = z.object({
   permissions: z.union([z.string(), z.coerce.number().int()]),
 });
 
+export const EmojiSchema = z.object({
+  id: z.string(),
+  animated: z.boolean().default(false),
+  guild_id: z.string(),
+  managed: z.boolean().default(false),
+  groups: z.object({}).optional().nullish(),
+  name: z.string(),
+  require_colons: z.boolean().default(true),
+  roles: z.array(RoleSchema).default([]),
+  user_id: z.string().optional().nullish(),
+});
+
 export const MemberSchema = z.object({
   id: z.string(),
   user: UserSchema,
@@ -45,6 +57,7 @@ export const GuildSchema = z.object({
   banner: z.string().nullish(),
   owner_id: z.string(),
   roles: z.array(RoleSchema),
+  emojis: z.array(EmojiSchema).nullish().default([]),
   channels: z.array(z.lazy(() => ChannelSchema)),
   presences: z.lazy(() => z.array(PresenceUpdateSchema)).optional(),
   voice_states: z.array(VoiceStateSchema).default([]),
@@ -52,5 +65,6 @@ export const GuildSchema = z.object({
 
 export type Guild = z.infer<typeof GuildSchema>;
 export type Member = z.infer<typeof MemberSchema>;
+export type Emoji = z.infer<typeof EmojiSchema>;
 export type Role = z.infer<typeof RoleSchema>;
 export type VoiceState = z.infer<typeof VoiceStateSchema>; //okay technically this is not guild only

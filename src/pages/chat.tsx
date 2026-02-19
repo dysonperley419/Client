@@ -1,4 +1,4 @@
-import { type JSX, useCallback, useEffect, useState } from 'react';
+import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useModal } from '@/context/modalContext';
@@ -9,7 +9,7 @@ import type { Guild } from '@/types/guilds';
 import type { Relationship } from '@/types/relationship';
 import type { User } from '@/types/users';
 import { post } from '@/utils/api';
-import { logger } from '@/utils/logger';
+import { logger, type LogEntry } from '@/utils/logger';
 
 import ChannelSidebar from '../components/chat/channelSidebar';
 import { FriendsList } from '../components/chat/friendsList';
@@ -36,6 +36,10 @@ const ChatApp = (): JSX.Element => {
   const { connectToVoice } = useVoice();
 
   const navigate = useNavigate();
+  const [logs, setLogs] = useState<LogEntry[]>(logger.entries);
+  const [consolePos, setConsolePos] = useState({ x: 100, y: 100, w: 400, h: 300 });
+  const isDragging = useRef(false);
+  const isResizing = useRef(false);
   const [showSettings, setShowSettings] = useState(false);
   const [localFriends, setLocalFriends] = useState<Relationship[] | []>([]);
   const [passedGuilds, setPassedGuilds] = useState<Guild[]>([]);
@@ -46,6 +50,57 @@ const ChatApp = (): JSX.Element => {
   const selectedChannel = selectedGuild
     ? (selectedGuild.channels.find((c) => c.id === channelId) ?? null)
     : ((privateChannels as Channel[])?.find((c) => c.id === channelId) ?? null);
+
+  const isUsingWebRTCP2P = JSON.parse(localStorage.getItem('developerSettings') ?? '{}').webrtc_p2p ?? false;
+  const isUsingPopoutConsole = JSON.parse(localStorage.getItem('developerSettings') ?? '{}').popout_console ?? false;
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).classList.contains('popout-console-titlebar')) {
+      isDragging.current = true;
+    } else if ((e.target as HTMLElement).classList.contains('resizer')) {
+      isResizing.current = true;
+    }
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startPos = { ...consolePos };
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (isDragging.current) {
+        setConsolePos(prev => ({
+          ...prev,
+          x: startPos.x + (moveEvent.clientX - startX),
+          y: startPos.y + (moveEvent.clientY - startY),
+        }));
+      } else if (isResizing.current) {
+        setConsolePos(prev => ({
+          ...prev,
+          w: Math.max(200, startPos.w + (moveEvent.clientX - startX)),
+          h: Math.max(150, startPos.h + (moveEvent.clientY - startY)),
+        }));
+      }
+    };
+
+    const onMouseUp = () => {
+      isDragging.current = false;
+      isResizing.current = false;
+
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setLogs([...logger.entries]); 
+    };
+
+    window.addEventListener('logger_update', handleUpdate);
+    return () => window.removeEventListener('logger_update', handleUpdate);
+  }, []);
 
   useEffect(() => {
     if (isReady && guildId && channelId && requestMembers) {
@@ -276,10 +331,7 @@ const ChatApp = (): JSX.Element => {
       return; //only support guild calls for now
     }
 
-    const webrtc_p2p =
-      JSON.parse(localStorage.getItem('developerSettings') ?? '{}').webrtc_p2p ?? false;
-
-    if (webrtc_p2p) {
+    if (isUsingWebRTCP2P) {
       openModal('CONFIRMATION_CONNECT_P2P', {
         channel: channel,
         name: channel.name!,
@@ -364,6 +416,7 @@ const ChatApp = (): JSX.Element => {
 
         if (guildSet) {
           const newSet = new Set(guildSet);
+
           newSet.delete(channelIdToClear);
 
           if (newSet.size === 0) {
@@ -378,9 +431,12 @@ const ChatApp = (): JSX.Element => {
       setMentions((prev) => {
         const next = new Map(prev);
         const guildMap = next.get(key);
+
         if (guildMap) {
           const newMap = new Map(guildMap);
+
           newMap.delete(channelIdToClear);
+
           if (newMap.size === 0) {
             next.delete(key);
           } else {
@@ -393,7 +449,7 @@ const ChatApp = (): JSX.Element => {
       if (lastMsgId && updateReadState) {
         updateReadState(channelIdToClear, String(lastMsgId));
       }
-
+ 
       if (!lastMsgId) return;
 
       try {
@@ -424,6 +480,35 @@ const ChatApp = (): JSX.Element => {
         ></Settings>
       )}
 
+      {!showSettings && isUsingPopoutConsole && (
+        <div 
+          className='popout-console'
+          onMouseDown={handleMouseDown}
+          style={{ 
+            left: consolePos.x, 
+            top: consolePos.y, 
+            width: consolePos.w, 
+            height: consolePos.h 
+          }}
+        >
+          <div className='popout-console-titlebar'>
+            <span>Console</span>
+          </div>
+          <div className="popout-console-entries">
+            {logs.map((log, i) => (
+              <div key={i} className={`log-line ${log.level.toLowerCase()}`}>
+                <span className="timestamp">[{log.timestamp}]</span>
+                <span className="origin">({log.source})</span>
+                <span className="message">{log.message}</span>
+                {log.formattedData && (
+                  <pre className="log-data">{log.formattedData}</pre>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="resizer" />
+        </div>
+      )}
       {!showSettings && (
         <div className='chat-layout'>
           <GuildSidebar

@@ -5,7 +5,7 @@ import { type JSX } from 'react';
 import { useGateway } from '@/context/gatewayContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import type { Member, Role } from '@/types/guilds';
-import { useUserProfileActions } from '@/utils/profileUtils';
+import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { getDefaultAvatar } from '../../utils/avatar';
@@ -24,7 +24,7 @@ export const PopoutProfile = ({
   const { getPresence } = useGateway();
   const contextPerms = usePermissions(contextGuildId ?? '0');
   const status = getPresence(member.id)?.status ?? 'offline';
-  const { openFullProfile } = useUserProfileActions(null);
+  const { openFullProfile } = useUiUtilityActions(null);
 
   const MemberAvatar = ({ member, className }: { member: Member; className: string }) => {
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(

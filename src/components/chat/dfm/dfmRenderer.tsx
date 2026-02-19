@@ -4,7 +4,7 @@ import './dfm.css';
 
 import type { JSX } from "react";
 
-import { ChannelMention, Emoji, EveryoneMention, HereMention, MemberMention, RoleMention } from "./dfmComponents";
+import { ChannelMention, EmojiMention, EveryoneMention, HereMention, MemberMention, RoleMention } from "./dfmComponents";
 
 function accumulate(source: string, terminators: string[]): { accumulated: string, remaining: string, terminator: string } {
   let accumulated = "";
@@ -205,7 +205,7 @@ export default function renderDfm(text: string | null | undefined, guild_id: str
           //emoji
           const [name, id] = innerText.split(':');
           if (name && id)
-            result.push(<Emoji name={name} emoji_id={id} />);
+            result.push(<EmojiMention name={name} emoji_id={id} />);
           else
             result.push(innerText);
         }
