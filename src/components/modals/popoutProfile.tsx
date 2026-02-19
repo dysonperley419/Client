@@ -89,7 +89,10 @@ export const PopoutProfile = ({
               e.currentTarget.classList.remove('avatar-img-text');
             }}
             onClick={(e: React.MouseEvent) => {
-              openFullProfile(e, member);
+              e.preventDefault();
+              e.stopPropagation();
+
+              void openFullProfile(member);
             }}
           >
             <MemberAvatar member={member} className='avatar-img-large' />

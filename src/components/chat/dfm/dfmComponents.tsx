@@ -77,7 +77,7 @@ export const MemberMention = ({
     <strong
       onClick={(e) => {
         if (fetchedUser) {
-          openUserProfile(e, member! ?? fakeMemberObj);
+          void openUserProfile(e, member! ?? fakeMemberObj);
         }
       }}
       className='user-msg-mention'

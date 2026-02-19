@@ -29,8 +29,8 @@ interface MediaAttachment {
 interface MainContentProps {
   selectedChannel: Channel;
   selectedGuild: Guild | null;
-  unreads?: any;
-  mentions?: any;
+  unreads?: Map<string, Set<string>>;
+  mentions?: Map<string, Map<string, number>>;
   onChannelSeen?: (guild_id: string | null, channel_id: string, lastMsgId: string) => Promise<void>;
 }
 
@@ -525,7 +525,7 @@ const MainContent = ({
             rollover();
           }}
           onClick={(e) => {
-            openUserProfile(e, memberObj);
+            void openUserProfile(e, memberObj);
           }}
         />
       );
