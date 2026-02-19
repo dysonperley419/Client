@@ -909,7 +909,10 @@ const MainContent = ({
                   roles: [],
                 };
 
-                void openFullProfile(e, memberObj);
+                e.preventDefault();
+                e.stopPropagation();
+
+                void openFullProfile(memberObj);
               }
             }}
             style={

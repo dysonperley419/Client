@@ -1,3 +1,5 @@
+import type React from 'react';
+
 import { useGateway } from '@/context/gatewayContext';
 import { useModal } from '@/context/modalContext';
 import { usePopup } from '@/context/popupContext';
@@ -6,7 +8,6 @@ import type { Guild, Member, Role } from '@/types/guilds';
 
 import { get } from './api';
 import { logger } from './logger';
-import type React from 'react';
 
 export const useUiUtilityActions = (selectedGuild: Guild | null) => {
   const { openPopup } = usePopup();
@@ -64,10 +65,7 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
     });
   };
 
-  const openFullProfile = async (e: React.MouseEvent, user: Member) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const openFullProfile = async (user: Member) => {
     closePopup();
 
     openModal('SERVER_PROFILE', { member: user });
@@ -92,7 +90,7 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
     }
   };
 
- const openEmojiPopout = async (e: React.MouseEvent, emojiBase: { name: string; id: string }) => {
+  const openEmojiPopout = async (e: React.MouseEvent, emojiBase: { name: string; id: string }) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -138,7 +136,7 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
       guildName: emojiDetails.guild_name,
       guildIcon: localGuild?.icon! ?? null,
       guildId: localGuild?.id!,
-      isPrivate: emojiDetails.is_private ?? true
+      isPrivate: emojiDetails.is_private ?? true,
     });
   };
 

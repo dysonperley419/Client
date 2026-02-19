@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import './userProfile.css';
 
 import { type JSX, useState } from 'react';
@@ -64,8 +66,6 @@ export const UserProfileModal = (): JSX.Element => {
     closePopup();
   };
 
-  const switchAccount = () => {};
-
   const switchInstance = () => {
     closePopup();
     openModal('DANGER_CONFIRMATION', {
@@ -86,7 +86,7 @@ export const UserProfileModal = (): JSX.Element => {
     });
   };
 
-  const viewUserProfile = (e: React.MouseEvent, user: User) => {
+  const viewUserProfile = (user: User) => {
     if (user?.id) {
       closePopup();
 
@@ -105,12 +105,16 @@ export const UserProfileModal = (): JSX.Element => {
         roles: [],
       };
 
-      void openFullProfile(e, memberObj);
+      void openFullProfile(memberObj);
     }
   };
 
+  const activeSession = sessions.find((s) => s.active === true);
   const status =
-    sessions[0]?.status ?? (user?.id ? getPresence(user.id)?.status : undefined) ?? 'offline';
+    activeSession?.status ??
+    sessions[0]?.status ??
+    (user?.id ? getPresence(user.id)?.status : undefined) ??
+    'offline';
 
   return (
     <div className='user-profile-modal'>
@@ -161,12 +165,23 @@ export const UserProfileModal = (): JSX.Element => {
               </span>
             )}
           </div>
-          <div className='icon-btn-small' title='Switch account' onClick={switchAccount}>
+          <div className='icon-btn-small' title='Switch account'>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
               switch_account
             </span>
           </div>
-          <div className='icon-btn-small' title='Switch instance' onClick={switchInstance}>
+          <div
+            className='icon-btn-small'
+            title='Switch instance'
+            onClick={switchInstance}
+            tabIndex={0}
+            role='button'
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                switchInstance();
+              }
+            }}
+          >
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
               hard_drive
             </span>
@@ -175,7 +190,20 @@ export const UserProfileModal = (): JSX.Element => {
             className='icon-btn-small'
             title={`View user profile`}
             onClick={(e: any) => {
-              viewUserProfile(e, user!);
+              e.preventDefault();
+              e.stopPropagation();
+
+              viewUserProfile(user!);
+            }}
+            tabIndex={0}
+            role='button'
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+
+                viewUserProfile(user!);
+              }
             }}
           >
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>

@@ -22,8 +22,8 @@ const GuildSidebar = ({
   markAsRead,
 }: {
   guilds: Guild[];
-  unreads: any;
-  mentions: any;
+  unreads: Map<string, Set<string>>;
+  mentions: Map<string, Map<string, number>>;
   selectedGuildId?: string | null;
   onSelectGuild: (guild: Guild) => void;
   markAsRead: (guild_id: string) => Promise<void>;
@@ -50,7 +50,19 @@ const GuildSidebar = ({
       e.clientX,
       e.clientY,
       <div className='context-menu-out guild-context-menu'>
-        <div className='button' onClick={() => markAsRead(guild.id)}>
+        <div
+          className='button'
+          onClick={() => {
+            void markAsRead(guild.id);
+          }}
+          role='button'
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              void markAsRead(guild.id);
+            }
+          }}
+        >
           Mark as read
         </div>
         <div className='button'>Change nickname</div>
@@ -128,8 +140,12 @@ const GuildSidebar = ({
   };
 
   const isHomeSelected = !selectedGuildId;
+  const activeSession = sessions.find((s) => s.active === true);
   const status =
-    sessions[0]?.status ?? (user?.id ? getPresence(user.id)?.status : undefined) ?? 'offline';
+    activeSession?.status ??
+    sessions[0]?.status ??
+    (user?.id ? getPresence(user.id)?.status : undefined) ??
+    'offline';
 
   const onlineFriendsCount = relationships.filter((r) => {
     const friendStatus = getPresence(r.id)?.status ?? 'offline';
@@ -165,16 +181,14 @@ const GuildSidebar = ({
       <div className='server-section'>
         {guilds.map((guild: Guild) => {
           const guildMentionsMap = mentions.get(guild.id);
-          
+
           let totalMentions = 0;
 
-          if (guildMentionsMap) {
-            guildMentionsMap.forEach((count: number) => {
-              totalMentions += count;
-            });
-          }
+          guildMentionsMap?.forEach((count: number) => {
+            totalMentions += count;
+          });
 
-          const hasUnreads = unreads.has(guild.id) && unreads.get(guild.id).size > 0;
+          const hasUnreads = (unreads.get(guild.id)?.size ?? 0) > 0;
 
           return (
             <button
@@ -193,7 +207,9 @@ const GuildSidebar = ({
                 </div>
               )}
               <div
-                style={{ '--mention-count': `"${totalMentions}"` } as React.CSSProperties}
+                style={
+                  { '--mention-count': `"${totalMentions.toString()}"` } as React.CSSProperties
+                }
                 className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads ? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`}
               >
                 {guild.icon ? (
