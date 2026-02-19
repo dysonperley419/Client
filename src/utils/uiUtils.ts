@@ -100,10 +100,22 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
 
     let emojiDetails: any = null;
 
-    const localGuild = guilds.find((g) => g.emojis?.some((em) => em.id === emojiBase.id));
-    const localEmoji = localGuild?.emojis?.find((em) => em.id === emojiBase.id);
+    let localEmoji: any = null;
+    let localGuild: Guild | undefined = undefined;
 
-    if (localGuild && localEmoji) {
+    const cleanName = emojiBase.name.replace(/:/g, '');
+
+    for (const g of guilds) {
+      const found = g.emojis?.find((em) => em.id === emojiBase.id || em.name === cleanName);
+
+      if (found) {
+        localEmoji = found;
+        localGuild = g;
+        break; 
+      }
+    }
+
+    if (localEmoji && localGuild) {
       emojiDetails = {
         ...localEmoji,
         guild_id: localGuild.id,
@@ -111,12 +123,16 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
         is_private: false,
       };
     } else {
-      try {
-        emojiDetails = await get(`/emojis/${emojiBase.id}/public`);
-      } catch (err) {
-        logger.error('EMOJI_POPOUT', `Failed to fetch emoji ${emojiBase.id}`, err);
-        return;
-      }
+      logger.warn('EMOJI_POPOUT', `Emoji ${emojiBase.id} not found in local guilds. Using fallback.`);
+      
+      emojiDetails = {
+        id: emojiBase.id,
+        name: cleanName,
+        animated: false,
+        guild_id: null,
+        guild_name: 'Unknown Guild',
+        is_private: true,
+      };
     }
 
     openPopup('EMOJI_DETAILS_POPOUT', {
