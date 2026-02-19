@@ -102,4 +102,13 @@ export const ChannelSchema = z.object({
   safety_warnings: z.array(SafetyWarningSchema).nullish(),
 });
 
+export const ChannelReadStateSchema = z.object({
+  id: z.string(),
+  channel_id: z.string(),
+  last_message_id: z.string().nullish(),
+  last_pin_timestamp: z.string().nullish(),
+  mention_count: z.number().default(0),
+});
+
 export type Channel = z.infer<typeof ChannelSchema>;
+export type ChannelReadState = z.infer<typeof ChannelReadStateSchema>;

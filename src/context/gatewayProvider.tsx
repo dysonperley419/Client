@@ -39,6 +39,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const [privateChannels, setPrivateChannels] = useState<Channel[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [presences, setPresences] = useState<GatewayContextSchema['presences']>({});
+  const [readStates, setReadStates] = useState<GatewayContextSchema['readStates']>([]);
   const [voiceStates, setVoiceStates] = useState<GatewayContextSchema['voiceStates']>({});
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [memberLists, setMemberLists] = useState<GatewayContextSchema['memberLists']>({});
@@ -113,6 +114,38 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     [presences],
   );
 
+  const updateReadState = useCallback((channelId: string, messageId: string) => {
+    setReadStates((prev: any[]) => {
+      const targetCid = String(channelId);
+      const targetMid = String(messageId);
+
+      const exists = prev.find((rs) => String(rs.channel_id) === targetCid);
+
+      if (!exists) {
+        return [
+          ...prev,
+          {
+            channel_id: targetCid,
+            last_message_id: targetMid,
+            mention_count: 0,
+          },
+        ];
+      }
+
+      return prev.map((rs) => {
+        if (String(rs.channel_id) === targetCid) {
+          const currentAckId = rs.last_message_id ? BigInt(rs.last_message_id) : 0n;
+          const newAckId = BigInt(targetMid);
+
+          if (newAckId >= currentAckId) {
+            return { ...rs, last_message_id: targetMid, mention_count: 0 };
+          }
+        }
+        return rs;
+      });
+    });
+  }, []);
+
   const handleDispatch = useCallback(
     (type: string, data: unknown) => {
       const { upsertUsers, updatePresence } = useUserStore.getState();
@@ -156,6 +189,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           }); //So spacebar doesnt actually have this like we do on oldcord, some modern discord engineering bullshit - it'll fix itself on op 14 responses dw
           setUser(parsed.user);
           setPrivateChannels(parsed.private_channels ?? []);
+          setReadStates(parsed.read_state?.entries ?? []);
           setRelationships(parsed.relationships);
           setUserSettings(parsed.user_settings);
           setGuilds(parsed.guilds);
@@ -215,11 +249,32 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           break;
         }
 
+        case 'MESSAGE_ACK': {
+          const { channel_id, message_id } = data as { channel_id: string; message_id: string };
+
+          setReadStates((prev) => {
+            return prev.map((rs) => {
+              if (rs.channel_id === channel_id) {
+                const isNewer =
+                  !rs.last_message_id || BigInt(message_id) >= BigInt(rs.last_message_id);
+
+                if (isNewer) {
+                  return { ...rs, last_message_id: message_id, mention_count: 0 };
+                }
+              }
+              return rs;
+            });
+          });
+          break;
+        }
+
         case 'CHANNEL_CREATE': {
           const newChannel = data as Channel;
+
           if (newChannel.type === 1 || newChannel.type === 3) {
             setPrivateChannels((prev) => [newChannel, ...prev]);
           }
+
           window.dispatchEvent(new CustomEvent('ui_channel_created', { detail: newChannel }));
           break;
         }
@@ -546,6 +601,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     presences,
     voiceStates,
     privateChannels,
+    readStates,
     requestMembers,
     getMember,
     getMemberColor,
@@ -553,6 +609,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     typingUsers,
     memberLists,
     memberListsRef,
+    updateReadState,
     sendOp,
   };
 

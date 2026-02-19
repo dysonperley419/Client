@@ -1,6 +1,6 @@
 import './guildSidebar.css';
 
-import { type JSX  } from 'react';
+import { type JSX } from 'react';
 import { Link } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
@@ -19,12 +19,14 @@ const GuildSidebar = ({
   mentions,
   selectedGuildId,
   onSelectGuild,
+  markAsRead,
 }: {
   guilds: Guild[];
   unreads: any;
   mentions: any;
   selectedGuildId?: string | null;
   onSelectGuild: (guild: Guild) => void;
+  markAsRead: (guild_id: string) => Promise<void>;
 }): JSX.Element => {
   const { user, sessions, relationships, getPresence } = useGateway();
   const { openModal } = useModal();
@@ -48,6 +50,9 @@ const GuildSidebar = ({
       e.clientX,
       e.clientY,
       <div className='context-menu-out guild-context-menu'>
+        <div className='button' onClick={() => markAsRead(guild.id)}>
+          Mark as read
+        </div>
         <div className='button'>Change nickname</div>
         {!isOwner && (
           <>
@@ -160,49 +165,49 @@ const GuildSidebar = ({
       <div className='server-section'>
         {guilds.map((guild: Guild) => {
           const guildMentionsMap = mentions.get(guild.id);
-        let totalMentions = 0;
-        
-        if (guildMentionsMap) {
-          guildMentionsMap.forEach((count: number) => {
-            totalMentions += count;
-          });
-        }
+          let totalMentions = 0;
 
-        const hasUnreads = unreads.has(guild.id) && unreads.get(guild.id).size > 0;
+          if (guildMentionsMap) {
+            guildMentionsMap.forEach((count: number) => {
+              totalMentions += count;
+            });
+          }
 
-          return (<button
-            className={`guild-icon-wrapper ${selectedGuildId === guild.id && !isUserPopupOpen ? 'selected' : ''}`}
-            key={guild.id}
-            onClick={() => {
-              onSelectGuild(guild);
-            }}
-            onContextMenu={(e) => {
-              handleRightClick(e, guild);
-            }}
-          >
-            {selectedGuildId === guild.id && !isUserPopupOpen && (
-              <div className='selected-indicator-bg'>
-                <div className='selected-gradient' />
-              </div>
-            )}
-            <div
-              style={
-                { '--mention-count': `"${totalMentions}"` } as React.CSSProperties
-              }
-              className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`}
+          const hasUnreads = unreads.has(guild.id) && unreads.get(guild.id).size > 0;
+
+          return (
+            <button
+              className={`guild-icon-wrapper ${selectedGuildId === guild.id && !isUserPopupOpen ? 'selected' : ''}`}
+              key={guild.id}
+              onClick={() => {
+                onSelectGuild(guild);
+              }}
+              onContextMenu={(e) => {
+                handleRightClick(e, guild);
+              }}
             >
-              {guild.icon ? (
-                <img
-                  className='guild-icon'
-                  src={`${localStorage.getItem('selectedCdnUrl') ?? ''}/icons/${guild.id}/${guild.icon}.png`}
-                  alt={guild.name}
-                  onError={handleImgError}
-                />
-              ) : (
-                <div className={`guild-icon no-icon`}>{guild.name.charAt(0)}</div>
+              {selectedGuildId === guild.id && !isUserPopupOpen && (
+                <div className='selected-indicator-bg'>
+                  <div className='selected-gradient' />
+                </div>
               )}
-            </div>
-          </button>)
+              <div
+                style={{ '--mention-count': `"${totalMentions}"` } as React.CSSProperties}
+                className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads ? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`}
+              >
+                {guild.icon ? (
+                  <img
+                    className='guild-icon'
+                    src={`${localStorage.getItem('selectedCdnUrl') ?? ''}/icons/${guild.id}/${guild.icon}.png`}
+                    alt={guild.name}
+                    onError={handleImgError}
+                  />
+                ) : (
+                  <div className={`guild-icon no-icon`}>{guild.name.charAt(0)}</div>
+                )}
+              </div>
+            </button>
+          );
         })}
 
         <button

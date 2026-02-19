@@ -1,4 +1,4 @@
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useModal } from '@/context/modalContext';
@@ -7,6 +7,9 @@ import type { Channel } from '@/types/channel';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
 import type { Guild } from '@/types/guilds';
 import type { Relationship } from '@/types/relationship';
+import type { User } from '@/types/users';
+import { post } from '@/utils/api';
+import { logger } from '@/utils/logger';
 
 import ChannelSidebar from '../components/chat/channelSidebar';
 import { FriendsList } from '../components/chat/friendsList';
@@ -16,7 +19,6 @@ import NoTextChannels from '../components/chat/noTextChannels';
 import Settings from '../components/chat/settings';
 import { useGateway } from '../context/gatewayContext';
 import LoadingScreen from './loading';
-import type { User } from '@/types/users';
 
 const ChatApp = (): JSX.Element => {
   const {
@@ -26,6 +28,8 @@ const ChatApp = (): JSX.Element => {
     relationships,
     requestMembers,
     privateChannels,
+    readStates,
+    updateReadState,
   }: GatewayContextSchema = useGateway();
   const { guildId, channelId } = useParams();
   const { openModal } = useModal();
@@ -43,7 +47,6 @@ const ChatApp = (): JSX.Element => {
     ? (selectedGuild.channels.find((c) => c.id === channelId) ?? null)
     : ((privateChannels as Channel[])?.find((c) => c.id === channelId) ?? null);
 
-
   useEffect(() => {
     if (isReady && guildId && channelId && requestMembers) {
       requestMembers(guildId, channelId);
@@ -55,6 +58,38 @@ const ChatApp = (): JSX.Element => {
       setPassedGuilds(guilds);
     }
   }, [guilds]);
+
+  useEffect(() => {
+    if (readStates && guilds.length > 0) {
+      const newUnreads = new Map<string, Set<string>>();
+      const newMentions = new Map<string, Map<string, number>>();
+
+      readStates.forEach((state: any) => {
+        const { channel_id, mention_count, last_message_id: ackId } = state;
+
+        if (channel_id === channelId) return;
+
+        const guild = guilds.find((g) => g.channels.some((c) => c.id === channel_id));
+        const channel = guild?.channels.find((c) => c.id === channel_id);
+        const key = guild?.id || 'direct_messages';
+
+        if (channel?.last_message_id && BigInt(channel.last_message_id) !== BigInt(ackId)) {
+          if (!newUnreads.has(key)) newUnreads.set(key, new Set());
+          newUnreads.get(key)?.add(channel_id);
+        }
+
+        if (mention_count > 0) {
+          if (!newMentions.has(key)) {
+            if (!newMentions.has(key)) newMentions.set(key, new Map());
+            newMentions.get(key)?.set(channel_id, mention_count);
+          }
+        }
+      });
+
+      setUnreads(newUnreads);
+      setMentions(newMentions);
+    }
+  }, [readStates, guilds, channelId]);
 
   useEffect(() => {
     setLocalFriends(relationships);
@@ -109,20 +144,29 @@ const ChatApp = (): JSX.Element => {
 
     const handleNewMessage = (event: Event) => {
       const newMessage = (event as CustomEvent).detail;
-      const gId = newMessage.guild_id;
-      const cId = newMessage.channel_id;
+      const { guild_id: gId, channel_id: cId, id: msgId } = newMessage;
 
-      if (!gId || cId === selectedChannel?.id) return;
+      setPassedGuilds((prev) =>
+        prev.map((g) =>
+          g.id === gId
+            ? {
+                ...g,
+                channels: g.channels.map((c) =>
+                  c.id === cId ? { ...c, last_message_id: msgId } : c,
+                ),
+              }
+            : g,
+        ),
+      );
 
-      const authorId = newMessage.author?.id;
-
-      if (authorId === user?.id) {
+      if (cId === selectedChannel?.id) {
+        clearChannelReadState(gId, cId, msgId);
+        updateReadState(cId, msgId);
         return;
       }
 
       const isMentioned =
-        newMessage.mentions?.some((m: User) => m.id === user?.id) ||
-        newMessage.mention_everyone;
+        newMessage.mentions?.some((m: User) => m.id === user?.id) || newMessage.mention_everyone;
 
       if (isMentioned) {
         setMentions((prev) => {
@@ -184,7 +228,7 @@ const ChatApp = (): JSX.Element => {
 
       setMentions((prev) => {
         if (!prev.has(selectedGuild.id)) {
-           return prev;
+          return prev;
         }
 
         const next = new Map(prev);
@@ -223,10 +267,6 @@ const ChatApp = (): JSX.Element => {
     };
   }, []);
 
-  if (!isReady) {
-    return <LoadingScreen />;
-  }
-
   const handleSelectGuild = (guild: Guild) => {
     void navigate(`/channels/${guild.id}`);
   };
@@ -259,6 +299,120 @@ const ChatApp = (): JSX.Element => {
     void navigate(`/channels/${gId}/${cId}`);
   };
 
+  const handleMarkGuildAsRead = async (guild_id: string) => {
+    try {
+      const ApiVer =
+        parseInt((localStorage.getItem('defaultApiVersion') ?? 'v9').split('v')[1]!) ?? 0;
+
+      if (ApiVer < 9) {
+        await post(`/guilds/${guild_id}/ack`, {});
+      } else {
+        const guildUnreadSet = unreads.get(guild_id);
+        if (!guildUnreadSet || guildUnreadSet.size === 0) return;
+
+        const targetGuild = guilds.find((g) => g.id === guild_id);
+        if (!targetGuild) return;
+
+        const read_states = Array.from(guildUnreadSet)
+          .map((channelId) => {
+            const channel = targetGuild.channels.find((c) => c.id === channelId);
+
+            if (channel?.last_message_id) {
+              return {
+                channel_id: channel.id,
+                message_id: channel.last_message_id,
+                read_state_type: 0,
+              };
+            }
+            return null;
+          })
+          .filter((entry) => entry !== null);
+
+        if (read_states.length === 0) return;
+
+        await post(`/read-states/ack-bulk`, {
+          read_states: read_states,
+        });
+      }
+
+      setUnreads((prev) => {
+        const next = new Map(prev);
+        next.delete(guild_id);
+        return next;
+      });
+
+      setMentions((prev) => {
+        const next = new Map(prev);
+        next.delete(guild_id);
+        return next;
+      });
+
+      logger.info(`GUILD_SIDEBAR`, `Bulk ack sent in guild`, guild_id);
+    } catch (err) {
+      logger.error(`GUILD_SIDEBAR`, `Failed to bulk-ack in guild: ${guild_id}`, err);
+    }
+  };
+
+  const clearChannelReadState = useCallback(
+    async (gId: string | null, cId: string, lastMsgId: string | null) => {
+      const key = String(gId ?? 'direct_messages');
+      const channelIdToClear = String(cId);
+
+      setUnreads((prev) => {
+        const next = new Map(prev);
+        const guildSet = next.get(key);
+
+        if (guildSet) {
+          const newSet = new Set(guildSet);
+          newSet.delete(channelIdToClear);
+
+          if (newSet.size === 0) {
+            next.delete(key);
+          } else {
+            next.set(key, newSet);
+          }
+        }
+        return next;
+      });
+
+      setMentions((prev) => {
+        const next = new Map(prev);
+        const guildMap = next.get(key);
+        if (guildMap) {
+          const newMap = new Map(guildMap);
+          newMap.delete(channelIdToClear);
+          if (newMap.size === 0) {
+            next.delete(key);
+          } else {
+            next.set(key, newMap);
+          }
+        }
+        return next;
+      });
+
+      if (lastMsgId && updateReadState) {
+        updateReadState(channelIdToClear, String(lastMsgId));
+      }
+
+      if (!lastMsgId) return;
+
+      try {
+        await post(`/channels/${cId}/messages/${lastMsgId}/ack`, {
+          token: null,
+        });
+
+        logger.info('CHAT_APP', 'Ack sent for channel', cId);
+      } catch (err) {
+        logger.error('CHAT_APP', 'Failed to send ack', err);
+      }
+    },
+    [updateReadState],
+  );
+
+  if (!isReady) {
+    return <LoadingScreen />;
+  }
+
   return (
     <div className='page-wrapper'>
       {showSettings && (
@@ -278,6 +432,7 @@ const ChatApp = (): JSX.Element => {
             onSelectGuild={handleSelectGuild}
             unreads={unreads}
             mentions={mentions}
+            markAsRead={handleMarkGuildAsRead}
           />
           <ChannelSidebar
             selectedGuild={selectedGuild}
@@ -288,7 +443,13 @@ const ChatApp = (): JSX.Element => {
           />
 
           {selectedChannel ? (
-            <MainContent selectedChannel={selectedChannel} selectedGuild={selectedGuild} />
+            <MainContent
+              selectedChannel={selectedChannel}
+              selectedGuild={selectedGuild}
+              unreads={unreads}
+              mentions={mentions}
+              onChannelSeen={clearChannelReadState}
+            />
           ) : !selectedGuild ? (
             <FriendsList
               friends={localFriends}

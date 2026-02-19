@@ -29,6 +29,9 @@ interface MediaAttachment {
 interface MainContentProps {
   selectedChannel: Channel;
   selectedGuild: Guild | null;
+  unreads?: any;
+  mentions?: any;
+  onChannelSeen?: (guild_id: string | null, channel_id: string, lastMsgId: string) => Promise<void>;
 }
 
 export const MESSAGE_STATE = Object.freeze({
@@ -43,10 +46,20 @@ export const MESSAGE_STATE = Object.freeze({
 
 type LocalMessage = Message & { state: number };
 
-const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.Element => {
+const MainContent = ({
+  selectedChannel,
+  selectedGuild,
+  unreads,
+  mentions,
+  onChannelSeen,
+}: MainContentProps): JSX.Element => {
   const { openModal } = useModal();
   const { openUserProfile, openFullProfile } = useUserProfileActions(selectedGuild);
-  const [suggestionTrigger, setSuggestionTrigger] = useState<{ type: 'user' | 'role' | 'channel'; query: string; startIndex: number } | null>(null);
+  const [suggestionTrigger, setSuggestionTrigger] = useState<{
+    type: 'user' | 'role' | 'channel';
+    query: string;
+    startIndex: number;
+  } | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -58,10 +71,25 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
   const isloadingMore = useRef(false);
   const [firstLoad, setFirstLoad] = useState(true);
   const autoScroll = useRef(true);
-
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (!selectedChannel) {
+      return;
+    }
+
+    const channelId = selectedChannel.id;
+    const lastMsgId = selectedChannel.last_message_id ?? null;
+    const key = selectedGuild?.id ?? 'direct_messages';
+    const isUnread = unreads?.get(key)?.has(channelId);
+    const hasMentions = mentions?.get(key)?.has(channelId);
+
+    if (isUnread || hasMentions) {
+      void onChannelSeen!(selectedGuild?.id || null, channelId, lastMsgId!);
+    }
+  }, [selectedChannel.id, selectedChannel.last_message_id, selectedGuild?.id, onChannelSeen]);
 
   const addFiles = (files: File[]) => {
     const newAttachments: MediaAttachment[] = files.map((file) => ({
@@ -181,7 +209,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
     const roles = selectedGuild.roles || [];
 
-    roles.forEach(role => {
+    roles.forEach((role) => {
       const escapedName = role.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(`@${escapedName}\\b`, 'g');
 
@@ -189,15 +217,15 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     }); //yeah uh role mentions dont really work with spaces
 
     const memberState = memberLists![selectedGuild.id];
-    const listItems = Array.isArray(memberState) ? memberState : (memberState?.items || []);
+    const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
     const members: Member[] = listItems
       .filter((item: any) => !!item.member)
       .map((item: any) => item.member);
 
-    members.forEach(m => {
+    members.forEach((m) => {
       const names = [m.user.username, m.nick, m.user.global_name].filter(Boolean);
 
-      names.forEach(name => {
+      names.forEach((name) => {
         const escapedName = name!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`@${escapedName}\\b`, 'g');
 
@@ -262,11 +290,15 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     setAttachments([]);
 
     try {
-      await post(`/channels/${selectedChannel.id}/messages`, formData);
+      const response = await post(`/channels/${selectedChannel.id}/messages`, formData);
 
       toCleanup.forEach((at) => {
         URL.revokeObjectURL(at.preview);
       });
+
+      if (onChannelSeen && response?.id) {
+        void onChannelSeen(selectedGuild?.id ?? null, selectedChannel.id, response.id);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
 
@@ -640,52 +672,59 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
     if (type === 'user') {
       const memberState = selectedGuild ? memberLists![selectedGuild.id] : null;
-      const listItems = Array.isArray(memberState) ? memberState : (memberState?.items || []);
-      
+      const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
+
       const guildMembers: Member[] = listItems
         .filter((item: any) => !!item.member)
         .map((item: any) => item.member);
 
       const guildRoles = selectedGuild?.roles || [];
-      const recentSpeakerIds = Array.from(new Set(messages.map(m => m.author.id))).reverse();
+      const recentSpeakerIds = Array.from(new Set(messages.map((m) => m.author.id))).reverse();
 
-     const filteredUsers = guildMembers.filter((m: Member) =>
-        m.user.username.toLowerCase().includes(q) ||
-        (m.nick && m.nick.toLowerCase().includes(q)) ||
-        (m.user.global_name && m.user.global_name.toLowerCase().includes(q))
-      ).map(m => ({ ...m, suggestionType: 'user' }));
+      const filteredUsers = guildMembers
+        .filter(
+          (m: Member) =>
+            m.user.username.toLowerCase().includes(q) ||
+            m.nick?.toLowerCase().includes(q) ||
+            m.user.global_name?.toLowerCase().includes(q),
+        )
+        .map((m) => ({ ...m, suggestionType: 'user' }));
 
-      const filteredRoles = guildRoles.filter((role: any) => role.name.toLowerCase().includes(q) && role.name !== "@everyone").map(r => ({ ...r, suggestionType: 'role' }));
+      const filteredRoles = guildRoles
+        .filter((role: any) => role.name.toLowerCase().includes(q) && role.name !== '@everyone')
+        .map((r) => ({ ...r, suggestionType: 'role' }));
 
-      const combined = [...filteredUsers, ...filteredRoles].sort((a: any, b: any) => {
-        const getName = (item: any) => {
-          if (item.suggestionType === 'user') {
-            return (item.nick || item.user.global_name || item.user.username).toLowerCase();
+      const combined = [...filteredUsers, ...filteredRoles]
+        .sort((a: any, b: any) => {
+          const getName = (item: any) => {
+            if (item.suggestionType === 'user') {
+              return (item.nick || item.user.global_name || item.user.username).toLowerCase();
+            }
+
+            return item.name.toLowerCase();
+          };
+
+          const nameA = getName(a);
+          const nameB = getName(b);
+
+          const startsA = nameA.startsWith(q);
+          const startsB = nameB.startsWith(q);
+
+          if (startsA && !startsB) return -1;
+          if (!startsA && startsB) return 1;
+
+          if (a.suggestionType === 'user' && b.suggestionType === 'user') {
+            const indexA = recentSpeakerIds.indexOf(a.user.id);
+            const indexB = recentSpeakerIds.indexOf(b.user.id);
+
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
           }
 
-          return item.name.toLowerCase();
-        };
-
-        const nameA = getName(a);
-        const nameB = getName(b);
-
-        const startsA = nameA.startsWith(q);
-        const startsB = nameB.startsWith(q);
-
-        if (startsA && !startsB) return -1;
-        if (!startsA && startsB) return 1;
-
-        if (a.suggestionType === 'user' && b.suggestionType === 'user') {
-          const indexA = recentSpeakerIds.indexOf(a.user.id);
-          const indexB = recentSpeakerIds.indexOf(b.user.id);
-
-          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-          if (indexA !== -1) return -1;
-          if (indexB !== -1) return 1;
-        }
-
-        return nameA.localeCompare(nameB);
-      }).slice(0, 8);
+          return nameA.localeCompare(nameB);
+        })
+        .slice(0, 8);
 
       setFilteredSuggestions(combined);
     } else {
@@ -696,7 +735,7 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
       const filteredChannels = selectedGuild.channels
         .filter((c: any) => c.name.toLowerCase().includes(q) && c.type !== 4)
-        .map(c => ({ ...c, suggestionType: 'channel' }))
+        .map((c) => ({ ...c, suggestionType: 'channel' }))
         .sort((a: Channel, b: Channel) => {
           const startsA = a.name!.toLowerCase().startsWith(q);
           const startsB = b.name!.toLowerCase().startsWith(q);
@@ -718,8 +757,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
     if (mentionMatch) {
       const symbol = mentionMatch[1]!;
       const query = mentionMatch[2]!;
-      const type = symbol!.includes('#') ? 'channel' : 'user'; //or role but you know.. we do that logic later
-      
+      const type = symbol.includes('#') ? 'channel' : 'user'; //or role but you know.. we do that logic later
+
       setSuggestionTrigger({ type, query, startIndex: mentionMatch.index });
       filterSuggestions(type, query);
     } else {
@@ -815,13 +854,13 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
 
   const applySuggestion = (item: any) => {
     if (!suggestionTrigger) return;
-    
+
     const before = chatMessage.substring(0, suggestionTrigger.startIndex);
     const queryLength = suggestionTrigger.query.length + 1;
     const after = chatMessage.substring(suggestionTrigger.startIndex + queryLength);
-    
-    let insertion = "";
-    
+
+    let insertion = '';
+
     if (item.suggestionType === 'user') {
       insertion = `@${item.user.username}#${item.user.discriminator} `;
     } else if (item.suggestionType === 'role') {
@@ -951,31 +990,37 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
           >
             {suggestionTrigger != null && filteredSuggestions.length > 0 && (
               <>
-              <div className='input-wrapper' key={'SuggestionsBar'}>
-                <div className='input-row'>
+                <div className='input-wrapper' key={'SuggestionsBar'}>
+                  <div className='input-row'>
                     {suggestionTrigger != null && filteredSuggestions.length > 0 && (
                       <>
                         <div className='chat-suggestions-wrapper'>
                           {filteredSuggestions.map((item, index) => {
                             const isUser = item.suggestionType === 'user';
                             const isRole = item.suggestionType === 'role';
-                            
-                            let prefix = isUser || isRole ? "@" : "#";
-                            let name = "";
-                            let subtext = "";
+
+                            const prefix = isUser || isRole ? '@' : '#';
+                            let name = '';
+                            let subtext = '';
 
                             if (isUser) {
                               name = item.nick || item.user.username;
-                              subtext = item.user.discriminator !== "0" ? `${item.user.username}#${item.user.discriminator}` : item.user.username;
+                              subtext =
+                                item.user.discriminator !== '0'
+                                  ? `${item.user.username}#${item.user.discriminator}`
+                                  : item.user.username;
                             } else if (isRole) {
                               name = item.name;
-                              subtext = "Role";
+                              subtext = 'Role';
                             } else {
-                              let topic = item.topic || "Channel";
-                              let maxTopicLength = 50;
+                              const topic = item.topic || 'Channel';
+                              const maxTopicLength = 50;
 
                               name = item.name;
-                              subtext = topic.length > maxTopicLength ? `${topic.substring(0, maxTopicLength)}...` : topic;
+                              subtext =
+                                topic.length > maxTopicLength
+                                  ? `${topic.substring(0, maxTopicLength)}...`
+                                  : topic;
                             }
 
                             return (
@@ -983,8 +1028,12 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                                 key={item.id}
                                 className={`chat-suggestion ${index === selectedIndex ? 'active' : ''}`}
                                 style={{ '--prefix': `"${prefix}"` } as React.CSSProperties}
-                                onClick={() => applySuggestion(item)}
-                                onMouseEnter={() => setSelectedIndex(index)}
+                                onClick={() => {
+                                  applySuggestion(item);
+                                }}
+                                onMouseEnter={() => {
+                                  setSelectedIndex(index);
+                                }}
                               >
                                 {isUser && item.user.avatar ? (
                                   <img
@@ -1004,8 +1053,8 @@ const MainContent = ({ selectedChannel, selectedGuild }: MainContentProps): JSX.
                         </div>
                       </>
                     )}
+                  </div>
                 </div>
-              </div>
               </>
             )}
             <div className='input-wrapper'>

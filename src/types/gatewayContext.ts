@@ -1,4 +1,4 @@
-import type { Channel } from './channel';
+import type { Channel, ChannelReadState } from './channel';
 import type { GuildMemberListGroup, GuildMemberListOperationItem } from './gateway';
 import type { Guild, Member, VoiceState } from './guilds';
 import type { Presence, Session } from './presences';
@@ -25,6 +25,7 @@ export interface GatewayContextSchema {
   presences: Record<string, Presence>;
   voiceStates: Record<string, VoiceState>;
   privateChannels: Channel[] | [];
+  readStates: ChannelReadState[] | [];
   requestMembers: (guildId: string, channelId: string, ranges?: number[][]) => void;
   getMember: (
     guild_id: string | null | undefined,
@@ -34,6 +35,7 @@ export interface GatewayContextSchema {
   getPresence: (userId: string | undefined) => Presence | null;
   typingUsers: Record<string, Record<string, number>>;
   memberLists?: Record<string, GuildMemberListState>;
+  updateReadState: any;
   memberListsRef?: React.RefObject<Record<string, GuildMemberListState> | undefined>;
   sendOp?: (op: number, d: unknown) => void;
 }

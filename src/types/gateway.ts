@@ -1,6 +1,6 @@
 import * as z from 'zod';
 
-import { ChannelSchema } from './channel';
+import { ChannelReadStateSchema, ChannelSchema } from './channel';
 import { GuildSchema, MemberSchema, VoiceStateSchema } from './guilds';
 import { MessageSchema } from './messages';
 import { PresenceSchema, SessionSchema } from './presences';
@@ -64,6 +64,12 @@ const PrivateChannelSchema = ChannelSchema.extend({
   }, z.number().default(0)),
 });
 
+const ReadStateSchema = z.object({
+  entries: z.array(ChannelReadStateSchema).default([]),
+  partial: z.boolean().default(false),
+  version: z.number().default(0),
+});
+
 // TODO: Implement all ReadyEventSchema
 export const ReadyEventSchema = z.looseObject({
   user: UserSchema,
@@ -76,6 +82,7 @@ export const ReadyEventSchema = z.looseObject({
   private_channels: z.array(PrivateChannelSchema).default([]),
   presences: z.array(PresenceSchema).optional().default([]),
   voice_states: z.array(VoiceStateSchema).optional().default([]),
+  read_state: ReadStateSchema,
 });
 
 export const MessageCreateSchema = MessageSchema.extend({
