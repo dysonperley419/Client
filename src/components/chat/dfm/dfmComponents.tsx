@@ -133,22 +133,28 @@ export const ChannelMention = ({
   return render(channel);
 };
 
-export const EmojiMention = ({ name, emoji_id }: { name: string; emoji_id: string }): JSX.Element => {
+export const EmojiMention = ({
+  name,
+  emoji_id,
+}: {
+  name: string;
+  emoji_id: string;
+}): JSX.Element => {
   const { guilds } = useGateway();
   const contextGuild = guilds.find((g) => g.emojis?.some((e) => e.id === emoji_id));
   const { openEmojiPopout } = useUiUtilityActions(contextGuild || null);
 
   const invalid = /\D/.test(emoji_id);
-  if (invalid) return <></>;
+  if (invalid) return <></>; //Invalid and probably dangerous. Do not render or just a fucking idiot made these.
 
   const emojiUrl = `${localStorage.getItem('selectedCdnUrl') ?? ''}/emojis/${emoji_id}.png`;
 
   return (
-    <img 
-      className='emoji' 
-      alt={name} 
-      src={emojiUrl} 
-      onClick={(e) => openEmojiPopout(e, { name, id: emoji_id })} 
+    <img
+      className='emoji'
+      alt={name}
+      src={emojiUrl}
+      onClick={(e) => openEmojiPopout(e, { name, id: emoji_id })}
     />
   );
 };
