@@ -54,7 +54,7 @@ const LoginForm = ({
       <div className='form-body'>
         <span>Instance</span>
         <select
-          value={typeof instance === 'object' ? instance.url : instance}
+          value={typeof instance === 'object' ? instance.url : (instance ?? 'custom-instance')}
           onChange={handleInstanceSelect}
         >
           {instances.map((instance) => (

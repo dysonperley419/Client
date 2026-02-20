@@ -16,7 +16,7 @@ function Register(): JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [customInstance, setCustomInstance] = useState('');
-  const [instance, setInstance] = useState<Instance | string | undefined>(undefined);
+  const [instance, setInstance] = useState<Instance | string>('custom-instance');
   const [usernameStatus, setUsernameStatus] = useState<string | null>(null);
   const [passwordStatus, setPasswordStatus] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState<string | null>(null);

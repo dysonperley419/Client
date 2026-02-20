@@ -555,6 +555,85 @@ const MainContent = ({
       );
     };
 
+    const ChatAttachment = ({attachment, msg} : { attachment: any, msg: any}) => {
+      const [loaded, setLoaded] = useState(false);
+      const isVideo = /\.(mp4|webm|mov)$/i.exec(attachment.filename);
+      const maxWidth = 400;
+      const maxHeight = 300;
+      const originalWidth = attachment.width || 1600;
+      const originalHeight = attachment.height || 900;
+
+      const ratio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight, 1);
+
+      const displayWidth = Math.floor(originalWidth * ratio);
+      const displayHeight = Math.floor(originalHeight * ratio);
+      
+      return (
+        <div key={attachment.id} className='attachment-item' style={{ 
+          width: `${displayWidth}px`, 
+          height: `${displayHeight}px`
+        }}>
+         {!loaded && !isVideo && (
+            <div className="attachment-placeholder">
+              <span className="material-symbols-rounded" style={{ color: `var(--accent-primary)` }}>
+                image
+              </span>
+            </div>
+          )}
+
+          {isVideo ? (
+            <video
+              src={attachment.url}
+              controls
+              className='chat-video'
+              style={{
+                width: '100%',
+                height: '100%'
+              }}
+            >
+              <track kind='captions' />
+            </video>
+          ) : (
+            <button
+              type='button'
+              className={loaded ? '' : 'hidden-img'}
+              onClick={() => {
+                openModal('IMAGE_PREVIEW', {
+                  src: attachment.url,
+                  alt: attachment.filename,
+                  width: attachment.width ?? 0,
+                  height: attachment.height ?? 0,
+                  author: msg.author,
+                  id: attachment.id,
+                  timestamp: formatTimestamp(msg.timestamp),
+                });
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                width: '100%',
+                height: '100%'
+              }}
+            >
+              <img
+                src={attachment.url}
+                alt={attachment.filename}
+                className={`chat-image ${!loaded ? 'loading' : ''}`}
+                onLoad={() => setLoaded(true)}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </button>
+          )}
+        </div>
+      );
+    };
+
     return allMessages.map((msg: LocalMessage, index: number) => {
       const messageKey = msg.nonce || msg.id;
       const prevMsg = allMessages[index - 1];
@@ -580,58 +659,9 @@ const MainContent = ({
             {msg.attachments.length > 0 && (
               <div className='message-attachments'>
                 {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
-                  const isVideo = /\.(mp4|webm|mov)$/i.exec(attachment.filename);
-
+                  
                   return (
-                    <div key={attachment.id} className='attachment-item'>
-                      {isVideo ? (
-                        <video
-                          src={attachment.url}
-                          controls
-                          className='chat-video'
-                          style={{
-                            maxWidth: '400px',
-                            minWidth: '200px'
-                          }}
-                        >
-                          <track kind='captions' />
-                        </video>
-                      ) : (
-                        <button
-                          type='button'
-                          onClick={() => {
-                            openModal('IMAGE_PREVIEW', {
-                              src: attachment.url,
-                              alt: attachment.filename,
-                              width: attachment.width ?? 0,
-                              height: attachment.height ?? 0,
-                              author: msg.author,
-                              id: attachment.id,
-                              timestamp: formatTimestamp(msg.timestamp),
-                            });
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            padding: 0,
-                            cursor: 'pointer',
-                            display: 'block',
-                            width: '50%',
-                          }}
-                        >
-                          <img
-                            src={attachment.url}
-                            alt={attachment.filename}
-                            className='chat-image'
-                            style={{
-                              width: '100%',
-                              height: 'auto',
-                              maxHeight: 400,
-                            }}
-                          />
-                        </button>
-                      )}
-                    </div>
+                    <ChatAttachment attachment={attachment} key={attachment.id} msg={msg}/>
                   );
                 })}
               </div>

@@ -208,7 +208,9 @@ export const FriendsList = ({
               return (
                 <div
                   key={friend.id}
-                  className='friend-item-row'
+                  className='friend-item-row' onClick={() => {
+                    openDMChannel(friend.id);
+                  }}
                 >
                   <div className='friend-info'>
                     <div className='avatar-wrapper'>
@@ -243,7 +245,8 @@ export const FriendsList = ({
                           <>
                             <button
                               className='action-btn online'
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 void acceptFriendRequest(friend);
                               }}
                             >
@@ -251,7 +254,8 @@ export const FriendsList = ({
                             </button>
                             <button
                               className='action-btn dnd'
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 void declineFriendRequest(friend);
                               }}
                             >
@@ -279,7 +283,10 @@ export const FriendsList = ({
                       if (friend.type === 1) {
                         return (
                           <>
-                            <button className='icon-action-btn' onClick={() => openDMChannel(friend.id)}>
+                            <button className='icon-action-btn' onClick={(e) => {
+                              e.stopPropagation();
+                              openDMChannel(friend.id);
+                            }}>
                               <span
                                 className='material-symbols-rounded'
                                 style={{ fontSize: '20px' }}
@@ -287,7 +294,11 @@ export const FriendsList = ({
                                 chat_bubble
                               </span>
                             </button>
-                            <button className='icon-action-btn'>
+                            <button className='icon-action-btn' onClick={(e) => {
+                              e.stopPropagation();
+
+                              //uh.. do something here
+                            }}>
                               <span
                                 className='material-symbols-rounded'
                                 style={{ fontSize: '20px' }}

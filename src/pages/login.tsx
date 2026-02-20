@@ -15,7 +15,7 @@ function Login(): JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [customInstance, setCustomInstance] = useState('');
-  const [instance, setInstance] = useState<Instance | string | undefined>(undefined);
+  const [instance, setInstance] = useState<Instance | string>('custom-instance');
   const [credentialsStatus, setCredentialsStatus] = useState<string | null>(null);
 
   const {

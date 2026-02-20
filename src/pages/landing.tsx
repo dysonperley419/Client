@@ -95,7 +95,7 @@ const Landing = (): JSX.Element => {
                         <div className="separator"></div>
                         <div className='description'>
                             <p>Flicker is designed to be a drop in daily driver for those wishing to jump ship from Discord to Spacebar/Oldcord instances.</p>
-                            <p>It is based on the UX discord had during it's best years in 2017-2018, designed & developed by the very same people who made <Link to="https://oldcordapp.com" className='landing-link' target="__blank">Oldcord</Link>.</p>
+                            <p>It is based on the UX discord had during its best years in 2017-2018, designed & developed by the very same people who made <Link to="https://oldcordapp.com" className='landing-link' target="__blank">Oldcord</Link>.</p>
                             <p>Completely free, open-source, and maintained by the Community.</p>
                         </div>
                     </div>
