@@ -7,7 +7,7 @@ import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
 import type { Guild, Member } from '@/types/guilds';
-import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
+import { type Attachment, type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
 import { useUiUtilityActions } from '@/utils/uiUtils';
@@ -497,7 +497,7 @@ const MainContent = ({
     );
   };
 
-  const ChatAttachment = ({attachment, msg} : { attachment: any, msg: any}) => {
+  const ChatAttachment = ({attachment, msg} : { attachment: Attachment, msg: Message}) => {
       const [loaded, setLoaded] = useState(false);
       const isVideo = /\.(mp4|webm|mov)$/i.exec(attachment.filename);
       const maxWidth = 400;
@@ -575,7 +575,7 @@ const MainContent = ({
         </div>
       );
     };
-    
+
   const renderMessages = () => {
     const allMessages = messages;
 
