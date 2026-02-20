@@ -31,7 +31,7 @@ function Login(): JSX.Element {
     void checkInstance(selectedUrl);
   };
 
-  if (localStorage.getItem('selectedAuthorization')) return <Navigate to='/' />;
+  if (localStorage.getItem('selectedAuthorization')) return <Navigate to='/channels/@me' />;
 
   const handleSignin = async () => {
     try {

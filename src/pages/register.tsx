@@ -35,7 +35,7 @@ function Register(): JSX.Element {
     void checkInstance(selectedUrl);
   };
 
-  if (localStorage.getItem('selectedAuthorization')) return <Navigate to='/' />;
+  if (localStorage.getItem('selectedAuthorization')) return <Navigate to='/channels/@me' />;
 
   const handleSignup = async () => {
     setUsernameStatus(null);

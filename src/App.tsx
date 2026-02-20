@@ -11,6 +11,7 @@ import Register from './pages/register';
 import type { Instance } from './types/instance';
 import { type DomainsResponse, DomainsResponseSchema } from './types/responses';
 import { get } from './utils/api';
+import Landing from './pages/landing';
 
 function App(): JSX.Element {
   const { openModal } = useModal();
@@ -22,6 +23,11 @@ function App(): JSX.Element {
 
   useEffect(() => {
     const initializeApp = async () => {
+      if (location.pathname === '/') {
+        setLoading(false);
+        return;
+      }
+
       if (!localStorage.getItem('instances')) {
         const defaultInstances: Instance[] = [
           {
@@ -89,7 +95,7 @@ function App(): JSX.Element {
     };
 
     void initializeApp();
-  }, [location, navigate]);
+  }, [location.pathname, navigate]);
 
   if (loading) {
     return (
@@ -112,13 +118,14 @@ function App(): JSX.Element {
 
   return (
     <Routes>
+      <Route path='/' element={<Landing />} />
       <Route path='/register' element={<Register />} />
       <Route path='/login' element={<Login />} />
-      <Route path='/' element={<ChatApp />}>
-        <Route path='channels/@me' element={<ChatApp />} />
-        <Route path='channels/@me/:channelId' element={<ChatApp />} />
-        <Route path='channels/:guildId' element={<ChatApp />} />
-        <Route path='channels/:guildId/:channelId' element={<ChatApp />} />
+      <Route path='/channels' element={<ChatApp />}>
+        <Route path='@me' element={<ChatApp />} />
+        <Route path='@me/:channelId' element={<ChatApp />} />
+        <Route path=':guildId' element={<ChatApp />} />
+        <Route path=':guildId/:channelId' element={<ChatApp />} />
       </Route>
     </Routes>
   );
