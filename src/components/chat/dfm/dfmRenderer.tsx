@@ -201,6 +201,7 @@ export default function renderDfm(text: string | null | undefined, guild_id: str
         break;
 
       case '<:':
+      case '<a:':
         {
           //emoji
           const [name, id] = innerText.split(':');

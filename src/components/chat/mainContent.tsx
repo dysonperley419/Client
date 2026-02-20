@@ -56,7 +56,7 @@ const MainContent = ({
   const { openModal } = useModal();
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
   const [suggestionTrigger, setSuggestionTrigger] = useState<{
-    type: 'user' | 'role' | 'channel';
+    type: 'user' | 'role' | 'channel' | 'emoji';
     query: string;
     startIndex: number;
   } | null>(null);
@@ -64,7 +64,7 @@ const MainContent = ({
   const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const getUser = useUserStore((state) => state.getUser);
-  const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists } = useGateway();
+  const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists, guilds } = useGateway();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [chatMessage, setChatMessage] = useState('');
   const lastTypingSent = useRef<number>(0);
@@ -196,46 +196,58 @@ const MainContent = ({
   const resolveMentions = (text: string): string => {
     if (!selectedGuild) return text;
 
-    let resolvedText = text;
+    const channelMap = new Map(selectedGuild.channels?.map(c => [c.name?.toLowerCase(), c.id]));
+    const roleMap = new Map(selectedGuild.roles?.map(r => [r.name.toLowerCase(), r.id]));
 
-    const channels = selectedGuild.channels || [];
-
-    channels.forEach((ch: Channel) => {
-      const escapedName = ch.name!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`#${escapedName}\\b`, 'g');
-
-      resolvedText = resolvedText.replace(regex, `<#${ch.id}>`);
-    });
-
-    const roles = selectedGuild.roles || [];
-
-    roles.forEach((role) => {
-      const escapedName = role.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`@${escapedName}\\b`, 'g');
-
-      resolvedText = resolvedText.replace(regex, `<@&${role.id}>`);
-    }); //yeah uh role mentions dont really work with spaces
+    const emojiMap = new Map(
+      guilds.flatMap(g => g.emojis || []).map(e => [e.name?.toLowerCase(), e])
+    );
 
     const memberState = memberLists![selectedGuild.id];
     const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
-    const members: Member[] = listItems
-      .filter((item: any) => !!item.member)
-      .map((item: any) => item.member);
+    const memberMap = new Map();
 
-    members.forEach((m) => {
-      const names = [m.user.username, m.nick, m.user.global_name].filter(Boolean);
+    listItems.forEach((item: any) => {
+      if (item.member) {
+        const m = item.member;
 
-      names.forEach((name) => {
-        const escapedName = name!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`@${escapedName}\\b`, 'g');
+        if (m.nick) memberMap.set(m.nick.toLowerCase(), m.user.id);
+        if (m.user.global_name) memberMap.set(m.user.global_name.toLowerCase(), m.user.id);
 
-        resolvedText = resolvedText.replace(regex, `<@${m.user.id}>`);
-      });
+        memberMap.set(m.user.username.toLowerCase(), m.user.id);
+      }
     });
 
-    resolvedText = resolvedText.replace(/#\d{1,4}\b/g, '');
+    return text.replace(/([@#:])([\w-]+)(:?)/g, (match, symbol, name) => {
+      const lowName = name.toLowerCase();
 
-    return resolvedText;
+      if (symbol === '@') {
+        const userId = memberMap.get(lowName);
+
+        if (userId) return `<@${userId}>`;
+
+        const roleId = roleMap.get(lowName);
+
+        if (roleId) return `<@&${roleId}>`;
+      } 
+      
+      if (symbol === '#') {
+        const chId = channelMap.get(lowName);
+
+        if (chId) return `<#${chId}>`;
+      }
+
+      if (symbol === ':') {
+        const emoji = emojiMap.get(lowName);
+        if (emoji) {
+          const prefix = emoji.animated ? 'a:' : ':';
+
+          return `<${prefix}${emoji.name}:${emoji.id}>`;
+        }
+      }
+
+      return match;
+    });
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -450,6 +462,18 @@ const MainContent = ({
     };
   }, [selectedChannel.id]);
 
+  const scrollToMessage = (messageId: string) => {
+    const element = scrollerRef.current?.querySelector(`[data-message-id="${messageId}"]`);
+
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      element.classList.add('message-highlight');
+
+      setTimeout(() => element.classList.remove('message-highlight'), 3000);
+    }
+  };
+
   const ReplyPreview = ({ referencedMessage }: { referencedMessage: Message }) => {
     const { url: defaultAvatarUrl } = useAssetsUrl(
       `/assets/${getDefaultAvatar(referencedMessage.author) ?? ''}.png`,
@@ -460,7 +484,7 @@ const MainContent = ({
       : defaultAvatarUrl;
 
     return (
-      <div className='message-reply-preview'>
+      <div className='message-reply-preview' onClick={() => scrollToMessage(referencedMessage.id)}>
         <div className='reply-spine'></div>
         <img src={avatarUrl} className='reply-avatar avatar-img' alt='' />
         <span className='reply-author'>
@@ -543,6 +567,9 @@ const MainContent = ({
       const pendingClass = msg.state == MESSAGE_STATE.PENDING ? 'message-pending' : '';
       const pendingStyle =
         msg.state == MESSAGE_STATE.PENDING ? { opacity: 0.5, filter: 'grayscale(100%)' } : {};
+
+      const isMentioned = msg.mentions?.some(m => m.id === user?.id) || msg.content?.includes(`@${user?.username}`);
+      const mentionClass = isMentioned ? 'message-mention' : '';
 
       const msgContent = (
         <>
@@ -630,13 +657,12 @@ const MainContent = ({
         };
 
         const color = getMemberColor(member, selectedGuild);
-
         return (
           <>
             {msg.referenced_message && (
               <ReplyPreview referencedMessage={msg.referenced_message as Message} />
             )}
-            <div key={messageKey} className={`message-group ${pendingClass}`} style={pendingStyle}>
+            <div key={messageKey} data-message-id={msg.id} className={`message-group ${pendingClass} ${mentionClass}`} style={pendingStyle}>
               <AuthorAvatar msg={msg} member={member} />
               <div className='message-details'>
                 <div className='message-header'>
@@ -647,7 +673,7 @@ const MainContent = ({
                       void openUserProfile(e, member);
                     }}
                   >
-                    {member.nick ?? msg.author.global_name ?? msg.author.username}
+                   {member.nick || msg.author.global_name || msg.author.username}
                   </span>
                   <span className='timestamp'>{formatTimestamp(msg.timestamp)}</span>
                 </div>
@@ -661,7 +687,8 @@ const MainContent = ({
       return (
         <div
           key={messageKey}
-          className={`message-details message-sub ${pendingClass}`}
+          data-message-id={msg.id} 
+          className={`message-details message-sub ${pendingClass} ${mentionClass}`}
           style={pendingStyle}
         >
           {msgContent}
@@ -670,7 +697,27 @@ const MainContent = ({
     });
   };
 
-  const filterSuggestions = (type: 'user' | 'role' | 'channel', query: string) => {
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (suggestionTrigger && filteredSuggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev + 1) % filteredSuggestions.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        applySuggestion(filteredSuggestions[selectedIndex]);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setSuggestionTrigger(null);
+        setFilteredSuggestions([]);
+      }
+    }
+  };
+
+  const filterSuggestions = (type: 'user' | 'role' | 'channel' | 'emoji', query: string) => {
     const q = query.toLowerCase();
 
     if (type === 'user') {
@@ -730,7 +777,28 @@ const MainContent = ({
         .slice(0, 8);
 
       setFilteredSuggestions(combined);
-    } else {
+    } else if (type === 'emoji') {
+      const allEmojis = guilds.flatMap((g) => 
+        (g.emojis || []).map((e) => ({
+          ...e,
+          suggestionType: 'emoji',
+          sourceGuildName: g.name
+        }))
+      );
+
+      const filteredEmojis = allEmojis
+        .filter((e: any) => e.name.toLowerCase().includes(q) && e.require_colons)
+        .sort((a: any, b: any) => {
+          const startsA = a.name!.toLowerCase().startsWith(q);
+          const startsB = b.name!.toLowerCase().startsWith(q);
+          if (startsA && !startsB) return -1;
+          if (!startsA && startsB) return 1;
+          return a.name!.localeCompare(b.name!);
+        })
+        .slice(0, 8);
+
+      setFilteredSuggestions(filteredEmojis);
+    } else if (type === 'channel') {
       if (!selectedGuild?.channels) {
         setFilteredSuggestions([]);
         return;
@@ -755,12 +823,16 @@ const MainContent = ({
   const updateChat = (message: string) => {
     setChatMessage(message);
 
-    const mentionMatch = /(@|<@!?|#)([\w\s]*)$/.exec(message);
+    const mentionMatch = /(@|<@!?|#|:)([\w\s]*)$/.exec(message);
 
     if (mentionMatch) {
       const symbol = mentionMatch[1]!;
       const query = mentionMatch[2]!;
-      const type = symbol.includes('#') ? 'channel' : 'user'; //or role but you know.. we do that logic later
+
+      let type: 'user' | 'role' | 'channel' | 'emoji' = 'user';
+      if (symbol === '#') type = 'channel';
+      else if (symbol === ':') type = 'emoji';
+      else type = 'user';
 
       setSuggestionTrigger({ type, query, startIndex: mentionMatch.index });
       filterSuggestions(type, query);
@@ -865,9 +937,11 @@ const MainContent = ({
     let insertion = '';
 
     if (item.suggestionType === 'user') {
-      insertion = `@${item.user.username}#${item.user.discriminator} `;
+    insertion = `@${item.user.username}#${item.user.discriminator} `;
     } else if (item.suggestionType === 'role') {
       insertion = `@${item.name} `;
+    } else if (item.suggestionType === 'emoji') {
+      insertion = `:${item.name}: `;
     } else {
       insertion = `#${item.name} `;
     }
@@ -1004,8 +1078,9 @@ const MainContent = ({
                           {filteredSuggestions.map((item, index) => {
                             const isUser = item.suggestionType === 'user';
                             const isRole = item.suggestionType === 'role';
+                            const isEmoji = item.suggestionType === 'emoji';
 
-                            const prefix = isUser || isRole ? '@' : '#';
+                            const prefix = (isUser || isRole) ? '@': isEmoji ? ':' : '#';
                             let name = '';
                             let subtext = '';
 
@@ -1015,6 +1090,9 @@ const MainContent = ({
                                 item.user.discriminator !== '0'
                                   ? `${item.user.username}#${item.user.discriminator}`
                                   : item.user.username;
+                            } else if (isEmoji) {
+                              name = item.name;
+                              subtext = `Emoji from ${item.sourceGuildName || 'Unknown Server'}`;
                             } else if (isRole) {
                               name = item.name;
                               subtext = 'Role';
@@ -1046,8 +1124,16 @@ const MainContent = ({
                                     src={`${localStorage.getItem('selectedCdnUrl')}/avatars/${item.user.id}/${item.user.avatar}.png`}
                                     className='avatar-img suggested-item-avi'
                                   />
+                                ) : isEmoji ? (
+                                  <img
+                                    src={`${localStorage.getItem('selectedCdnUrl')}/emojis/${item.id}.${item.animated ? 'gif' : 'png'}`}
+                                    className='suggested-item-avi'
+                                    style={{ objectFit: 'contain' }}
+                                  />
                                 ) : (
-                                  <div className='suggested-item-avi' />
+                                  <div className='suggested-item-avi' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {!isUser && prefix}
+                                  </div>
                                 )}
                                 <div className='chat-suggestion-item'>
                                   <span>{name}</span>
@@ -1118,6 +1204,7 @@ const MainContent = ({
                   onChange={(e) => {
                     updateChat(e.target.value);
                   }}
+                  onKeyDown={handleKeyDown}
                   onSubmit={(e) => {
                     void handleSendMessage(e);
                   }}
@@ -1136,11 +1223,6 @@ const MainContent = ({
                   <button type='button' className='input-icon-btn'>
                     <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                       mood
-                    </span>
-                  </button>
-                  <button type='button' className='input-icon-btn'>
-                    <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-                      interests
                     </span>
                   </button>
                 </div>
