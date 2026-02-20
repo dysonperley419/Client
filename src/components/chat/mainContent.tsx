@@ -7,18 +7,19 @@ import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
 import type { Guild, Member } from '@/types/guilds';
-import { type Attachment, type Message, MessageListSchema, MessageSchema } from '@/types/messages';
+import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
-import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import ChatInput from './chatInput';
 import renderDfm from './dfm/dfmRenderer';
 import MemberList from './memberList';
+import { ChatAttachment } from './chatAttachment';
+import { ReplyPreview } from './replyPreview';
 
 interface MediaAttachment {
   file: File;
@@ -53,7 +54,6 @@ const MainContent = ({
   mentions,
   onChannelSeen,
 }: MainContentProps): JSX.Element => {
-  const { openModal } = useModal();
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
   const [suggestionTrigger, setSuggestionTrigger] = useState<{
     type: 'user' | 'role' | 'channel' | 'emoji';
@@ -474,108 +474,6 @@ const MainContent = ({
     }
   };
 
-  const ReplyPreview = ({ referencedMessage }: { referencedMessage: Message }) => {
-    const { url: defaultAvatarUrl } = useAssetsUrl(
-      `/assets/${getDefaultAvatar(referencedMessage.author) ?? ''}.png`,
-    );
-
-    const avatarUrl = referencedMessage.author.avatar
-      ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${referencedMessage.author.id}/${referencedMessage.author.avatar}.png`
-      : defaultAvatarUrl;
-
-    return (
-      <div className='message-reply-preview' onClick={() => scrollToMessage(referencedMessage.id)}>
-        <div className='reply-spine'></div>
-        <img src={avatarUrl} className='reply-avatar avatar-img' alt='' />
-        <span className='reply-author'>
-          {referencedMessage.author.global_name ?? referencedMessage.author.username}
-        </span>
-        <div className='reply-content'>
-          {renderDfm(referencedMessage.content, selectedGuild?.id)}
-        </div>
-      </div>
-    );
-  };
-
-  const ChatAttachment = ({attachment, msg} : { attachment: Attachment, msg: Message}) => {
-      const [loaded, setLoaded] = useState(false);
-      const isVideo = /\.(mp4|webm|mov)$/i.exec(attachment.filename);
-      const maxWidth = 400;
-      const maxHeight = 300;
-      const originalWidth = attachment.width || 1600;
-      const originalHeight = attachment.height || 900;
-
-      const ratio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight, 1);
-
-      const displayWidth = Math.floor(originalWidth * ratio);
-      const displayHeight = Math.floor(originalHeight * ratio);
-      
-      return (
-        <div key={attachment.id} className='attachment-item' style={{ 
-          width: `${displayWidth}px`, 
-          height: `${displayHeight}px`
-        }}>
-         {!loaded && !isVideo && (
-            <div className="attachment-placeholder">
-              <span className="material-symbols-rounded" style={{ color: `var(--accent-primary)` }}>
-                image
-              </span>
-            </div>
-          )}
-
-          {isVideo ? (
-            <video
-              src={attachment.url}
-              controls
-              className='chat-video'
-              style={{
-                width: '100%',
-                height: '100%'
-              }}
-            >
-              <track kind='captions' />
-            </video>
-          ) : (
-            <button
-              type='button'
-              className={loaded ? '' : 'hidden-img'}
-              onClick={() => {
-                openModal('IMAGE_PREVIEW', {
-                  src: attachment.url,
-                  alt: attachment.filename,
-                  width: attachment.width ?? 0,
-                  height: attachment.height ?? 0,
-                  author: msg.author,
-                  id: attachment.id,
-                  timestamp: formatTimestamp(msg.timestamp),
-                });
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                width: '100%',
-                height: '100%'
-              }}
-            >
-              <img
-                src={attachment.url}
-                alt={attachment.filename}
-                className={`chat-image ${!loaded ? 'loading' : ''}`}
-                onLoad={() => setLoaded(true)}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-            </button>
-          )}
-        </div>
-      );
-    };
-
   const renderMessages = () => {
     const allMessages = messages;
 
@@ -661,7 +559,7 @@ const MainContent = ({
                 {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
                   
                   return (
-                    <ChatAttachment attachment={attachment} key={attachment.id} msg={msg}/>
+                    <ChatAttachment attachment={attachment} key={attachment.id} msg={msg} formatTimestamp={formatTimestamp}/>
                   );
                 })}
               </div>
@@ -690,7 +588,7 @@ const MainContent = ({
         return (
           <>
             {msg.referenced_message && (
-              <ReplyPreview referencedMessage={msg.referenced_message as Message} />
+              <ReplyPreview referencedMessage={msg.referenced_message as Message} selectedGuildId={selectedGuild?.id} scrollToMessage={scrollToMessage}/>
             )}
             <div key={messageKey} data-message-id={msg.id} className={`message-group ${pendingClass} ${mentionClass}`} style={pendingStyle}>
               <AuthorAvatar msg={msg} member={member} />
