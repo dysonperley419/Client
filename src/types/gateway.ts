@@ -82,7 +82,7 @@ export const ReadyEventSchema = z.looseObject({
   private_channels: z.array(PrivateChannelSchema).default([]),
   presences: z.array(PresenceSchema).optional().default([]),
   voice_states: z.array(VoiceStateSchema).optional().default([]),
-  read_state: ReadStateSchema,
+  read_state: z.union([ReadStateSchema, z.array(z.any())]).optional(),
 });
 
 export const MessageCreateSchema = MessageSchema.extend({

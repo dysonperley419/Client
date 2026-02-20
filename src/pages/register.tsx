@@ -67,7 +67,7 @@ function Register(): JSX.Element {
         localStorage.setItem('Authorizations', JSON.stringify(currentAuths));
       }
 
-      window.location.href = '/';
+      window.location.href = '/channels/@me';
     } catch (err: any) {
       try {
         const fieldErrors = RegistrationFieldErrorsSchema.parse(err.responseBody);

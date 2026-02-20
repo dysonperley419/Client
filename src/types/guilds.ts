@@ -31,7 +31,7 @@ export const RoleSchema = z.object({
 export const EmojiSchema = z.object({
   id: z.string(),
   animated: z.boolean().default(false),
-  guild_id: z.string(),
+  guild_id: z.string().nullish(),
   managed: z.boolean().default(false),
   groups: z.object({}).optional().nullish(),
   name: z.string(),
