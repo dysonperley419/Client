@@ -497,65 +497,7 @@ const MainContent = ({
     );
   };
 
-  const renderMessages = () => {
-    const allMessages = messages;
-
-    if (allMessages.length === 0) {
-      if (firstLoad)
-        return (
-          <div className='no-messages'>
-            <h1>Loading...</h1>
-          </div>
-        );
-      else
-        return (
-          <div className='no-messages'>
-            <h1>There are no messages here yet!</h1>
-            <p>This is the start of something exciting!</p>
-          </div>
-        );
-    }
-
-    const AuthorAvatar = ({ msg, member }: { msg: Message; member?: Member }) => {
-      const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-        `/assets/${getDefaultAvatar(msg.author) ?? ''}.png`,
-      );
-      const avatarUrl = msg.author.avatar
-        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${msg.author.id ?? ''}/${msg.author.avatar}.png`
-        : defaultAvatarUrl;
-
-      const presence = getPresence(msg.author.id);
-      const status = presence?.status ?? 'offline';
-
-      const memberObj: Member = member ?? {
-        id: msg.author.id!,
-        user: msg.author as User,
-        presence: {
-          user: msg.author as User,
-          status: status,
-          activities: presence?.activities ?? [],
-        },
-        joined_at: new Date().toISOString(),
-        roles: [],
-      };
-
-      return (
-        <img
-          src={avatarUrl}
-          className='avatar-img'
-          alt=''
-          style={{ cursor: 'pointer' }}
-          onError={() => {
-            rollover();
-          }}
-          onClick={(e) => {
-            void openUserProfile(e, memberObj);
-          }}
-        />
-      );
-    };
-
-    const ChatAttachment = ({attachment, msg} : { attachment: any, msg: any}) => {
+  const ChatAttachment = ({attachment, msg} : { attachment: any, msg: any}) => {
       const [loaded, setLoaded] = useState(false);
       const isVideo = /\.(mp4|webm|mov)$/i.exec(attachment.filename);
       const maxWidth = 400;
@@ -631,6 +573,64 @@ const MainContent = ({
             </button>
           )}
         </div>
+      );
+    };
+    
+  const renderMessages = () => {
+    const allMessages = messages;
+
+    if (allMessages.length === 0) {
+      if (firstLoad)
+        return (
+          <div className='no-messages'>
+            <h1>Loading...</h1>
+          </div>
+        );
+      else
+        return (
+          <div className='no-messages'>
+            <h1>There are no messages here yet!</h1>
+            <p>This is the start of something exciting!</p>
+          </div>
+        );
+    }
+
+    const AuthorAvatar = ({ msg, member }: { msg: Message; member?: Member }) => {
+      const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
+        `/assets/${getDefaultAvatar(msg.author) ?? ''}.png`,
+      );
+      const avatarUrl = msg.author.avatar
+        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${msg.author.id ?? ''}/${msg.author.avatar}.png`
+        : defaultAvatarUrl;
+
+      const presence = getPresence(msg.author.id);
+      const status = presence?.status ?? 'offline';
+
+      const memberObj: Member = member ?? {
+        id: msg.author.id!,
+        user: msg.author as User,
+        presence: {
+          user: msg.author as User,
+          status: status,
+          activities: presence?.activities ?? [],
+        },
+        joined_at: new Date().toISOString(),
+        roles: [],
+      };
+
+      return (
+        <img
+          src={avatarUrl}
+          className='avatar-img'
+          alt=''
+          style={{ cursor: 'pointer' }}
+          onError={() => {
+            rollover();
+          }}
+          onClick={(e) => {
+            void openUserProfile(e, memberObj);
+          }}
+        />
       );
     };
 
