@@ -189,7 +189,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           }); //So spacebar doesnt actually have this like we do on oldcord, some modern discord engineering bullshit - it'll fix itself on op 14 responses dw
           setUser(parsed.user);
           setPrivateChannels(parsed.private_channels ?? []);
-          setReadStates(parsed.read_state?.entries ?? []);
+          setReadStates(parsed.read_state);
           setRelationships(parsed.relationships);
           setUserSettings(parsed.user_settings);
           setGuilds(parsed.guilds);

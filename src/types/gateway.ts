@@ -64,11 +64,7 @@ const PrivateChannelSchema = ChannelSchema.extend({
   }, z.number().default(0)),
 });
 
-const ReadStateSchema = z.object({
-  entries: z.array(ChannelReadStateSchema).default([]),
-  partial: z.boolean().default(false),
-  version: z.number().default(0),
-});
+const ReadStateSchema = z.array(ChannelReadStateSchema).default([]);
 
 // TODO: Implement all ReadyEventSchema
 export const ReadyEventSchema = z.looseObject({
