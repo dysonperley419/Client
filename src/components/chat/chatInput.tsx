@@ -33,7 +33,7 @@ const ChatInput = ({ value, onChange, onSubmit, ...props }: ChatInputProps) => {
     if (newValue.toLowerCase().includes('b1nzy')) {
       window.open('https://takeb1nzyto.space/', '_blank');
 
-      e.target.value = newValue.replace(/b1nzy/gi, '');; //You're gonna get ratelimited.
+      e.target.value = newValue.replace(/b1nzy/gi, ''); //You're gonna get ratelimited.
     }
 
     onChange(e);
