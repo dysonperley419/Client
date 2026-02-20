@@ -115,15 +115,17 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   );
 
   const updateReadState = useCallback((channelId: string, messageId: string) => {
-    setReadStates((prev: any[]) => {
+    setReadStates((prev: any) => {
+      const currentList = Array.isArray(prev) ? prev : (prev?.entries || []);
+    
       const targetCid = String(channelId);
       const targetMid = String(messageId);
 
-      const exists = prev.find((rs) => String(rs.channel_id) === targetCid);
+      const exists = currentList.find((rs: any) => String(rs.channel_id) === targetCid);
 
       if (!exists) {
         return [
-          ...prev,
+          ...currentList,
           {
             channel_id: targetCid,
             last_message_id: targetMid,
@@ -132,7 +134,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         ];
       }
 
-      return prev.map((rs) => {
+      return currentList.map((rs: any) => {
         if (String(rs.channel_id) === targetCid) {
           const currentAckId = rs.last_message_id ? BigInt(rs.last_message_id) : 0n;
           const newAckId = BigInt(targetMid);
@@ -189,7 +191,11 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           }); //So spacebar doesnt actually have this like we do on oldcord, some modern discord engineering bullshit - it'll fix itself on op 14 responses dw
           setUser(parsed.user);
           setPrivateChannels(parsed.private_channels ?? []);
-          setReadStates(parsed.read_state);
+
+          const readStateData = parsed.read_state;
+          const entries = Array.isArray(readStateData) ? readStateData : (readStateData?.entries || []);
+
+          setReadStates(entries);
           setRelationships(parsed.relationships);
           setUserSettings(parsed.user_settings);
           setGuilds(parsed.guilds);
