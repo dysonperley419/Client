@@ -2,20 +2,30 @@
 
 import './dfm.css';
 
-import type { JSX } from "react";
+import type { JSX } from 'react';
 
-import { ChannelMention, EmojiMention, EveryoneMention, HereMention, MemberMention, RoleMention } from "./dfmComponents";
+import {
+  ChannelMention,
+  EmojiMention,
+  EveryoneMention,
+  HereMention,
+  MemberMention,
+  RoleMention,
+} from './dfmComponents';
 
-function accumulate(source: string, terminators: string[]): { accumulated: string, remaining: string, terminator: string } {
-  let accumulated = "";
+function accumulate(
+  source: string,
+  terminators: string[],
+): { accumulated: string; remaining: string; terminator: string } {
+  let accumulated = '';
   let i = 0;
-  for (; ;) {
+  for (;;) {
     if (i >= source.length) {
       return {
         accumulated: accumulated,
-        remaining: "",
+        remaining: '',
         terminator: '\0',
-      }
+      };
     }
 
     if (source[i] == '\\') {
@@ -30,27 +40,54 @@ function accumulate(source: string, terminators: string[]): { accumulated: strin
         return {
           accumulated: accumulated,
           remaining: source.substring(i + terminator.length),
-          terminator: terminator
+          terminator: terminator,
         };
       }
     }
 
     const c = source[i];
-    if (c)
-      accumulated += c;
+    if (c) accumulated += c;
     i++;
   }
 }
 
-export default function renderDfm(text: string | null | undefined, guild_id: string | undefined): JSX.Element {
-  if (!text)
-    return (<></>);
+export default function renderDfm(
+  text: string | null | undefined,
+  guild_id: string | undefined,
+): JSX.Element {
+  if (!text) return <></>;
 
   const renderDfmInner = (text: string) => renderDfm(text, guild_id);
 
   const result: (JSX.Element | string)[] = [];
   while (text.length > 0) {
-    const startAcc = accumulate(text, ['https://', 'http://', '```', '``', '`', '>>> ', '> ', '### ', '## ', '# ', '-# ', '***', '**', '*', '__', '_', '~~', '@everyone', '@here', '<@!', '<@&', '<@', '<#', '<a:', '<:']);
+    const startAcc = accumulate(text, [
+      'https://',
+      'http://',
+      '```',
+      '``',
+      '`',
+      '>>> ',
+      '> ',
+      '### ',
+      '## ',
+      '# ',
+      '-# ',
+      '***',
+      '**',
+      '*',
+      '__',
+      '_',
+      '~~',
+      '@everyone',
+      '@here',
+      '<@!',
+      '<@&',
+      '<@',
+      '<#',
+      '<a:',
+      '<:',
+    ]);
     if (startAcc.terminator == '\0') {
       //end
       result.push(startAcc.accumulated);
@@ -61,18 +98,36 @@ export default function renderDfm(text: string | null | undefined, guild_id: str
     const openingDelimiter = startAcc.terminator;
 
     //take text up to the first delimiter
-    if (startAcc.accumulated != '\n') //ignore bogus newlines between elements
+    if (startAcc.accumulated != '\n')
+      //ignore bogus newlines between elements
       result.push(startAcc.accumulated);
 
     let innerText;
-    if (openingDelimiter == "@everyone" || openingDelimiter == "@here") {
+    if (openingDelimiter == '@everyone' || openingDelimiter == '@here') {
       innerText = openingDelimiter;
     } else {
       let closingDelimiters: string[];
       switch (openingDelimiter) {
         case 'https://':
         case 'http://':
-          closingDelimiters = ['\0', '\n', '"', '\'', '`', ')', '(', ']', '[', '}', '{', '<', '>', ',', ';', ' '];
+          closingDelimiters = [
+            '\0',
+            '\n',
+            '"',
+            "'",
+            '`',
+            ')',
+            '(',
+            ']',
+            '[',
+            '}',
+            '{',
+            '<',
+            '>',
+            ',',
+            ';',
+            ' ',
+          ];
           break;
 
         case '> ':
@@ -117,25 +172,29 @@ export default function renderDfm(text: string | null | undefined, guild_id: str
       case 'https://':
       case 'http://':
         innerText = openingDelimiter + innerText;
-        result.push(<a title={innerText} href={innerText} target="_blank" rel="noreferrer">{innerText}</a>);
+        result.push(
+          <a title={innerText} href={innerText} target='_blank' rel='noreferrer'>
+            {innerText}
+          </a>,
+        );
         break;
 
       case '```':
-        result.push(<code className="block">{innerText}</code>);
+        result.push(<code className='block'>{innerText}</code>);
         break;
 
       case '``':
       case '`':
-        result.push(<code className="inline">{innerText}</code>);
+        result.push(<code className='inline'>{innerText}</code>);
         break;
 
       case '> ':
       case '>>> ':
         result.push(
-          <div className="blockquoteContainer">
-            <div className="blockquoteDivider"/>
+          <div className='blockquote-container'>
+            <div className='blockquote-divider' />
             <blockquote>{renderDfmInner(innerText)}</blockquote>
-          </div>
+          </div>,
         );
         break;
 
@@ -156,7 +215,11 @@ export default function renderDfm(text: string | null | undefined, guild_id: str
         break;
 
       case '***':
-        result.push(<em><strong>{renderDfmInner(innerText)}</strong></em>);
+        result.push(
+          <em>
+            <strong>{renderDfmInner(innerText)}</strong>
+          </em>,
+        );
         break;
 
       case '**':
@@ -179,7 +242,7 @@ export default function renderDfm(text: string | null | undefined, guild_id: str
       case '<@!':
       case '<@':
         //member
-        result.push(<MemberMention guild_id={guild_id} user_id={innerText}/>);
+        result.push(<MemberMention guild_id={guild_id} user_id={innerText} />);
         break;
 
       case '<#':
@@ -205,14 +268,12 @@ export default function renderDfm(text: string | null | undefined, guild_id: str
         {
           //emoji
           const [name, id] = innerText.split(':');
-          if (name && id)
-            result.push(<EmojiMention name={name} emoji_id={id} />);
-          else
-            result.push(innerText);
+          if (name && id) result.push(<EmojiMention name={name} emoji_id={id} />);
+          else result.push(innerText);
         }
         break;
     }
   }
 
-  return (<>{result}</>);
-};
+  return <>{result}</>;
+}

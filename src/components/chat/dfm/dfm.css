@@ -1,20 +1,12 @@
+.emoji {
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
 .message-content .emoji {
   width: 40px;
   height: 40px;
-}
-
-.message-content strong {
-}
-
-.message-content em {
-}
-
-.message-content s {
-}
-
-.message-content h1,
-.message-content h2,
-.message-content h3 {
 }
 
 .message-content h1 {
@@ -40,14 +32,14 @@
   color: #0096cf;
 }
 
-.message-content .blockquoteContainer {
+.message-content .blockquote-container {
   display: flex;
   margin-top: 4px;
   margin-bottom: 4px;
   overflow-wrap: anywhere;
 }
 
-.message-content .blockquoteDivider {
+.message-content .blockquote-divider {
   background-color: #52566c;
   border-radius: 4px;
   min-width: 4px;
@@ -105,7 +97,6 @@
   color: var(--text-brightness);
 }
 
-
 .emoji-popout {
   background: var(--bg-sidebar);
   border-radius: 8px;
@@ -119,7 +110,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgb(0 0 0 / 20%);
   padding: 8px;
   border-radius: 4px;
   margin-bottom: 8px;
