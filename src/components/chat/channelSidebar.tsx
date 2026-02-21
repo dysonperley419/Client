@@ -15,6 +15,7 @@ import { logger } from '@/utils/logger';
 import { DmChannel } from './dmChannel';
 import VoiceActivityControls from './voiceActivityControls';
 import { useContextMenu } from '@/context/contextMenuContext';
+import { Snowflake } from '@/utils/snowflake';
 
 interface ChannelSidebarProps {
   selectedGuild?: Guild | null;
@@ -43,7 +44,7 @@ const PrivateChannelItem = ({
   selected: boolean;
   onCloseLocal: () => void;
 }) => {
-  const { getPresence } = useGateway();
+  const { getPresence, typingUsers } = useGateway();
 
   const recipient = channel.recipients?.[0];
   const { url: defaultAvatarUrl } = useAssetsUrl(
@@ -57,13 +58,24 @@ const PrivateChannelItem = ({
     : defaultAvatarUrl;
 
   const status = getPresence(recipient?.id)?.status ?? 'offline';
+  const recipientId = recipient?.id;
+  const isTyping = !!(recipientId && typingUsers[channel.id]?.[recipientId]);
+
+  let subTitle = ``;
+
+  if (channel.last_message_id) {
+    const snowflake = new Snowflake(channel.last_message_id);
+    
+    subTitle = `Last Message ${snowflake.format()}`;
+  }
 
   return (
     <DmChannel
       key={channel.id}
       title={channelName}
-      subtitle={channel.last_message_id ? 'Message history' : 'No messages yet'}
+      subtitle={subTitle !== '' ? subTitle : undefined}
       icon={avatarUrl}
+      isTyping={isTyping}
       selected={selected}
       status={status}
       onClose={async () => {
@@ -138,9 +150,16 @@ const ChannelSidebar = ({
   const [closedChannelIds, setClosedChannelIds] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || []).filter(
-    (channel) => !closedChannelIds.includes(channel.id),
-  );
+const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
+  .filter((channel) => !closedChannelIds.includes(channel.id))
+  .sort((a, b) => {
+    const idA = BigInt(a.last_message_id ?? '0');
+    const idB = BigInt(b.last_message_id ?? '0');
+
+    if (idB > idA) return 1;
+    if (idB < idA) return -1;
+    return 0;
+  });
 
   useEffect(() => {
     const handleRemoteDelete = (event: Event) => {

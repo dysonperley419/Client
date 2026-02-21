@@ -1,7 +1,7 @@
 import './guildSidebar.css';
 
 import { type JSX } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
 import type { Guild } from '@/types/guilds';
@@ -12,23 +12,29 @@ import { useGateway } from '../../context/gatewayContext';
 import { useModal } from '../../context/modalContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
+import type { Channel } from '@/types/channel';
 
 const GuildSidebar = ({
+  privateChannels,
   guilds,
   unreads,
   mentions,
+  privateChannelMentions,
   selectedGuildId,
   onSelectGuild,
   markAsRead,
 }: {
+  privateChannels: Channel[]; //yeah okay i get it, private channels in a GUILD sidebar. boohoo
   guilds: Guild[];
   unreads: Map<string, Set<string>>;
   mentions: Map<string, Map<string, number>>;
+  privateChannelMentions: Map<string, number>;
   selectedGuildId?: string | null;
   onSelectGuild: (guild: Guild) => void;
   markAsRead: (guild_id: string) => Promise<void>;
 }): JSX.Element => {
   const { user, sessions, relationships, getPresence } = useGateway();
+  const navigate = useNavigate();
   const { openModal } = useModal();
   const { openContextMenu } = useContextMenu();
   const { openPopup, popupType } = usePopup();
@@ -174,10 +180,48 @@ const GuildSidebar = ({
         </button>
         <div className='online-stats'>
           <span className='stat-text'>{onlineFriendsCount} ONLINE</span>
+          {privateChannels.length > 0 && (
+            <div className='privateChannels-section'>
+              {privateChannels.map((privateChannel: Channel) => {
+                const recipient = privateChannel.recipients?.[0];
+                const mentions = privateChannelMentions.get(privateChannel.id);
+                const totalMentions = mentions ?? 0;
+
+                return (
+                  <button
+                    className={`guild-icon-wrapper`}
+                    key={privateChannel.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+
+                      void navigate(`/channels/@me/${privateChannel.id}`)
+                    }}
+                  >
+                    <div
+                      style={
+                        { '--mention-count': `"${totalMentions.toString()}"` } as React.CSSProperties
+                      }
+                      className={`icon-container shadow-container ${totalMentions > 0 ? 'mention-badge' : ''}`} title={recipient?.username}
+                    >
+                      {recipient?.avatar ? (
+                        <img
+                          className='guild-icon'
+                          src={`${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${recipient?.id}/${recipient?.avatar}.png`}
+                          alt={recipient?.username}
+                          onError={handleImgError}
+                        />
+                      ) : (
+                        <div className={`guild-icon no-icon`}>{recipient?.username?.charAt(0)}</div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div className='stat-line' />
         </div>
       </div>
-
       <div className='server-section'>
         {guilds.map((guild: Guild) => {
           const guildMentionsMap = mentions.get(guild.id);
@@ -210,7 +254,7 @@ const GuildSidebar = ({
                 style={
                   { '--mention-count': `"${totalMentions.toString()}"` } as React.CSSProperties
                 }
-                className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads ? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`}
+                className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads ? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`} title={guild.name}
               >
                 {guild.icon ? (
                   <img

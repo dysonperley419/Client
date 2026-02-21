@@ -618,6 +618,37 @@ button {
   bottom: 10px;
 }
 
+
+.fr-typing-indicator-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 10px;
+  padding: 2px 5px;
+  position: relative;
+left: 15px;
+  bottom: 8px;
+  max-width: 25px;
+}
+
+.fr-typing-indicator-dots .dot {
+  width: 4px;
+  height: 4px;
+  background-color: #dbdee1;
+  border-radius: 50%;
+  display: inline-block;
+  animation: typing-fade 1.4s infinite ease-in-out both;
+}
+
+.fr-typing-indicator-dots .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.fr-typing-indicator-dots .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
 .status-dot.online {
   background-color: var(--bg-online);
 }

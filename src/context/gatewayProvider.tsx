@@ -252,6 +252,18 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
             const { [parsed.author.id ?? '']: _, ...remainingTyping } = channelTyping;
             return { ...prev, [parsed.channel_id]: remainingTyping };
           });
+
+          setPrivateChannels((prev) => 
+            prev.map((channel) => {
+              if (channel.id === parsed.channel_id) {
+                return {
+                  ...channel,
+                  last_message_id: parsed.id
+                };
+              }
+              return channel;
+            })
+          );
           break;
         }
 

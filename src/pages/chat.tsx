@@ -44,6 +44,8 @@ const ChatApp = (): JSX.Element => {
   const [passedGuilds, setPassedGuilds] = useState<Guild[]>([]);
   const [unreads, setUnreads] = useState<Map<string, Set<string>>>(new Map());
   const [mentions, setMentions] = useState<Map<string, Map<string, number>>>(new Map());
+  const [newPrivateChannels, setNewPrivateChannels] = useState<Channel[] | []>([]);
+  const [privateChannelMentions, setPrivateChannelMentions] = useState <Map<string, number>>(new Map());
 
   const selectedGuild = passedGuilds.find((g) => g.id === guildId) ?? null;
   const selectedChannel = selectedGuild
@@ -187,6 +189,29 @@ const ChatApp = (): JSX.Element => {
         return;
       }
 
+      const targetChannel = (privateChannels as Channel[])?.find(c => c.id === cId);
+
+      if (targetChannel) {
+        setPrivateChannelMentions((prev) => {
+          const newMap = new Map(prev);
+          const currentCount = newMap.get(cId) ?? 0;
+          newMap.set(cId, currentCount + 1);
+          return newMap;
+        });
+
+        setNewPrivateChannels((prev) => {
+          const otherChannels = prev.filter(c => c.id !== cId);
+
+          const updatedChannel = { ...targetChannel, last_message_id: msgId };
+
+          return [...otherChannels, updatedChannel].sort((a, b) => {
+            const idA = BigInt(a.last_message_id ?? '0');
+            const idB = BigInt(b.last_message_id ?? '0');
+            return idB > idA ? 1 : -1;
+          });
+        });
+      }
+
       const isMentioned =
         newMessage.mentions?.some((m: User) => m.id === user?.id) || newMessage.mention_everyone;
 
@@ -266,6 +291,28 @@ const ChatApp = (): JSX.Element => {
 
         return next;
       });
+    }
+
+    if (selectedChannel && selectedChannel.id && (selectedChannel.type === 1 || selectedChannel.type === 3)) {
+      const exists = newPrivateChannels.some((c: Channel) => c.id === selectedChannel.id);
+
+      if (exists) {
+        setPrivateChannelMentions((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(selectedChannel.id, 0);
+          return newMap;
+        });
+
+        setNewPrivateChannels((prev) => {
+          const otherChannels = prev.filter(c => c.id !== selectedChannel.id);
+
+          return [...otherChannels].sort((a, b) => {
+            const idA = BigInt(a.last_message_id ?? '0');
+            const idB = BigInt(b.last_message_id ?? '0');
+            return idB > idA ? 1 : -1;
+          });
+        });
+      }
     }
   }, [selectedGuild, selectedChannel]);
 
@@ -482,6 +529,8 @@ const ChatApp = (): JSX.Element => {
             guilds={passedGuilds}
             selectedGuildId={guildId}
             onSelectGuild={handleSelectGuild}
+            privateChannels={newPrivateChannels}
+            privateChannelMentions={privateChannelMentions}
             unreads={unreads}
             mentions={mentions}
             markAsRead={handleMarkGuildAsRead}

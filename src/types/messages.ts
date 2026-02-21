@@ -158,9 +158,6 @@ export const MessageSchema = z.object({
       fail_if_not_exists: z.boolean().nullish(),
     })
     .nullish(),
-  get referenced_message(): z.ZodOptional<z.ZodNullable<typeof MessageSchema>> {
-    return MessageSchema.nullish();
-  },
   interaction_metadata: z.any().nullish(),
   components: z.array(z.any()).nullish(),
   sticker_items: z.array(z.any()).nullish(),

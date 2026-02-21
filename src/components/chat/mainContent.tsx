@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import './mainContent.css';
 
-import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
+import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
@@ -66,6 +66,9 @@ const MainContent = ({
   const getUser = useUserStore((state) => state.getUser);
   const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists, guilds } = useGateway();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
+  const messageMap = useMemo(() => {
+    return new Map(messages.map((m) => [m.id, m]));
+  }, [messages]);
   const [chatMessage, setChatMessage] = useState('');
   const lastTypingSent = useRef<number>(0);
   const isloadingMore = useRef(false);
@@ -194,34 +197,52 @@ const MainContent = ({
   );
 
   const resolveMentions = (text: string): string => {
-    if (!selectedGuild) return text;
-
-    const channelMap = new Map(selectedGuild.channels?.map(c => [c.name?.toLowerCase(), c.id]));
-    const roleMap = new Map(selectedGuild.roles?.map(r => [r.name.toLowerCase(), r.id]));
+    const channelMap = new Map(selectedGuild?.channels?.map(c => [c.name?.toLowerCase(), c.id]) ?? []);
+    const roleMap = new Map(selectedGuild?.roles?.map(r => [r.name.toLowerCase(), r.id]) ?? []);
 
     const emojiMap = new Map(
       guilds.flatMap(g => g.emojis || []).map(e => [e.name?.toLowerCase(), e])
     );
 
-    const memberState = memberLists![selectedGuild.id];
-    const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
     const memberMap = new Map();
 
-    listItems.forEach((item: any) => {
-      if (item.member) {
-        const m = item.member;
+    if (selectedGuild) {
+      const memberState = memberLists![selectedGuild.id];
+      const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
+      
+      listItems.forEach((item: any) => {
+        if (item.member) {
+          const m = item.member;
 
-        if (m.nick) memberMap.set(m.nick.toLowerCase(), m.user.id);
-        if (m.user.global_name) memberMap.set(m.user.global_name.toLowerCase(), m.user.id);
+          if (m.nick) {
+            memberMap.set(m.nick.toLowerCase(), m.user.id);
+          }
 
-        memberMap.set(m.user.username.toLowerCase(), m.user.id);
-      }
-    });
+          if (m.user.global_name) {
+            memberMap.set(m.user.global_name.toLowerCase(), m.user.id);
+          }
 
-    return text.replace(/([@#:])([\w-]+)(:?)/g, (match, symbol, name) => {
-      const lowName = name.toLowerCase();
+          memberMap.set(m.user.username.toLowerCase(), m.user.id);
+        }
+      });
+    } else if (selectedChannel.recipients) {
+      selectedChannel.recipients.forEach(user => {
+        if (user.global_name) {
+          memberMap.set(user.global_name.toLowerCase(), user.id);
+        }
+
+        memberMap.set(user.username!.toLowerCase(), user.id);
+      });
+    }
+
+    return text.replace(/([@#:])([\w-]+(?:#\d{4})?)(:?)/g, (match, symbol, name) => {
+      let lowName = name.toLowerCase();
 
       if (symbol === '@') {
+        if (lowName.includes('#')) {
+          lowName = lowName.split('#')[0];
+        }
+        
         const userId = memberMap.get(lowName);
 
         if (userId) return `<@${userId}>`;
@@ -537,9 +558,11 @@ const MainContent = ({
       const prevMsg = allMessages[index - 1];
 
       const isNewGroup =
-        msg.referenced_message ||
+        msg.message_reference ||
         prevMsg?.author.id !== msg.author.id ||
         new Date(msg.timestamp).getTime() - new Date(prevMsg?.timestamp ?? '').getTime() > 420000;
+
+      const referencedMessage = (msg.message_reference?.message_id ? messageMap.get(msg.message_reference.message_id) : null);
 
       const pendingClass = msg.state == MESSAGE_STATE.PENDING ? 'message-pending' : '';
       const pendingStyle =
@@ -587,8 +610,8 @@ const MainContent = ({
         const color = getMemberColor(member, selectedGuild);
         return (
           <>
-            {msg.referenced_message && (
-              <ReplyPreview referencedMessage={msg.referenced_message as Message} selectedGuildId={selectedGuild?.id} scrollToMessage={scrollToMessage}/>
+            {referencedMessage && (
+              <ReplyPreview referencedMessage={referencedMessage as Message} selectedGuildId={selectedGuild?.id} scrollToMessage={scrollToMessage}/>
             )}
             <div key={messageKey} data-message-id={msg.id} className={`message-group ${pendingClass} ${mentionClass}`} style={pendingStyle}>
               <AuthorAvatar msg={msg} member={member} />
@@ -649,19 +672,28 @@ const MainContent = ({
     const q = query.toLowerCase();
 
     if (type === 'user') {
-      const memberState = selectedGuild ? memberLists![selectedGuild.id] : null;
-      const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
+      let userSource: any[] = [];
 
-      const guildMembers: Member[] = listItems
-        .filter((item: any) => !!item.member)
-        .map((item: any) => item.member);
+      if (selectedGuild) {
+        const memberState = memberLists![selectedGuild.id];
+        const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
+
+        userSource = listItems.filter((item: any) => !!item.member).map((item: any) => item.member);
+      } else if (selectedChannel.recipients) {
+        userSource = selectedChannel.recipients.map(user => ({
+          user,
+          nick: null,
+          roles: [],
+          joined_at: new Date().toISOString()
+        }));
+      }
 
       const guildRoles = selectedGuild?.roles || [];
       const recentSpeakerIds = Array.from(new Set(messages.map((m) => m.author.id))).reverse();
 
-      const filteredUsers = guildMembers
+      const filteredUsers = userSource
         .filter(
-          (m: Member) =>
+          (m: any) =>
             m.user.username.toLowerCase().includes(q) ||
             m.nick?.toLowerCase().includes(q) ||
             m.user.global_name?.toLowerCase().includes(q),

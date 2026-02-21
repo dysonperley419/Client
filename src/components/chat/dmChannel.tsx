@@ -8,6 +8,7 @@ export const DmChannel = ({
   subtitle,
   selected,
   status,
+  isTyping,
   onClick,
   onClose,
 }: {
@@ -15,6 +16,7 @@ export const DmChannel = ({
   title: string;
   selected: boolean;
   status: string;
+  isTyping: boolean;
   subtitle?: string;
   onClick: () => void;
   onClose: () => void;
@@ -22,7 +24,15 @@ export const DmChannel = ({
   <div className={`dm-card ${selected ? 'selected-dm' : ''}`} onClick={onClick}>
     <div className='dm-card-icon'>
       {typeof icon === 'string' ? <img src={icon} alt='' /> : icon}
-      <div className={`fr-status-dot ${status}`} title={status}></div>
+      {isTyping ? (
+          <div className={`fr-typing-indicator-dots ${status}`}>
+            <span className='dot'></span>
+            <span className='dot'></span>
+            <span className='dot'></span>
+          </div>
+        ) : (
+         <div className={`fr-status-dot ${status}`} title={status}></div>
+        )}
     </div>
     <div className='dm-card-info'>
       <div className='dm-card-title'>{title}</div>

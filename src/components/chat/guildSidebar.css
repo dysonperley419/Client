@@ -188,6 +188,10 @@
   background: radial-gradient(circle at bottom, #854fbb 0%, #bb9af7 100%);
 }
 
+.privateChannels-section {
+  margin-top: 15px;
+}
+
 .user-icon-container.active {
   border-radius: 30%;
   outline: none;
