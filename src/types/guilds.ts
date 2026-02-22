@@ -44,7 +44,7 @@ export const MemberSchema = z.object({
   id: z.string(),
   user: UserSchema,
   avatar: z.string().nullish(),
-  roles: z.array(z.string()),
+  roles: z.array(z.coerce.string()),
   presence: PresenceSchema.nullish(),
   joined_at: z.iso.datetime({ offset: true }),
   nick: z.string().nullish(),
