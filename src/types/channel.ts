@@ -24,7 +24,7 @@ export const PermissionOverwriteSchema = z.object({
   type: z.preprocess((val) => {
     const coerced = Number(val);
     return isNaN(coerced) ? undefined : coerced;
-  }, z.int().nullish()),
+  }, z.number().int().nullish()),
   allow: z.coerce.string(),
   deny: z.coerce.string(),
 });
