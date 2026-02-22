@@ -171,7 +171,7 @@ export const OffsiteMedia = ({ src } : {
   return (
     <div className="gif-embed-container">
       <img
-        src={src}
+        src={`https://staging.oldcordapp.com/proxy/${encodeURIComponent(src)}`} //you're welcome. make this use the instance configured's proxy ASAP.
         alt={type.toUpperCase()}
         className={`chat-gif-render ${isExpanded ? 'is-big' : ''}`}
         loading="lazy"
