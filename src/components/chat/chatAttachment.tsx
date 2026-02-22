@@ -29,7 +29,7 @@ export const ChatAttachment = ({ attachment, msg, formatTimestamp }: ChatAttachm
             height: `${displayHeight}px`
         }}>
             {!loaded && !isVideo && (
-                <div className="attachment-placeholder">
+                <div className="attachment-placeholder loading-shimmer">
                     <span className="material-symbols-rounded" style={{ color: `var(--accent-primary)` }}>
                         image
                     </span>

@@ -11,6 +11,7 @@ import {
   HereMention,
   InviteMention,
   MemberMention,
+  OffsiteMedia,
   RoleMention,
 } from './dfmComponents';
 
@@ -173,13 +174,24 @@ export default function renderDfm(
       case 'https://':
       case 'http://':
         innerText = openingDelimiter + innerText;
+
         const inviteRegex = /\/invite\/([a-zA-Z0-9]+)/.exec(innerText);
 
-        result.push(
-          <a title={innerText} href={innerText} target='_blank' rel='noreferrer'>
-            {innerText}
-          </a>,
-        );
+        const isDirectGif = innerText.toLowerCase().endsWith('.gif');
+        const isTenor = innerText.includes('tenor.com/view/') ?? innerText.includes('media.tenor.com/');
+        const isKlipy = innerText.includes('klipy.com');
+
+        
+
+        if (isDirectGif || isTenor || isKlipy) {
+          result.push(<OffsiteMedia src={innerText}/>);
+        } else {
+          result.push(
+            <a title={innerText} href={innerText} target='_blank' rel='noreferrer'>
+              {innerText}
+            </a>,
+          );
+        }
 
         if (inviteRegex?.[1]) {
           const inviteCode = inviteRegex[1];

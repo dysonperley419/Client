@@ -323,3 +323,8 @@
     background-position: -200% 0;
   }
 }
+
+.gif-embed-container img:hover {
+  opacity: 0.8;
+  cursor: pointer;
+}

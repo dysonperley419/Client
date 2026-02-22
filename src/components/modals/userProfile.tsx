@@ -4,7 +4,6 @@ import './userProfile.css';
 
 import { type JSX, useState } from 'react';
 
-import { useModal } from '@/context/modalContext';
 import type { Member } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { getDefaultAvatar } from '@/utils/avatar';
@@ -17,7 +16,6 @@ import { usePopup } from '../../context/popupContext';
 export const UserProfileModal = (): JSX.Element => {
   const { user, sessions, getPresence } = useGateway();
   const { closePopup } = usePopup();
-  const { openModal, closeModal } = useModal();
   const { openFullProfile } = useUiUtilityActions(null);
 
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
@@ -64,26 +62,6 @@ export const UserProfileModal = (): JSX.Element => {
   const handleOpenSettings = () => {
     window.dispatchEvent(new CustomEvent('ui_open_settings'));
     closePopup();
-  };
-
-  const switchInstance = () => {
-    closePopup();
-    openModal('DANGER_CONFIRMATION', {
-      title: 'Switch instance?',
-      body: 'Switching to a new instance will sign you out of your current account.',
-      onCancel: () => {
-        closeModal();
-      },
-      onConfirm: () => {
-        localStorage.removeItem('selectedAssetsUrl');
-        localStorage.removeItem('selectedCdnUrl');
-        localStorage.removeItem('selectedGatewayUrl');
-        localStorage.removeItem('selectedInstanceUrl');
-        localStorage.removeItem('selectedAuthorization');
-        localStorage.removeItem('selectedEmail');
-        location.reload();
-      },
-    });
   };
 
   const viewUserProfile = (user: User) => {
@@ -168,22 +146,6 @@ export const UserProfileModal = (): JSX.Element => {
           <div className='icon-btn-small' title='Switch account'>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
               switch_account
-            </span>
-          </div>
-          <div
-            className='icon-btn-small'
-            title='Switch instance'
-            onClick={switchInstance}
-            tabIndex={0}
-            role='button'
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                switchInstance();
-              }
-            }}
-          >
-            <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
-              hard_drive
             </span>
           </div>
           <div

@@ -14,6 +14,8 @@ import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import { MutualItem } from '../chat/mutualItem';
 
+//import hypesquad from "../../assets/hypesquad.svg";
+
 interface ServerProfileProps {
   member: Member;
   mutual_guilds?: Guild[] | [];
@@ -121,7 +123,22 @@ export const ServerProfileModal = ({
               </span>
             )}
           </div>
-          {member.user.pronouns && <span className='modal-pronouns'>{member.user.pronouns}</span>}
+          <div className="identity-meta-row">
+            {member.user.pronouns && (
+              <span className='modal-pronouns'>{member.user.pronouns}</span>
+            )}
+            {
+              /*
+                {Number(member.user.public_flags) > 0 && (
+                    <div className="profile-badges">
+                      <div className="badge-item" title="HypeSquad">
+                        <img src={hypesquad} alt="badge" />
+                      </div>
+                    </div>
+                  )}
+              */
+            }
+          </div>
         </div>
 
         {sharedGuilds !== undefined && member.user.id !== user?.id && (

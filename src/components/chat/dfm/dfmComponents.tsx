@@ -162,6 +162,26 @@ export const EmojiMention = ({
   );
 };
 
+export const OffsiteMedia = ({ src } : {
+  src: string
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const type = src.toLowerCase().endsWith('.gif') ? "gif" : "img";
+
+  return (
+    <div className="gif-embed-container">
+      <img
+        src={src}
+        alt={type.toUpperCase()}
+        className={`chat-gif-render ${isExpanded ? 'is-big' : ''}`}
+        loading="lazy"
+        onError={(e) => (e.currentTarget.style.display = 'none')}
+        onClick={() => setIsExpanded(!isExpanded)}
+      />
+    </div>
+  )
+};
+
 export const InviteMention = ({ code }: { code: string }): JSX.Element => {
   const { guilds } = useGateway();
   const navigate = useNavigate();

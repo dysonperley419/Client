@@ -20,6 +20,7 @@ import renderDfm from './dfm/dfmRenderer';
 import MemberList from './memberList';
 import { ChatAttachment } from './chatAttachment';
 import { ReplyPreview } from './replyPreview';
+import { logger } from '@/utils/logger';
 
 interface MediaAttachment {
   file: File;
@@ -45,6 +46,14 @@ export const MESSAGE_STATE = Object.freeze({
   '-1': 'Failed',
 }); //Should I put this somewhere else?
 
+interface GifResult {
+  id: string;
+  title: string;
+  previewUrl: string; 
+  fullUrl: string;    
+  aspectRatio: number;
+}
+
 type LocalMessage = Message & { state: number };
 
 const MainContent = ({
@@ -62,6 +71,12 @@ const MainContent = ({
   } | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([]);
+  const [gifs, setGifs] = useState<GifResult[] | []>([]);
+  const [gifCategories, setGifCategories] = useState<{name: string, src: string}[]>([]);
+  const [gifSearchQuery, setGifSearchQuery] = useState('');
+  const [stickernatorActive, setStickernatorActive] = useState(false);
+  const [showGifSearcher9000, setShowGifSearcher9000] = useState(false);
+  const [theESRF, setTheESRF] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const getUser = useUserStore((state) => state.getUser);
   const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists, guilds } = useGateway();
@@ -93,6 +108,22 @@ const MainContent = ({
       void onChannelSeen!(selectedGuild?.id || null, channelId, lastMsgId!);
     }
   }, [selectedChannel.id, selectedChannel.last_message_id, selectedGuild?.id, onChannelSeen]);
+
+  useEffect(() => {
+    if (showGifSearcher9000 && gifSearchQuery === '') {
+      const fetchTrending = async () => {
+        try {
+          const data: any = await get('/gifs/trending?locale=en');
+
+          setGifCategories(data.categories || []);
+        } catch (err) {
+          logger.error(`MAIN_CONTENT`, `Failed to metch trending gifs`, err);
+        }
+      };
+
+      void fetchTrending();
+    }
+  }, [showGifSearcher9000, gifSearchQuery]);
 
   const addFiles = (files: File[]) => {
     const newAttachments: MediaAttachment[] = files.map((file) => ({
@@ -398,6 +429,29 @@ const MainContent = ({
       return `Yesterday at ${timeStr}`;
     } else {
       return `${date.toLocaleDateString()} ${timeStr}`;
+    }
+  };
+
+  const handleSearchAndSetGif = async (term: string) => {
+    setGifSearchQuery(term);
+
+    setGifs([]);
+
+    if (!term.trim()) return;
+
+    try {
+      const data: any = await get(`/gifs/search?locale=en&q=${encodeURIComponent(term)}&limit=50`);
+      const mappedGifs = data.map((g: any) => ({
+        id: g.id,
+        title: g.title,
+        previewUrl: g.gif_src,
+        fullUrl: g.gif_src,
+        aspectRatio: g.width / g.height
+      }));
+
+      setGifs(mappedGifs);
+    } catch (error) {
+      logger.error(`MAIN_CONTENT`, `Failed to search gifs for term: ${term}`, error);
     }
   };
 
@@ -1028,7 +1082,7 @@ const MainContent = ({
               void handleSendMessage(e);
             }}
           >
-            {suggestionTrigger != null && filteredSuggestions.length > 0 && (
+            {suggestionTrigger != null && filteredSuggestions.length > 0 && !showGifSearcher9000 && (
               <>
                 <div className='input-wrapper' key={'SuggestionsBar'}>
                   <div className='input-row'>
@@ -1109,6 +1163,57 @@ const MainContent = ({
                 </div>
               </>
             )}
+            {showGifSearcher9000 && (
+              <div className="input-wrapper" key={'GifSearcher9000'}>
+                <div className="gif-picker-container">
+                  <div className="gif-picker-header">
+                    <div className="search-bar">
+                      <input 
+                        type="text" 
+                        placeholder="Search Tenor" 
+                        autoFocus
+                        value={gifSearchQuery}
+                        onChange={(e) => {
+                          handleSearchAndSetGif(e.currentTarget.value);
+                        }}
+                      />
+                      <span className="material-symbols-rounded search-icon">search</span>
+                    </div>
+                  </div>
+                  <div className="gif-picker-content scroller">
+                    {!gifSearchQuery && gifCategories.length > 0 && (
+                      <div className="gif-category-grid">
+                        {gifCategories.map((cat) => (
+                          <div 
+                            key={cat.name} 
+                            className="category-item" 
+                            onClick={() => handleSearchAndSetGif(cat.name)}
+                          >
+                            <img src={cat.src} alt={cat.name} />
+                            <div className="category-label">{cat.name}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="gif-grid">
+                      {gifs.map((gif) => (
+                        <div 
+                          key={gif.id} 
+                          className="gif-item"
+                          onClick={() => {
+                            setChatMessage(gif.fullUrl);
+                            setShowGifSearcher9000(false);
+                            setGifSearchQuery('');
+                          }}
+                        >
+                          <img src={gif.previewUrl} alt={gif.title} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className='input-wrapper'>
               {attachments.length > 0 && (
                 <div className='attachment-shelf'>
@@ -1170,17 +1275,17 @@ const MainContent = ({
                   }}
                 />
                 <div className='input-icons'>
-                  <button type='button' className='input-icon-btn'>
+                  <button type='button' className={`input-icon-btn ${showGifSearcher9000 ? 'active-input-btn' : ''}`} title={`Search gifs`} onClick={() => setShowGifSearcher9000(!showGifSearcher9000)}>
                     <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                       gif_box
                     </span>
                   </button>
-                  <button type='button' className='input-icon-btn'>
+                  <button type='button' className='input-icon-btn' title={`Search stickers`} onClick={() => setStickernatorActive(!stickernatorActive)}>
                     <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                       sticky_note_2
                     </span>
                   </button>
-                  <button type='button' className='input-icon-btn'>
+                  <button type='button' className='input-icon-btn' title={`Search emojis`} onClick={() => setTheESRF(!theESRF)}>
                     <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                       mood
                     </span>
