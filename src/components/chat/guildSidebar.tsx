@@ -4,6 +4,7 @@ import { type JSX } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
+import type { Channel } from '@/types/channel';
 import type { Guild } from '@/types/guilds';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
@@ -12,7 +13,6 @@ import { useGateway } from '../../context/gatewayContext';
 import { useModal } from '../../context/modalContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
-import type { Channel } from '@/types/channel';
 
 const GuildSidebar = ({
   privateChannels,
@@ -194,14 +194,17 @@ const GuildSidebar = ({
                     onClick={(e) => {
                       e.stopPropagation();
 
-                      void navigate(`/channels/@me/${privateChannel.id}`)
+                      void navigate(`/channels/@me/${privateChannel.id}`);
                     }}
                   >
                     <div
                       style={
-                        { '--mention-count': `"${totalMentions.toString()}"` } as React.CSSProperties
+                        {
+                          '--mention-count': `"${totalMentions.toString()}"`,
+                        } as React.CSSProperties
                       }
-                      className={`icon-container shadow-container ${totalMentions > 0 ? 'mention-badge' : ''}`} title={recipient?.username}
+                      className={`icon-container shadow-container ${totalMentions > 0 ? 'mention-badge' : ''}`}
+                      title={recipient?.username}
                     >
                       {recipient?.avatar ? (
                         <img
@@ -254,7 +257,8 @@ const GuildSidebar = ({
                 style={
                   { '--mention-count': `"${totalMentions.toString()}"` } as React.CSSProperties
                 }
-                className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads ? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`} title={guild.name}
+                className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads ? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`}
+                title={guild.name}
               >
                 {guild.icon ? (
                   <img
@@ -264,7 +268,7 @@ const GuildSidebar = ({
                     onError={handleImgError}
                   />
                 ) : (
-                  <div className={`guild-icon no-icon`}>{guild.name.charAt(0)}</div>
+                  <div className={`guild-icon no-icon`}>{guild.name?.charAt(0) ?? '?'}</div>
                 )}
               </div>
             </button>

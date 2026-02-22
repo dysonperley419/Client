@@ -9,7 +9,7 @@ import type { Guild } from '@/types/guilds';
 import type { Relationship } from '@/types/relationship';
 import type { User } from '@/types/users';
 import { post } from '@/utils/api';
-import { logger, type LogEntry } from '@/utils/logger';
+import { type LogEntry, logger } from '@/utils/logger';
 
 import ChannelSidebar from '../components/chat/channelSidebar';
 import { FriendsList } from '../components/chat/friendsList';
@@ -45,15 +45,79 @@ const ChatApp = (): JSX.Element => {
   const [unreads, setUnreads] = useState<Map<string, Set<string>>>(new Map());
   const [mentions, setMentions] = useState<Map<string, Map<string, number>>>(new Map());
   const [newPrivateChannels, setNewPrivateChannels] = useState<Channel[] | []>([]);
-  const [privateChannelMentions, setPrivateChannelMentions] = useState <Map<string, number>>(new Map());
+  const [privateChannelMentions, setPrivateChannelMentions] = useState<Map<string, number>>(
+    new Map(),
+  );
+
+  const clearChannelReadState = useCallback(
+    async (gId: string | null, cId: string, lastMsgId: string | null) => {
+      const key = String(gId ?? 'direct_messages');
+      const channelIdToClear = String(cId);
+
+      setUnreads((prev) => {
+        const next = new Map(prev);
+        const guildSet = next.get(key);
+
+        if (guildSet) {
+          const newSet = new Set(guildSet);
+
+          newSet.delete(channelIdToClear);
+
+          if (newSet.size === 0) {
+            next.delete(key);
+          } else {
+            next.set(key, newSet);
+          }
+        }
+        return next;
+      });
+
+      setMentions((prev) => {
+        const next = new Map(prev);
+        const guildMap = next.get(key);
+
+        if (guildMap) {
+          const newMap = new Map(guildMap);
+
+          newMap.delete(channelIdToClear);
+
+          if (newMap.size === 0) {
+            next.delete(key);
+          } else {
+            next.set(key, newMap);
+          }
+        }
+        return next;
+      });
+
+      if (lastMsgId && updateReadState) {
+        updateReadState(channelIdToClear, String(lastMsgId));
+      }
+
+      if (!lastMsgId) return;
+
+      try {
+        await post(`/channels/${cId}/messages/${lastMsgId}/ack`, {
+          token: null,
+        });
+
+        logger.info('CHAT_APP', 'Ack sent for channel', cId);
+      } catch (err) {
+        logger.error('CHAT_APP', 'Failed to send ack', err);
+      }
+    },
+    [updateReadState],
+  );
 
   const selectedGuild = passedGuilds.find((g) => g.id === guildId) ?? null;
   const selectedChannel = selectedGuild
     ? (selectedGuild.channels.find((c) => c.id === channelId) ?? null)
     : ((privateChannels as Channel[])?.find((c) => c.id === channelId) ?? null);
 
-  const isUsingWebRTCP2P = JSON.parse(localStorage.getItem('developerSettings') ?? '{}').webrtc_p2p ?? false;
-  const isUsingPopoutConsole = JSON.parse(localStorage.getItem('developerSettings') ?? '{}').popout_console ?? false;
+  const isUsingWebRTCP2P =
+    JSON.parse(localStorage.getItem('developerSettings') ?? '{}').webrtc_p2p ?? false;
+  const isUsingPopoutConsole =
+    JSON.parse(localStorage.getItem('developerSettings') ?? '{}').popout_console ?? false;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).classList.contains('popout-console-titlebar')) {
@@ -68,13 +132,13 @@ const ChatApp = (): JSX.Element => {
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       if (isDragging.current) {
-        setConsolePos(prev => ({
+        setConsolePos((prev) => ({
           ...prev,
           x: startPos.x + (moveEvent.clientX - startX),
           y: startPos.y + (moveEvent.clientY - startY),
         }));
       } else if (isResizing.current) {
-        setConsolePos(prev => ({
+        setConsolePos((prev) => ({
           ...prev,
           w: Math.max(200, startPos.w + (moveEvent.clientX - startX)),
           h: Math.max(150, startPos.h + (moveEvent.clientY - startY)),
@@ -96,11 +160,13 @@ const ChatApp = (): JSX.Element => {
 
   useEffect(() => {
     const handleUpdate = () => {
-      setLogs([...logger.entries]); 
+      setLogs([...logger.entries]);
     };
 
     window.addEventListener('logger_update', handleUpdate);
-    return () => window.removeEventListener('logger_update', handleUpdate);
+    return () => {
+      window.removeEventListener('logger_update', handleUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -168,7 +234,7 @@ const ChatApp = (): JSX.Element => {
 
     const handleNewMessage = (event: Event) => {
       const newMessage = (event as CustomEvent).detail;
-      const { guild_id: gId, channel_id: cId, id: msgId } = newMessage;
+      const { guild_id: gId, channel_id: cId, id: msgId, author } = newMessage;
 
       setPassedGuilds((prev) =>
         prev.map((g) =>
@@ -189,9 +255,9 @@ const ChatApp = (): JSX.Element => {
         return;
       }
 
-      const targetChannel = (privateChannels as Channel[])?.find(c => c.id === cId);
+      const targetChannel = (privateChannels as Channel[])?.find((c) => c.id === cId);
 
-      if (targetChannel) {
+      if (targetChannel && author.id !== user?.id) {
         setPrivateChannelMentions((prev) => {
           const newMap = new Map(prev);
           const currentCount = newMap.get(cId) ?? 0;
@@ -200,7 +266,7 @@ const ChatApp = (): JSX.Element => {
         });
 
         setNewPrivateChannels((prev) => {
-          const otherChannels = prev.filter(c => c.id !== cId);
+          const otherChannels = prev.filter((c) => c.id !== cId);
 
           const updatedChannel = { ...targetChannel, last_message_id: msgId };
 
@@ -293,7 +359,11 @@ const ChatApp = (): JSX.Element => {
       });
     }
 
-    if (selectedChannel && selectedChannel.id && (selectedChannel.type === 1 || selectedChannel.type === 3)) {
+    if (
+      selectedChannel &&
+      selectedChannel.id &&
+      (selectedChannel.type === 1 || selectedChannel.type === 3)
+    ) {
       const exists = newPrivateChannels.some((c: Channel) => c.id === selectedChannel.id);
 
       if (exists) {
@@ -304,7 +374,7 @@ const ChatApp = (): JSX.Element => {
         });
 
         setNewPrivateChannels((prev) => {
-          const otherChannels = prev.filter(c => c.id !== selectedChannel.id);
+          const otherChannels = prev.filter((c) => c.id !== selectedChannel.id);
 
           return [...otherChannels].sort((a, b) => {
             const idA = BigInt(a.last_message_id ?? '0');
@@ -419,66 +489,6 @@ const ChatApp = (): JSX.Element => {
     }
   };
 
-  const clearChannelReadState = useCallback(
-    async (gId: string | null, cId: string, lastMsgId: string | null) => {
-      const key = String(gId ?? 'direct_messages');
-      const channelIdToClear = String(cId);
-
-      setUnreads((prev) => {
-        const next = new Map(prev);
-        const guildSet = next.get(key);
-
-        if (guildSet) {
-          const newSet = new Set(guildSet);
-
-          newSet.delete(channelIdToClear);
-
-          if (newSet.size === 0) {
-            next.delete(key);
-          } else {
-            next.set(key, newSet);
-          }
-        }
-        return next;
-      });
-
-      setMentions((prev) => {
-        const next = new Map(prev);
-        const guildMap = next.get(key);
-
-        if (guildMap) {
-          const newMap = new Map(guildMap);
-
-          newMap.delete(channelIdToClear);
-
-          if (newMap.size === 0) {
-            next.delete(key);
-          } else {
-            next.set(key, newMap);
-          }
-        }
-        return next;
-      });
-
-      if (lastMsgId && updateReadState) {
-        updateReadState(channelIdToClear, String(lastMsgId));
-      }
- 
-      if (!lastMsgId) return;
-
-      try {
-        await post(`/channels/${cId}/messages/${lastMsgId}/ack`, {
-          token: null,
-        });
-
-        logger.info('CHAT_APP', 'Ack sent for channel', cId);
-      } catch (err) {
-        logger.error('CHAT_APP', 'Failed to send ack', err);
-      }
-    },
-    [updateReadState],
-  );
-
   if (!isReady) {
     return <LoadingScreen />;
   }
@@ -495,32 +505,30 @@ const ChatApp = (): JSX.Element => {
       )}
 
       {!showSettings && isUsingPopoutConsole && (
-        <div 
+        <div
           className='popout-console'
           onMouseDown={handleMouseDown}
-          style={{ 
-            left: consolePos.x, 
-            top: consolePos.y, 
-            width: consolePos.w, 
-            height: consolePos.h 
+          style={{
+            left: consolePos.x,
+            top: consolePos.y,
+            width: consolePos.w,
+            height: consolePos.h,
           }}
         >
           <div className='popout-console-titlebar'>
             <span>Console</span>
           </div>
-          <div className="popout-console-entries">
+          <div className='popout-console-entries'>
             {logs.map((log, i) => (
               <div key={i} className={`log-line ${log.level.toLowerCase()}`}>
-                <span className="timestamp">[{log.timestamp}]</span>
-                <span className="origin">({log.source})</span>
-                <span className="message">{log.message}</span>
-                {log.formattedData && (
-                  <pre className="log-data">{log.formattedData}</pre>
-                )}
+                <span className='timestamp'>[{log.timestamp}]</span>
+                <span className='origin'>({log.source})</span>
+                <span className='message'>{log.message}</span>
+                {log.formattedData && <pre className='log-data'>{log.formattedData}</pre>}
               </div>
             ))}
           </div>
-          <div className="resizer" />
+          <div className='resizer' />
         </div>
       )}
       {!showSettings && (

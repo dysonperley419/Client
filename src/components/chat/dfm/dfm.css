@@ -132,3 +132,194 @@
   font-size: 12px;
   margin: 0;
 }
+
+.invite-card {
+  background: var(--bg-dark-alt);
+  border-radius: 8px;
+  max-width: 432px;
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.invite-card-inner {
+  padding: 13px;
+}
+
+.invite-banner {
+  height: 60px;
+  width: 100%;
+  background-size: 125%;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-bottom: 1px solid rgb(0 0 0 / 20%);
+}
+
+.invite-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.invite-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.invite-guild-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.invite-guild-icon,
+.invite-guild-icon-placeholder {
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
+  flex-shrink: 0;
+}
+
+.invite-guild-icon-placeholder {
+  background: var(--bg-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+}
+
+.invite-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.invite-guild-name {
+  color: var(--text-bright);
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.invite-channel-name {
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.invite-channel-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.invite-join-button {
+  background-color: var(--bg-alt);
+  color: var(--text-bright);
+  border: none;
+  border-radius: 3px;
+  padding: 10px 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.5s;
+}
+
+.invite-join-button:hover {
+  background-color: var(--bg-header-alt);
+}
+
+.invite-inviter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+}
+
+.invite-inviter img {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.invite-inviter span {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-main);
+}
+
+.invite-card-error .invite-error-title {
+  color: var(--bg-dnd);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.invite-card-error .invite-error-sub {
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.invite-error-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px !important;
+  color: var(--bg-dnd);
+  background-color: rgb(242 63 67 / 10%);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.no-gap {
+  justify-content: start;
+}
+
+.invite-card-error .invite-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.invite-card-loading .loading-bar {
+  height: 12px;
+  background: var(--bg-alt);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.invite-card-loading .loading-bar.long {
+  width: 140px;
+}
+
+.invite-card-loading .loading-bar.short {
+  width: 80px;
+}
+
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-alt) 25%,
+    var(--bg-header-alt) 50%,
+    var(--bg-alt) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}

@@ -2,12 +2,15 @@
 import './dfm.css';
 
 import { type JSX, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useGateway } from '@/context/gatewayContext';
 import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
 import type { User } from '@/types/users';
+import { get, post } from '@/utils/api';
+import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
 export const MemberMention = ({
@@ -156,5 +159,143 @@ export const EmojiMention = ({
       src={emojiUrl}
       onClick={(e) => openEmojiPopout(e, { name, id: emoji_id })}
     />
+  );
+};
+
+export const InviteMention = ({ code }: { code: string }): JSX.Element => {
+  const { guilds } = useGateway();
+  const navigate = useNavigate();
+  const [inviteData, setInviteData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchInvite = async () => {
+      try {
+        const response = await get(`/invites/${code}?with_counts=true`);
+
+        if (isMounted) {
+          setInviteData(response);
+        }
+      } catch (err) {
+        logger.error(`INVITE_MENTION`, `Failed to fetch invite: ${code}`, err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchInvite();
+    return () => {
+      isMounted = false;
+    };
+  }, [code]);
+
+  if (loading) {
+    return (
+      <div className='invite-card invite-card-loading'>
+        <div className='invite-card-inner'>
+          <div className='invite-header'>LOADING INVITE...</div>
+          <div className='invite-body'>
+            <div className='invite-guild-icon-placeholder loading-shimmer' />
+            <div className='invite-text'>
+              <div className='loading-bar long' />
+              <div className='loading-bar short' />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!inviteData) {
+    return (
+      <div className='invite-card invite-card-error'>
+        <div className='invite-card-inner'>
+          <div className='invite-header'>YOU WERE SENT AN INVITE, BUT...</div>
+          <div className='invite-body no-gap'>
+            <span className='material-symbols-rounded invite-error-icon'>close</span>
+            <div className='invite-text'>
+              <div className='invite-error-title'>Invalid Invite</div>
+              <div className='invite-error-sub'>Try sending a new invite!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const joinAndGotoServer = async (code: string) => {
+    try {
+      const response = await post(`/invites/${code}`, {});
+      const guild_id = response?.guild_id || response?.guild?.id;
+
+      if (guild_id) {
+        void navigate(`/channels/${guild_id}`);
+      }
+    } catch (err) {
+      setInviteData(null);
+
+      logger.error(`INVITE_MENTION`, `Failed to join server from invite: ${code}`, err);
+    }
+  };
+
+  const guild = inviteData.guild;
+  const bannerUrl = guild.banner
+    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${guild.id}/${guild.banner}.png`
+    : null;
+  const iconUrl = guild.icon
+    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/icons/${guild.id}/${guild.icon}.png`
+    : null;
+  const inviterAvatar = inviteData.inviter?.avatar
+    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${inviteData.inviter.id}/${inviteData.inviter.avatar}.png`
+    : null;
+  const inServerAlready = guilds.some((g: Guild) => g.id === guild.id);
+
+  return (
+    <div className='invite-card'>
+      {bannerUrl && (
+        <div className='invite-banner' style={{ backgroundImage: `url(${bannerUrl})` }} />
+      )}
+      <div className='invite-card-inner'>
+        <div className='invite-header'>YOU'VE BEEN INVITED TO JOIN A SERVER</div>
+        <div className='invite-body'>
+          <div className='invite-guild-info'>
+            {iconUrl ? (
+              <img src={iconUrl} className='invite-guild-icon' alt='' />
+            ) : (
+              <div className='invite-guild-icon-placeholder'>{guild.name.charAt(0)}</div>
+            )}
+            <div className='invite-text'>
+              <div className='invite-guild-name'>{guild.name}</div>
+              <div className='invite-channel-row'>
+                <span className='invite-channel-name'>#{inviteData.channel?.name}</span>
+              </div>
+
+              {inviteData.inviter && (
+                <div className='invite-inviter'>
+                  {inviterAvatar && <img src={inviterAvatar} alt='' />}
+                  <span>Invited by {inviteData.inviter.username}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <button
+            className='invite-join-button'
+            onClick={() => {
+              if (inServerAlready) {
+                void navigate(`/channels/${guild.id}`);
+              } else {
+                void joinAndGotoServer(code);
+              }
+            }}
+          >
+            {inServerAlready ? 'Joined' : 'Join'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };

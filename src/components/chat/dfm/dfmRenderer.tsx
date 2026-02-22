@@ -9,6 +9,7 @@ import {
   EmojiMention,
   EveryoneMention,
   HereMention,
+  InviteMention,
   MemberMention,
   RoleMention,
 } from './dfmComponents';
@@ -172,11 +173,18 @@ export default function renderDfm(
       case 'https://':
       case 'http://':
         innerText = openingDelimiter + innerText;
+        const inviteRegex = /\/invite\/([a-zA-Z0-9]+)/.exec(innerText);
+
         result.push(
           <a title={innerText} href={innerText} target='_blank' rel='noreferrer'>
             {innerText}
           </a>,
         );
+
+        if (inviteRegex?.[1]) {
+          const inviteCode = inviteRegex[1];
+          result.push(<InviteMention code={inviteCode} />);
+        }
         break;
 
       case '```':
