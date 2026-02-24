@@ -1,6 +1,6 @@
 import './memberList.css';
 
-import { type JSX, useCallback, useEffect, useState } from 'react';
+import { act, type JSX, useCallback, useEffect, useState } from 'react';
 
 import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
@@ -139,9 +139,11 @@ const LEEWAY_HEIGHT = 100;
 const MemberList = ({
   selectedGuild,
   selectedChannel,
+  active
 }: {
   selectedGuild: Guild | null;
   selectedChannel: Channel | null;
+  active: boolean;
 }): JSX.Element => {
   const { memberLists, memberListsRef, requestMembers, getMemberColor, typingUsers } = useGateway();
   const [rangeIndex, setRangeIndex] = useState(0);
@@ -215,51 +217,54 @@ const MemberList = ({
   const totalHeight = items.length * ITEM_HEIGHT;
   const offsetY = startIndex * ITEM_HEIGHT;
 
-  return (
-    <aside className='members-column'>
-      <header className='members-column-header-base'>Members ({listData.member_count})</header>
-      <div
-        className='scroller_hide members-column-scroller'
-        onScroll={handleScroll}
-        style={{ height: `${String(viewportHeight)}px`, overflowY: 'auto' }}
-      >
-        <div style={{ height: `${String(totalHeight)}px`, position: 'relative' }}>
-          <div style={{ transform: `translateY(${String(offsetY)}px)`, width: '100%' }}>
-            {visibleItems.map((item, index) => {
-              if (item.group && item.group.count > 0) {
-                const role = selectedGuild?.roles.find((x: Role) => x.id === item.group?.id);
-                return (
-                  <div key={`group-${item.group.id}`} className='role-title'>
-                    {role?.name ?? item.group.id} — {item.group.count}
-                  </div>
-                );
-              }
+  return !active ? <></> : (
+    <>
+      <aside className='members-column'>
+        <header className='members-column-header-base'>Members ({listData.member_count})</header>
+        <div
+          className='scroller_hide members-column-scroller'
+          onScroll={handleScroll}
+          style={{ height: `${String(viewportHeight)}px`, overflowY: 'auto' }}
+        >
+          <div style={{ height: `${String(totalHeight)}px`, position: 'relative' }}>
+            <div style={{ transform: `translateY(${String(offsetY)}px)`, width: '100%' }}>
+              {visibleItems.map((item, index) => {
+                if (item.group && item.group.count > 0) {
+                  const role = selectedGuild?.roles.find((x: Role) => x.id === item.group?.id);
+                  return (
+                    <div key={`group-${item.group.id}`} className='role-title'>
+                      {role?.name ?? item.group.id} — {item.group.count}
+                    </div>
+                  );
+                }
 
-              if (item.member) {
-                const memberWithGuild = { ...item.member, guild_id: selectedGuild?.id };
-                const color = getMemberColor(item.member, selectedGuild);
-                const memberId = item.member.user.id;
-                return (
-                  <MemberListItem
-                    key={`${memberId}-${index.toString()}`}
-                    member={memberWithGuild}
-                    isTyping={!!currentChannelTyping?.[memberId]}
-                    roles={selectedGuild?.roles}
-                    color={color}
-                  />
-                );
-              }
-              return null;
-            })}
+                if (item.member) {
+                  const memberWithGuild = { ...item.member, guild_id: selectedGuild?.id };
+                  const color = getMemberColor(item.member, selectedGuild);
+                  const memberId = item.member.user.id;
+                  return (
+                    <MemberListItem
+                      key={`${memberId}-${index.toString()}`}
+                      member={memberWithGuild}
+                      isTyping={!!currentChannelTyping?.[memberId]}
+                      roles={selectedGuild?.roles}
+                      color={color}
+                    />
+                  );
+                }
+                return null;
+              })}
+            </div>
           </div>
+          {listData.partial && (
+            <div className='role-title' style={{ transform: `translateY(${String(offsetY)}px)` }}>
+              Loading...
+            </div>
+          )}
         </div>
-        {listData.partial && (
-          <div className='role-title' style={{ transform: `translateY(${String(offsetY)}px)` }}>
-            Loading...
-          </div>
-        )}
-      </div>
-    </aside>
+      </aside>
+    </>
+
   );
 };
 
