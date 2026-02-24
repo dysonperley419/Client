@@ -6,7 +6,7 @@ import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
-import type { Guild, Member } from '@/types/guilds';
+import type { Guild, Member, Role } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
@@ -21,6 +21,9 @@ import MemberList from './memberList';
 import { ChatAttachment } from './chatAttachment';
 import { ReplyPreview } from './replyPreview';
 import { logger } from '@/utils/logger';
+import { SuggestionsType, type Suggestion, type SuggestionsTrigger } from '@/types/suggestions';
+import type { Command } from '@/types/command';
+import { SuggestionsBar } from './suggestionsBar';
 
 interface MediaAttachment {
   file: File;
@@ -54,12 +57,6 @@ interface GifResult {
   aspectRatio: number;
 }
 
-interface ChatCommand {
-  name: string;
-  description: string;
-  onUse: (parameters: string[]) => any;
-};
-
 type LocalMessage = Message & { state: number };
 
 const MainContent = ({
@@ -70,18 +67,16 @@ const MainContent = ({
   onChannelSeen,
 }: MainContentProps): JSX.Element => {
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
-  const [suggestionTrigger, setSuggestionTrigger] = useState<{
-    type: 'user' | 'role' | 'channel' | 'emoji' | 'command';
-    query: string;
-    startIndex: number;
-  } | null>(null);
+  const [suggestionsTrigger, setSuggestionTrigger] = useState<SuggestionsTrigger | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([]);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[] | []>([]);
   const [gifs, setGifs] = useState<GifResult[] | []>([]);
   const [gifCategories, setGifCategories] = useState<{ name: string, src: string }[]>([]);
   const [gifSearchQuery, setGifSearchQuery] = useState('');
+  const [emojiSearchQuery, setEmojiSearchQuery] = useState('');
   const [stickernatorActive, setStickernatorActive] = useState(false);
   const [showGifSearcher9000, setShowGifSearcher9000] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [memberListVisible, setMemberListVisible] = useState(true);
   const [theESRF, setTheESRF] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -99,7 +94,7 @@ const MainContent = ({
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const commands: ChatCommand[] = [{
+  const commands: Command[] = [{
     name: "shrug",
     description: "Appends ¯\\_(ツ)_/¯ to your message.",
     onUse: (parameters: string[]) => {
@@ -107,7 +102,7 @@ const MainContent = ({
       const fullMessage = text ? `${text} ¯\\_(ツ)_/¯` : `¯\\_(ツ)_/¯`;
       return fullMessage;
     }
-  }]
+  }] //should this go somewhere else?
 
   useEffect(() => {
     if (!selectedChannel) {
@@ -768,7 +763,7 @@ const MainContent = ({
 
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (suggestionTrigger && filteredSuggestions.length > 0) {
+    if (suggestionsTrigger && filteredSuggestions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex((prev) => (prev + 1) % filteredSuggestions.length);
@@ -777,7 +772,7 @@ const MainContent = ({
         setSelectedIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
       } else if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
-        applySuggestion(filteredSuggestions[selectedIndex]);
+        applySuggestion(filteredSuggestions[selectedIndex]!);
       } else if (e.key === 'Escape') {
         e.preventDefault();
         setSuggestionTrigger(null);
@@ -786,36 +781,35 @@ const MainContent = ({
     }
   };
 
-  const filterSuggestions = (type: 'user' | 'role' | 'channel' | 'emoji' | 'command', query: string) => {
+  const filterSuggestions = (type: SuggestionsType, query: string) => {
     const q = query.toLowerCase();
 
-    if (type === 'user') {
+    if (type === SuggestionsType.USER) {
       let userSource: any[] = [];
 
       const specialMentions = [
       { 
-        id: 'everyone', 
         name: 'everyone', 
-        suggestionType: 'role',
-        isSpecial: true, 
+        suggestionType: SuggestionsType.ROLE,
+        isSpecial: true,
+        role: null,
         description: 'Notify everyone who has permission to view this channel.' 
       },
       { 
-        id: 'here', 
         name: 'here', 
-        suggestionType: 'role', 
+        suggestionType: SuggestionsType.ROLE, 
+        role: null,
         isSpecial: true, 
         description: 'Notify everyone online who has permission to view this channel.' 
       },
       { 
-        id: 'someone', 
         name: 'someone', 
-        suggestionType: 'user', 
+        suggestionType: SuggestionsType.USER, 
         isSpecial: true, 
         user: null,
         description: "Help I've fallen and I need @someone." 
       }
-    ];
+    ] as Suggestion[];
 
       if (selectedGuild) {
         const memberState = memberLists![selectedGuild.id];
@@ -843,18 +837,26 @@ const MainContent = ({
             m.nick?.toLowerCase().includes(q) ||
             m.user.global_name?.toLowerCase().includes(q),
         )
-        .map((m) => ({ ...m, suggestionType: 'user' }));
+        .map((m: Member) => ({ 
+           suggestionType: SuggestionsType.USER,
+           user: m,
+           isSpecial: false
+         } as Suggestion));
 
       const filteredRoles = guildRoles
         .filter((role: any) => role.name.toLowerCase().includes(q) && role.name !== '@everyone')
-        .map((r) => ({ ...r, suggestionType: 'role' }));
+        .map((r: Role) => ({
+           role: r,
+           suggestionType: SuggestionsType.ROLE,
+           isSpecial: false,
+           name: r.name
+         } as Suggestion));
 
       const combined = [...filteredSpecials, ...filteredUsers, ...filteredRoles]
-      .sort((a: any, b: any) => {
-        const getName = (item: any) => {
-
-          if (item.suggestionType === 'user' && item.user) {
-            return (item.nick || item.user.global_name || item.user.username).toLowerCase();
+      .sort((a: Suggestion, b: Suggestion) => {
+        const getName = (item: Suggestion): string => {
+          if (item.suggestionType === SuggestionsType.USER && item.user) {
+            return (item.user.nick || item.user.user.global_name || item.user.user.username).toLowerCase();
           }
 
           if (item.name) {
@@ -872,7 +874,7 @@ const MainContent = ({
         if (startsA && !startsB) return -1;
         if (!startsA && startsB) return 1;
 
-        if (a.suggestionType === 'user' && b.suggestionType === 'user' && a.user && b.user) {
+        if (a.suggestionType === SuggestionsType.USER && b.suggestionType === SuggestionsType.USER && a.user && b.user) {
           const indexA = recentSpeakerIds.indexOf(a.user.id);
           const indexB = recentSpeakerIds.indexOf(b.user.id);
 
@@ -886,18 +888,19 @@ const MainContent = ({
       .slice(0, 8);
 
       setFilteredSuggestions(combined);
-    } else if (type === 'emoji') {
-      const allEmojis = guilds.flatMap((g) =>
+    } else if (type === SuggestionsType.EMOJI) {
+      const allEmojis = guilds.flatMap((g: Guild) =>
         (g.emojis || []).map((e) => ({
-          ...e,
-          suggestionType: 'emoji',
+          emoji: e,
+          suggestionType: SuggestionsType.EMOJI,
+          name: e.name,
           sourceGuildName: g.name
-        }))
+        } as Suggestion))
       );
 
       const filteredEmojis = allEmojis
-        .filter((e: any) => e.name.toLowerCase().includes(q) && e.require_colons)
-        .sort((a: any, b: any) => {
+        .filter((e: Suggestion) => e.emoji?.name.toLowerCase().includes(q) && e.emoji?.require_colons)
+        .sort((a: Suggestion, b: Suggestion) => {
           const startsA = a.name!.toLowerCase().startsWith(q);
           const startsB = b.name!.toLowerCase().startsWith(q);
           if (startsA && !startsB) return -1;
@@ -907,16 +910,22 @@ const MainContent = ({
         .slice(0, 8);
 
       setFilteredSuggestions(filteredEmojis);
-    } else if (type === 'channel') {
+    } else if (type === SuggestionsType.CHANNEL) {
       if (!selectedGuild?.channels) {
         setFilteredSuggestions([]);
         return;
       }
 
       const filteredChannels = selectedGuild.channels
-        .filter((c: any) => c.name.toLowerCase().includes(q) && c.type !== 4)
-        .map((c) => ({ ...c, suggestionType: 'channel' }))
-        .sort((a: Channel, b: Channel) => {
+        .filter((c: Channel) => c.name?.toLowerCase().includes(q) && c.type !== 4)
+        .map((c: Channel) => ({ 
+          channel: c,
+          suggestionType: SuggestionsType.CHANNEL,
+          name: c.name,
+          description: "Channel",
+          isSpecial: false
+         } as Suggestion))
+        .sort((a: Suggestion, b: Suggestion) => {
           const startsA = a.name!.toLowerCase().startsWith(q);
           const startsB = b.name!.toLowerCase().startsWith(q);
           if (startsA && !startsB) return -1;
@@ -926,10 +935,16 @@ const MainContent = ({
         .slice(0, 8);
 
       setFilteredSuggestions(filteredChannels);
-    } else if (type === 'command') {
+    } else if (type === SuggestionsType.COMMAND) {
       const filteredCommands = commands.filter(x => x.name.toLowerCase().includes(q))
-        .map((c) => ({ ...c, suggestionType: 'command' }))
-        .sort((a: ChatCommand, b: ChatCommand) => {
+        .map((c: Command) => ({ 
+          command: c,
+          suggestionType: SuggestionsType.COMMAND,
+          description: c.description,
+          name: c.name,
+          isSpecial: false
+         } as Suggestion))
+        .sort((a: Suggestion, b: Suggestion) => {
           const startsA = a.name!.toLowerCase().startsWith(q);
           const startsB = b.name!.toLowerCase().startsWith(q);
           if (startsA && !startsB) return -1;
@@ -951,13 +966,17 @@ const MainContent = ({
       const symbol = mentionMatch[1]!;
       const query = mentionMatch[2]!;
 
-      let type: 'user' | 'role' | 'channel' | 'emoji' | 'command' = 'user';
-      if (symbol === '#') type = 'channel';
-      else if (symbol === ':') type = 'emoji';
-      else if (symbol === '/') type = 'command';
-      else type = 'user';
+      let type: SuggestionsType = SuggestionsType.USER;
 
-      setSuggestionTrigger({ type, query, startIndex: mentionMatch.index });
+      if (symbol === '#') type = SuggestionsType.CHANNEL;
+      else if (symbol === ':') type = SuggestionsType.EMOJI;
+      else if (symbol === '/') type = SuggestionsType.COMMAND;
+
+      setSuggestionTrigger({ 
+         type: type,
+         query: query,
+         startIndex: mentionMatch.index
+       });
       filterSuggestions(type, query);
     } else {
       setSuggestionTrigger(null);
@@ -1050,25 +1069,25 @@ const MainContent = ({
     return <p>Several people are typing...</p>;
   };
 
-  const applySuggestion = (item: any) => {
-    if (!suggestionTrigger) return;
+  const applySuggestion = (item: Suggestion) => {
+    if (!suggestionsTrigger) return;
 
-    const before = chatMessage.substring(0, suggestionTrigger.startIndex);
-    const queryLength = suggestionTrigger.query.length + 1;
-    const after = chatMessage.substring(suggestionTrigger.startIndex + queryLength);
+    const before = chatMessage.substring(0, suggestionsTrigger.startIndex);
+    const queryLength = suggestionsTrigger.query.length + 1;
+    const after = chatMessage.substring(suggestionsTrigger.startIndex + queryLength);
 
     let insertion = '';
 
     if (item.isSpecial) {
       insertion = `@${item.name} `;
     }
-    else if (item.suggestionType === 'user') {
-      insertion = `@${item.user.username}#${item.user.discriminator} `;
-    } else if (item.suggestionType === 'role') {
+    else if (item.suggestionType === SuggestionsType.USER) {
+      insertion = `@${item.user?.user.username}#${item.user?.user.discriminator} `;
+    } else if (item.suggestionType === SuggestionsType.ROLE) {
       insertion = `@${item.name} `;
-    } else if (item.suggestionType === 'emoji') {
+    } else if (item.suggestionType === SuggestionsType.EMOJI) {
       insertion = `:${item.name}: `;
-    } else if (item.suggestionType === 'command') {
+    } else if (item.suggestionType === SuggestionsType.COMMAND) {
       insertion = `/${item.name} `;
     } else {
       insertion = `#${item.name} `;
@@ -1203,93 +1222,8 @@ const MainContent = ({
               void handleSendMessage(e);
             }}
           >
-            {suggestionTrigger != null && filteredSuggestions.length > 0 && !showGifSearcher9000 && (
-              <>
-                <div className='input-wrapper' key={'SuggestionsBar'}>
-                  <div className='input-row'>
-                    {suggestionTrigger != null && filteredSuggestions.length > 0 && (
-                      <>
-                        <div className='chat-suggestions-wrapper'>
-                          {filteredSuggestions.map((item, index) => {
-                            const isUser = item.suggestionType === 'user';
-                            const isRole = item.suggestionType === 'role';
-                            const isEmoji = item.suggestionType === 'emoji';
-                            const isCommand = item.suggestionType === 'command';
-
-                            const prefix = (isUser || isRole) ? '@' : isEmoji ? ':' : isCommand ? '/' : '#';
-                            let name = '';
-                            let subtext = '';
-
-                            if (isUser && item.user) {
-                              name = item.nick || item.user.username;
-                              subtext =
-                                item.user.discriminator !== '0'
-                                  ? `${item.user.username}#${item.user.discriminator}`
-                                  : item.user.username;
-                            } else if (item.isSpecial) {
-                               name = item.name;
-                               subtext = item.description;
-                            } else if (isEmoji) {
-                              name = item.name;
-                              subtext = `Emoji from ${item.sourceGuildName || 'Unknown Server'}`;
-                            } else if (isRole) {
-                              name = item.name;
-                              subtext = 'Role';
-                            } else if (isCommand) {
-                              name = item.name;
-                              subtext = item.description;
-                            } else {
-                              const topic = item.topic || 'Channel';
-                              const maxTopicLength = 50;
-
-                              name = item.name;
-                              subtext =
-                                topic.length > maxTopicLength
-                                  ? `${topic.substring(0, maxTopicLength)}...`
-                                  : topic;
-                            }
-
-                            return (
-                              <div
-                                key={item.id}
-                                className={`chat-suggestion ${index === selectedIndex ? 'active' : ''}`}
-                                style={{ '--prefix': `"${prefix}"` } as React.CSSProperties}
-                                onClick={() => {
-                                  applySuggestion(item);
-                                }}
-                                onMouseEnter={() => {
-                                  setSelectedIndex(index);
-                                }}
-                              >
-                                {isUser && item.user?.avatar && !item.isSpecial ? (
-                                  <img
-                                    src={`${localStorage.getItem('selectedCdnUrl')}/avatars/${item.user.id}/${item.user.avatar}.png`}
-                                    className='avatar-img suggested-item-avi'
-                                  />
-                                ) : isEmoji ? (
-                                  <img
-                                    src={`${localStorage.getItem('selectedCdnUrl')}/emojis/${item.id}.${item.animated ? 'gif' : 'png'}`}
-                                    className='suggested-item-avi'
-                                    style={{ objectFit: 'contain' }}
-                                  />
-                                ) : (
-                                  <div className='suggested-item-avi' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    {!isUser && prefix}
-                                  </div>
-                                )}
-                                <div className='chat-suggestion-item'>
-                                  <span>{name}</span>
-                                  <span>{subtext}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </>
+            {suggestionsTrigger && filteredSuggestions.length > 0 && !showGifSearcher9000 && (
+              <SuggestionsBar suggestionsTrigger={suggestionsTrigger} filteredSuggestions={filteredSuggestions} selectedIndex={selectedIndex} applySuggestion={applySuggestion} setSelectedIndex={setSelectedIndex}></SuggestionsBar>
             )}
             {showGifSearcher9000 && (
               <div className="input-wrapper" key={'GifSearcher9000'}>

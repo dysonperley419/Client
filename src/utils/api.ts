@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 type RequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 interface RequestOptions {
@@ -54,7 +56,7 @@ export const request = async (
       const data = await response.json();
       const retryAfter = (data.retry_after ?? 1) * 1000;
 
-      console.warn(`Rate limited. Retrying after ${retryAfter}ms`); //Should we visually show the user this?
+      logger.error(`API`, `Rate limited. Retrying after ${retryAfter}ms`); //Should we visually show the user this?
 
       await sleep(retryAfter);
 
