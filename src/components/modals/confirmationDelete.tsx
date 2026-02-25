@@ -1,19 +1,20 @@
 import type { JSX } from 'react';
 
-import { post } from '@/utils/api';
+import { del, post } from '@/utils/api';
 
 import { useModal } from '../../context/modalContext';
+import { logger } from '@/utils/logger';
+import { useGuildChannelMemoryStore } from '@/stores/gncmemorystore';
 
 export const ConfirmationDeleteModal = ({
-  name,
   id,
   type,
 }: {
-  name: string;
   id: string;
   type: string;
 }): JSX.Element => {
   const { closeModal } = useModal();
+  const currentChannelId = useGuildChannelMemoryStore((s) => s.currentChannelId);
 
   const deleteGuild = async (id: string): Promise<boolean> => {
     try {
@@ -24,15 +25,32 @@ export const ConfirmationDeleteModal = ({
     } catch (error) {
       closeModal();
 
-      console.error('Failed to delete guild: ', error);
+      logger.error(`CONFIRM_DELETE`, 'Failed to delete guild', error);
       return false;
     }
   };
+
+  const deleteMessage = async (id: string) => {
+    try {
+      await del(`/channels/${currentChannelId}/messages/${id}`);
+
+      closeModal();
+      return true;
+    } catch (error) {
+      closeModal();
+
+      logger.error(`CONFIRM_DELETE`, 'Failed to delete message', error);
+      return false;
+    }
+  }
 
   const deletePlace = async (id: string, type: string) => {
     if (type === 'server') {
       return deleteGuild(id);
     } //handle group dms, cuz like how else would you leave something
+    else if (type === 'message') {
+      return deleteMessage(id);
+    }
 
     return;
   };
@@ -40,7 +58,7 @@ export const ConfirmationDeleteModal = ({
   return (
     <div className='confirmation-leave-modal'>
       <p>
-        Are you sure you want to delete the {type} &ldquo;<b>{name}&rdquo;</b>?
+        Are you sure you want to delete this {type}?
       </p>
       <p>
         <b>Once it&rsquo;s gone, it&rsquo;s gone.</b>

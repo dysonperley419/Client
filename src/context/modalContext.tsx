@@ -11,7 +11,7 @@ export interface ModalDataMap {
   WHATS_IT_GONNA_BE: undefined;
   CONFIRMATION_LEAVE: { name: string; id: string; type: string };
   CLEAR_SELECTED_INSTANCE: undefined;
-  CONFIRMATION_DELETE: { name: string; id: string; type: string };
+  CONFIRMATION_DELETE: { id: string; type: string };
   DANGER_CONFIRMATION: { title: string; body: string; onCancel: () => void; onConfirm: () => void };
   CONFIRMATION_CONNECT_P2P: {
     channel: Channel;

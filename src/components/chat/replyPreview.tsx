@@ -42,6 +42,10 @@ export const ReplyPreview = ({
     displayContent = displayContent.trim() ? `${displayContent} ${attachmentText}` : attachmentText;
   }
 
+  if (referencedMessage.content?.endsWith(".gif")) {
+    displayContent = `(Gif)`
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       scrollToMessage(referencedMessage.id);

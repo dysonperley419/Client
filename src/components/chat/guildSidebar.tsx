@@ -43,8 +43,8 @@ const GuildSidebar = ({
     openModal('CONFIRMATION_LEAVE', { name: guild_name, id: guild_id, type: 'server' });
   };
 
-  const handleDeleteServer = (guild_name: string, guild_id: string) => {
-    openModal('CONFIRMATION_DELETE', { name: guild_name, id: guild_id, type: 'server' });
+  const handleDeleteServer = (guild_id: string) => {
+    openModal('CONFIRMATION_DELETE', { id: guild_id, type: 'server' });
   };
 
   const handleRightClick = (e: React.MouseEvent, guild: Guild) => {
@@ -103,11 +103,11 @@ const GuildSidebar = ({
               className='button'
               style={{ color: 'var(--bg-dnd)' }}
               onClick={() => {
-                handleDeleteServer(guild.name, guild.id);
+                handleDeleteServer(guild.id);
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  handleDeleteServer(guild.name, guild.id);
+                  handleDeleteServer(guild.id);
                 }
               }}
             >

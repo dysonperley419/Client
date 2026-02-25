@@ -26,6 +26,8 @@ import type { Command } from '@/types/command';
 import { SuggestionsBar } from './suggestionsBar';
 import { useContextMenu } from '@/context/contextMenuContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useModal } from '@/context/modalContext';
+import { MessageEditInput } from './messageeditinput';
 
 interface MediaAttachment {
   file: File;
@@ -71,8 +73,10 @@ const MainContent = ({
   const contextPerms = usePermissions(selectedGuild?.id ?? '0');
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
   const { openContextMenu } = useContextMenu();
+  const { openModal } = useModal();
   const [suggestionsTrigger, setSuggestionTrigger] = useState<SuggestionsTrigger | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [editingMsgID, setEditingMsgID] = useState<string | null>(null);
   const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[] | []>([]);
   const [gifs, setGifs] = useState<GifResult[] | []>([]);
   const [gifCategories, setGifCategories] = useState<{ name: string, src: string }[]>([]);
@@ -102,7 +106,7 @@ const MainContent = ({
     description: "Appends ¯\\_(ツ)_/¯ to your message.",
     onUse: (parameters: string[]) => {
       const text = parameters.join(' ');
-      const shrug = "¯\\\\\\_(ツ)_/¯"; 
+      const shrug = "¯\\\\\\_(ツ)_/¯";
       return text ? `${text} ${shrug}` : shrug; //¯\\\_(ツ)_/¯
     }
   }] //should this go somewhere else?
@@ -216,7 +220,7 @@ const MainContent = ({
       x,
       y,
       <div className='context-menu-out msg-context-menu'>
-        {msg.author.id === user?.id && (<div className='button'>Edit</div>)}
+        {msg.author.id === user?.id && (<div className='button' onClick={() => setEditingMsgID(msg.id)}>Edit</div>)}
         <div
           className='button'
           onClick={() => {
@@ -225,7 +229,9 @@ const MainContent = ({
         >
           Copy ID
         </div>
-        <div className='button'>Delete</div>
+        <div className='button' onClick={() => {
+          openModal('CONFIRMATION_DELETE', { id: msg.id, type: 'message' });
+        }}>Delete</div>
       </div>,
     );
   };
@@ -273,7 +279,7 @@ const MainContent = ({
 
   const resolveMentions = (text: string): string => {
     const emoticons = [
-      '¯\\_(ツ)_/¯',
+      '¯\\\\\\_(ツ)_/¯',
       '(∩ ͡° ͜ʖ ͡°)⊃━☆ﾟ. o ･ ｡ﾟ',
       '(∩ ͡° ͜ʖ ͡°)⊃━✿✿✿✿✿✿',
       '༼ つ ◕_◕ ༽つ',
@@ -281,7 +287,7 @@ const MainContent = ({
       '(⁄ ⁄•⁄ω⁄•⁄ ⁄)',
       '(╯°□°）╯︵ ┻━┻',
       'ಠ_ಠ',
-      '¯\\(°_o)/¯',
+      '¯\\\\\\(°_o)/¯',
       '（✿ ͡◕ ᴗ◕)つ━━✫・o。',
       'ヽ༼ ಠ益ಠ ༽ﾉ'
     ];
@@ -717,14 +723,34 @@ const MainContent = ({
       const isMentioned = msg.mentions?.some(m => m.id === user?.id) || msg.content?.includes(`@${user?.username}`) || msg.mention_everyone;
       const mentionClass = isMentioned ? 'message-mention' : '';
 
+      const isEditing = editingMsgID === msg.id;
+
+      const handleEditSave = (newContent: string) => {
+        if (newContent.trim() !== msg.content) {
+          console.log("Saving new content:", newContent);
+        }
+        setEditingMsgID(null);
+      };
+
       const msgContent = (
         <>
           <div
             className={`message-content ${msg.state === MESSAGE_STATE.FAILED ? 'message-failed' : ''} ${msg.content?.includes("@someone") ? 'april-fools' : ''}`}
           >
             <div className={`msg-text-contents`}>
-              {renderDfm(msg.content, selectedGuild?.id)}
-              {msg.attachments.length > 0 && (
+              {isEditing ? (
+                <MessageEditInput
+                  initialContent={msg.content ?? ''}
+                  onSave={handleEditSave}
+                  onCancel={() => setEditingMsgID(null)}
+                />
+              ) : (
+                <>
+                  {renderDfm(msg.content, selectedGuild?.id)}
+                  {msg.edited_timestamp && <span className="edited-tag">(edited)</span>}
+                </>
+              )}
+              {!isEditing && msg.attachments.length > 0 && (
                 <div className='message-attachments'>
                   {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
 
@@ -736,26 +762,26 @@ const MainContent = ({
               )}
             </div>
 
-              <>
-                <div id={`msg-contex-tools`}>
-                  <button className={`msg-context-btn`}>
+            {!isEditing && (
+              <div id={`msg-contex-tools`}>
+                <button className={`msg-context-btn`}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
+                    add_reaction
+                  </span>
+                </button>
+                {(msg.author.id === user?.id || (selectedGuild && contextPerms.canManageMessages)) && (
+                  <button className={`msg-context-btn`} onClick={(e) => {
+                    handleShowMsgContextMenu(e, msg);
+                  }}>
                     <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
-                      add_reaction
+                      more_vert
                     </span>
                   </button>
-                  {(msg.author.id === user?.id || (selectedGuild && contextPerms.canManageMessages)) && (
-                    <button className={`msg-context-btn`} onClick={(e) => {
-                      handleShowMsgContextMenu(e, msg);
-                    }}>
-                      <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
-                        more_vert
-                      </span>
-                    </button>
-                  )}
-                  
-                </div>
+                )}
 
-              </>
+              </div>
+
+            )}
           </div>
         </>
       );

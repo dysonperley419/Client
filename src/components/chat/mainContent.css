@@ -634,6 +634,41 @@ div.suggested-item-avi {
   transition: transform 0.25s cubic-bezier(0.33, 1, 0.68, 1), background 0.2s ease;
 }
 
+.message-edit-container {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.message-edit-input {
+  width: 100%;
+  background: var(--bg-alt);
+  color: var(--text-main);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  padding: 10px;
+  resize: none;
+  font-family: inherit;
+  outline: none;
+}
+
+.edit-help-text {
+  font-size: 12px;
+  margin-top: 4px;
+  color: var(--text-muted);
+}
+
+.edit-help-text span {
+  color: var(--accent-secondary);
+  cursor: pointer;
+}
+
+.edited-tag {
+  font-size: 0.65rem;
+  line-height: 1.375rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
 .gif-picker-container {
   background: var(--background-secondary);
   border-radius: 8px;
