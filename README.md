@@ -2,6 +2,9 @@
 
 WIP Spacebar compatible (themed as comfy lavender) client that also works with Oldcord instances.
 
+# Demo
+A demo is available here: https://flicker.oldcordapp.com
+
 ## Implemented Features
 
  - Messaging, of which:
