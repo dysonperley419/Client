@@ -75,4 +75,7 @@ export class PermissionHelper {
   get canAddReactions() {
     return this.has(PermissionBits.ADD_REACTIONS);
   }
+  get canMentionEveryone() {
+    return this.has(PermissionBits.MENTION_EVERYONE);
+  }
 }

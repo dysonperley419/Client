@@ -1,0 +1,187 @@
+.pins-shelf {
+  position: absolute;
+  right: 16px;
+  height: 450px;
+  width: 420px;
+  background: var(--bg-dark-alt);
+  z-index: 100;
+  border: 1px solid rgb(187 154 247 / 20%);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
+  overflow: hidden;
+}
+
+.pins-header {
+  color: var(--text-bright);
+  padding: 12px 16px;
+  background-color: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--gray-outline-bottom), var(--gray-outline-left);
+}
+
+.pins-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-grow: 1;
+  text-align: center;
+  padding-left: 32px;
+}
+
+.pins-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background-color: var(--bg-sidebar-secondary);
+}
+
+.pins-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pins-content::-webkit-scrollbar-track {
+  background-color: #2b2d31;
+}
+
+.pins-content::-webkit-scrollbar-thumb {
+  background-color: #1a1b1e;
+  border-radius: 4px;
+}
+
+.pin-item {
+  display: flex;
+  gap: 12px;
+  background: var(--bg-alt);
+  border: 1px solid rgb(187 154 247 / 5%);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.pin-item:hover {
+  border-color: var(--bg-sidebar-secondary);
+  transform: translateY(-2px);
+  background: var(--bg-dark-alt);
+}
+
+.pin-item strong {
+  display: block;
+  color: var(--text-bright);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.pin-item p {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.pins-content > p {
+  color: #949ba4;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 15px;
+}
+
+.pins-header .icon-btn {
+  color: #949ba4;
+  transition:
+    color 0.2s,
+    transform 0.2s;
+}
+
+.pins-header .icon-btn:hover {
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+.pin-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  outline: 1px solid rgb(187 154 247 / 10%);
+}
+
+.pin-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.pin-author {
+  display: block;
+  color: #c0caf5;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.pin-text {
+  margin: 0;
+  color: #a9b1d6;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.status-text {
+  color: #949ba4;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 15px;
+}
+
+.pin-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.pin-who-and-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  align-content: center;
+}
+
+.pin-timestamp {
+  color: #949ba4;
+  font-size: 12px;
+}
+
+.pin-jump-button {
+  background-color: var(--text-dim);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.pin-item:hover .pin-jump-button {
+  opacity: 1;
+}
+
+.pin-jump-button:hover {
+  filter: brightness(1.2);
+}

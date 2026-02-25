@@ -3,31 +3,33 @@ import './mainContent.css';
 
 import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useContextMenu } from '@/context/contextMenuContext';
+import { useModal } from '@/context/modalContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
+import type { Command } from '@/types/command';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
 import type { Guild, Member, Role } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
+import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
 import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
+import { formatTimestamp } from '@/utils/dateUtils';
+import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { ChatAttachment } from './chatAttachment';
 import ChatInput from './chatInput';
 import renderDfm from './dfm/dfmRenderer';
 import MemberList from './memberList';
-import { ChatAttachment } from './chatAttachment';
-import { ReplyPreview } from './replyPreview';
-import { logger } from '@/utils/logger';
-import { SuggestionsType, type Suggestion, type SuggestionsTrigger } from '@/types/suggestions';
-import type { Command } from '@/types/command';
-import { SuggestionsBar } from './suggestionsBar';
-import { useContextMenu } from '@/context/contextMenuContext';
-import { usePermissions } from '@/hooks/usePermissions';
-import { useModal } from '@/context/modalContext';
 import { MessageEditInput } from './messageeditinput';
+import { PinnedMessagesShelf } from './pinnedMessagesShelf';
+import { ReplyPreview } from './replyPreview';
+import { SuggestionsBar } from './suggestionsBar';
 
 interface MediaAttachment {
   file: File;
@@ -79,16 +81,19 @@ const MainContent = ({
   const [editingMsgID, setEditingMsgID] = useState<string | null>(null);
   const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[] | []>([]);
   const [gifs, setGifs] = useState<GifResult[] | []>([]);
-  const [gifCategories, setGifCategories] = useState<{ name: string, src: string }[]>([]);
+  const [gifCategories, setGifCategories] = useState<{ name: string; src: string }[]>([]);
   const [gifSearchQuery, setGifSearchQuery] = useState('');
   const [emojiSearchQuery, setEmojiSearchQuery] = useState('');
+  const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [stickernatorActive, setStickernatorActive] = useState(false);
+  const [channelPinsVisible, setChannelPinsVisible] = useState(false);
   const [showGifSearcher9000, setShowGifSearcher9000] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [memberListVisible, setMemberListVisible] = useState(true);
   const [theESRF, setTheESRF] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists, guilds } = useGateway();
+  const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists, guilds } =
+    useGateway();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const messageMap = useMemo(() => {
     return new Map(messages.map((m) => [m.id, m]));
@@ -101,15 +106,17 @@ const MainContent = ({
   const [attachments, setAttachments] = useState<MediaAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const commands: Command[] = [{
-    name: "shrug",
-    description: "Appends ¯\\_(ツ)_/¯ to your message.",
-    onUse: (parameters: string[]) => {
-      const text = parameters.join(' ');
-      const shrug = "¯\\\\\\_(ツ)_/¯";
-      return text ? `${text} ${shrug}` : shrug; //¯\\\_(ツ)_/¯
-    }
-  }] //should this go somewhere else?
+  const commands: Command[] = [
+    {
+      name: 'shrug',
+      description: 'Appends ¯\\_(ツ)_/¯ to your message.',
+      onUse: (parameters: string[]) => {
+        const text = parameters.join(' ');
+        const shrug = '¯\\\\\\_(ツ)_/¯';
+        return text ? `${text} ${shrug}` : shrug; //¯\\\_(ツ)_/¯
+      },
+    },
+  ]; //should this go somewhere else?
 
   useEffect(() => {
     if (!selectedChannel) {
@@ -198,9 +205,14 @@ const MainContent = ({
     });
   };
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     if (scrollerRef.current) {
-      scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
+      scrollerRef.current.scrollTo({
+        top: scrollerRef.current.scrollHeight,
+        behavior,
+      });
+
+      setIsScrolledUp(false);
     }
   };
 
@@ -220,7 +232,16 @@ const MainContent = ({
       x,
       y,
       <div className='context-menu-out msg-context-menu'>
-        {msg.author.id === user?.id && (<div className='button' onClick={() => setEditingMsgID(msg.id)}>Edit</div>)}
+        {msg.author.id === user?.id && (
+          <div
+            className='button'
+            onClick={() => {
+              setEditingMsgID(msg.id);
+            }}
+          >
+            Edit
+          </div>
+        )}
         <div
           className='button'
           onClick={() => {
@@ -229,9 +250,14 @@ const MainContent = ({
         >
           Copy ID
         </div>
-        <div className='button' onClick={() => {
-          openModal('CONFIRMATION_DELETE', { id: msg.id, type: 'message' });
-        }}>Delete</div>
+        <div
+          className='button'
+          onClick={() => {
+            openModal('CONFIRMATION_DELETE', { id: msg.id, type: 'message' });
+          }}
+        >
+          Delete
+        </div>
       </div>,
     );
   };
@@ -289,14 +315,16 @@ const MainContent = ({
       'ಠ_ಠ',
       '¯\\\\\\(°_o)/¯',
       '（✿ ͡◕ ᴗ◕)つ━━✫・o。',
-      'ヽ༼ ಠ益ಠ ༽ﾉ'
+      'ヽ༼ ಠ益ಠ ༽ﾉ',
     ];
 
-    const channelMap = new Map(selectedGuild?.channels?.map(c => [c.name?.toLowerCase(), c.id]) ?? []);
-    const roleMap = new Map(selectedGuild?.roles?.map(r => [r.name.toLowerCase(), r.id]) ?? []);
+    const channelMap = new Map(
+      selectedGuild?.channels?.map((c) => [c.name?.toLowerCase(), c.id]) ?? [],
+    );
+    const roleMap = new Map(selectedGuild?.roles?.map((r) => [r.name.toLowerCase(), r.id]) ?? []);
 
     const emojiMap = new Map(
-      guilds.flatMap(g => g.emojis || []).map(e => [e.name?.toLowerCase(), e])
+      guilds.flatMap((g) => g.emojis || []).map((e) => [e.name?.toLowerCase(), e]),
     );
 
     const memberMap = new Map();
@@ -321,7 +349,7 @@ const MainContent = ({
         }
       });
     } else if (selectedChannel.recipients) {
-      selectedChannel.recipients.forEach(user => {
+      selectedChannel.recipients.forEach((user) => {
         if (user.global_name) {
           memberMap.set(user.global_name.toLowerCase(), user.id);
         }
@@ -391,7 +419,7 @@ const MainContent = ({
     if (finalContent.startsWith('/')) {
       const args = chatMessage.slice(1).split(' ');
       const commandName = args.shift()?.toLowerCase();
-      const command = commands.find(c => c.name === commandName);
+      const command = commands.find((c) => c.name === commandName);
 
       if (command) {
         const transformed = command.onUse(args);
@@ -465,7 +493,9 @@ const MainContent = ({
       console.error('Error sending message:', error);
 
       setMessages((prev) =>
-        prev.map((m) => (m.nonce === `flicker-${nonce}` ? { ...m, state: MESSAGE_STATE.FAILED } : m)),
+        prev.map((m) =>
+          m.nonce === `flicker-${nonce}` ? { ...m, state: MESSAGE_STATE.FAILED } : m,
+        ),
       );
     }
 
@@ -473,6 +503,18 @@ const MainContent = ({
   };
 
   const handleScroll = async () => {
+    const container = scrollerRef.current;
+    if (!container) return;
+
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    if (distanceFromBottom > 2000) {
+      setIsScrolledUp(true);
+    } else {
+      setIsScrolledUp(false);
+    }
+
     const scroller = scrollerRef.current;
 
     if (!scroller || messages.length === 0 || isloadingMore.current) return;
@@ -509,27 +551,6 @@ const MainContent = ({
     autoScroll.current = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight;
   };
 
-  const formatTimestamp = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    if (msgDate.getTime() === today.getTime()) {
-      return `Today at ${timeStr}`;
-    } else if (msgDate.getTime() === yesterday.getTime()) {
-      return `Yesterday at ${timeStr}`;
-    } else {
-      return `${date.toLocaleDateString()} ${timeStr}`;
-    }
-  };
-
   const handleSearchAndSetGif = async (term: string) => {
     setGifSearchQuery(term);
 
@@ -544,7 +565,7 @@ const MainContent = ({
         title: g.title,
         previewUrl: g.gif_src,
         fullUrl: g.gif_src,
-        aspectRatio: g.width / g.height
+        aspectRatio: g.width / g.height,
       }));
 
       setGifs(mappedGifs);
@@ -635,15 +656,57 @@ const MainContent = ({
     };
   }, [selectedChannel.id]);
 
-  const scrollToMessage = (messageId: string) => {
+  const scrollToMessage = async (messageId: string) => {
+    //Check if we already have it in the silly dom
+
     const element = scrollerRef.current?.querySelector(`[data-message-id="${messageId}"]`);
 
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); //Everything else overflows it seems, pretty weird.
 
       element.classList.add('message-highlight');
 
-      setTimeout(() => element.classList.remove('message-highlight'), 3000);
+      setTimeout(() => {
+        element.classList.remove('message-highlight');
+      }, 3000);
+    } else {
+      //No? OK.
+
+      try {
+        isloadingMore.current = true;
+
+        const response = await get(
+          `/channels/${selectedChannel.id}/messages?limit=50&around=${messageId}`,
+        );
+        const data = MessageListSchema.parse(response);
+
+        if (data.length > 0) {
+          setMessages([...data].reverse()); //api should return them from new to old so we reverse CHRONOLOGICAL Order dis bitch
+          autoScroll.current = false; //make sure we dont scroll to the fucking bottom (owo)
+
+          requestAnimationFrame(() => {
+            const newElement = scrollerRef.current?.querySelector(
+              `[data-message-id="${messageId}"]`,
+            );
+
+            //lets try again
+
+            if (newElement) {
+              newElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              newElement.classList.add('message-highlight');
+
+              setTimeout(() => {
+                newElement.classList.remove('message-highlight');
+                isloadingMore.current = false;
+              }, 3000);
+            }
+          });
+        }
+      } catch (error) {
+        logger.error(`MAIN_CONTENT`, 'Failed to jump to message', error);
+
+        isloadingMore.current = false;
+      }
     }
   };
 
@@ -714,20 +777,25 @@ const MainContent = ({
         prevMsg?.author.id !== msg.author.id ||
         new Date(msg.timestamp).getTime() - new Date(prevMsg?.timestamp ?? '').getTime() > 420000;
 
-      const referencedMessage = (msg.message_reference?.message_id ? messageMap.get(msg.message_reference.message_id) : null);
+      const referencedMessage = msg.message_reference?.message_id
+        ? messageMap.get(msg.message_reference.message_id)
+        : null;
 
       const pendingClass = msg.state == MESSAGE_STATE.PENDING ? 'message-pending' : '';
       const pendingStyle =
         msg.state == MESSAGE_STATE.PENDING ? { opacity: 0.5, filter: 'grayscale(100%)' } : {};
 
-      const isMentioned = msg.mentions?.some(m => m.id === user?.id) || msg.content?.includes(`@${user?.username}`) || msg.mention_everyone;
+      const isMentioned =
+        msg.mentions?.some((m) => m.id === user?.id) ||
+        msg.content?.includes(`@${user?.username}`) ||
+        msg.mention_everyone;
       const mentionClass = isMentioned ? 'message-mention' : '';
 
       const isEditing = editingMsgID === msg.id;
 
       const handleEditSave = (newContent: string) => {
         if (newContent.trim() !== msg.content) {
-          console.log("Saving new content:", newContent);
+          //to-do actual editing
         }
         setEditingMsgID(null);
       };
@@ -735,29 +803,32 @@ const MainContent = ({
       const msgContent = (
         <>
           <div
-            className={`message-content ${msg.state === MESSAGE_STATE.FAILED ? 'message-failed' : ''} ${msg.content?.includes("@someone") ? 'april-fools' : ''}`}
+            className={`message-content ${msg.state === MESSAGE_STATE.FAILED ? 'message-failed' : ''} ${msg.content?.includes('@someone') ? 'april-fools' : ''}`}
           >
             <div className={`msg-text-contents`}>
               {isEditing ? (
                 <MessageEditInput
                   initialContent={msg.content ?? ''}
                   onSave={handleEditSave}
-                  onCancel={() => setEditingMsgID(null)}
+                  onCancel={() => {
+                    setEditingMsgID(null);
+                  }}
                 />
               ) : (
                 <>
                   {renderDfm(msg.content, selectedGuild?.id)}
-                  {msg.edited_timestamp && <span className="edited-tag">(edited)</span>}
+                  {msg.edited_timestamp && <span className='edited-tag'>(edited)</span>}
                 </>
               )}
               {!isEditing && msg.attachments.length > 0 && (
                 <div className='message-attachments'>
-                  {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
-
-                    return (
-                      <ChatAttachment attachment={attachment} key={attachment.id} msg={msg} formatTimestamp={formatTimestamp} />
-                    );
-                  })}
+                  {msg.attachments.map(
+                    (attachment: NonNullable<Message['attachments']>[number]) => {
+                      return (
+                        <ChatAttachment attachment={attachment} key={attachment.id} msg={msg} />
+                      );
+                    },
+                  )}
                 </div>
               )}
             </div>
@@ -765,22 +836,24 @@ const MainContent = ({
             {!isEditing && (
               <div id={`msg-contex-tools`}>
                 <button className={`msg-context-btn`}>
-                  <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
+                  <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                     add_reaction
                   </span>
                 </button>
-                {(msg.author.id === user?.id || (selectedGuild && contextPerms.canManageMessages)) && (
-                  <button className={`msg-context-btn`} onClick={(e) => {
-                    handleShowMsgContextMenu(e, msg);
-                  }}>
-                    <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
+                {(msg.author.id === user?.id ||
+                  (selectedGuild && contextPerms.canManageMessages)) && (
+                  <button
+                    className={`msg-context-btn`}
+                    onClick={(e) => {
+                      handleShowMsgContextMenu(e, msg);
+                    }}
+                  >
+                    <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                       more_vert
                     </span>
                   </button>
                 )}
-
               </div>
-
             )}
           </div>
         </>
@@ -806,9 +879,18 @@ const MainContent = ({
         return (
           <>
             {referencedMessage && (
-              <ReplyPreview referencedMessage={referencedMessage as Message} selectedGuildId={selectedGuild?.id} scrollToMessage={scrollToMessage} />
+              <ReplyPreview
+                referencedMessage={referencedMessage as Message}
+                selectedGuildId={selectedGuild?.id}
+                scrollToMessage={scrollToMessage}
+              />
             )}
-            <div key={messageKey} data-message-id={msg.id} className={`message-group ${pendingClass} ${mentionClass}`} style={pendingStyle}>
+            <div
+              key={messageKey}
+              data-message-id={msg.id}
+              className={`message-group ${pendingClass} ${mentionClass}`}
+              style={pendingStyle}
+            >
               <AuthorAvatar msg={msg} member={member} />
               <div className='message-details'>
                 <div className='message-header'>
@@ -843,7 +925,6 @@ const MainContent = ({
     });
   };
 
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (suggestionsTrigger && filteredSuggestions.length > 0) {
       if (e.key === 'ArrowDown') {
@@ -851,7 +932,9 @@ const MainContent = ({
         setSelectedIndex((prev) => (prev + 1) % filteredSuggestions.length);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
+        setSelectedIndex(
+          (prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length,
+        );
       } else if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
         applySuggestion(filteredSuggestions[selectedIndex]!);
@@ -875,22 +958,22 @@ const MainContent = ({
           suggestionType: SuggestionsType.ROLE,
           isSpecial: true,
           role: null,
-          description: 'Notify everyone who has permission to view this channel.'
+          description: 'Notify everyone who has permission to view this channel.',
         },
         {
           name: 'here',
           suggestionType: SuggestionsType.ROLE,
           role: null,
           isSpecial: true,
-          description: 'Notify everyone online who has permission to view this channel.'
+          description: 'Notify everyone online who has permission to view this channel.',
         },
         {
           name: 'someone',
           suggestionType: SuggestionsType.USER,
           isSpecial: true,
           user: null,
-          description: "Help I've fallen and I need @someone."
-        }
+          description: "Help I've fallen and I need @someone.",
+        },
       ] as Suggestion[];
 
       if (selectedGuild) {
@@ -899,15 +982,21 @@ const MainContent = ({
 
         userSource = listItems.filter((item: any) => !!item.member).map((item: any) => item.member);
       } else if (selectedChannel.recipients) {
-        userSource = selectedChannel.recipients.map(user => ({
+        userSource = selectedChannel.recipients.map((user) => ({
           user,
           nick: null,
           roles: [],
-          joined_at: new Date().toISOString()
+          joined_at: new Date().toISOString(),
         }));
       }
 
-      const filteredSpecials = specialMentions.filter(m => m.name.includes(q));
+      const filteredSpecials = specialMentions.filter((m) => {
+        if (!m.name.includes(q)) return false;
+
+        if (m.name === 'someone') return true;
+
+        return contextPerms?.canMentionEveryone;
+      });
 
       const guildRoles = selectedGuild?.roles || [];
       const recentSpeakerIds = Array.from(new Set(messages.map((m) => m.author.id))).reverse();
@@ -919,26 +1008,36 @@ const MainContent = ({
             m.nick?.toLowerCase().includes(q) ||
             m.user.global_name?.toLowerCase().includes(q),
         )
-        .map((m: Member) => ({
-          suggestionType: SuggestionsType.USER,
-          user: m,
-          isSpecial: false
-        } as Suggestion));
+        .map(
+          (m: Member) =>
+            ({
+              suggestionType: SuggestionsType.USER,
+              user: m,
+              isSpecial: false,
+            }) as Suggestion,
+        );
 
       const filteredRoles = guildRoles
         .filter((role: any) => role.name.toLowerCase().includes(q) && role.name !== '@everyone')
-        .map((r: Role) => ({
-          role: r,
-          suggestionType: SuggestionsType.ROLE,
-          isSpecial: false,
-          name: r.name
-        } as Suggestion));
+        .map(
+          (r: Role) =>
+            ({
+              role: r,
+              suggestionType: SuggestionsType.ROLE,
+              isSpecial: false,
+              name: r.name,
+            }) as Suggestion,
+        );
 
       const combined = [...filteredSpecials, ...filteredUsers, ...filteredRoles]
         .sort((a: Suggestion, b: Suggestion) => {
           const getName = (item: Suggestion): string => {
             if (item.suggestionType === SuggestionsType.USER && item.user) {
-              return (item.user.nick || item.user.user.global_name || item.user.user.username).toLowerCase();
+              return (
+                item.user.nick ||
+                item.user.user.global_name ||
+                item.user.user.username
+              ).toLowerCase();
             }
 
             if (item.name) {
@@ -956,7 +1055,12 @@ const MainContent = ({
           if (startsA && !startsB) return -1;
           if (!startsA && startsB) return 1;
 
-          if (a.suggestionType === SuggestionsType.USER && b.suggestionType === SuggestionsType.USER && a.user && b.user) {
+          if (
+            a.suggestionType === SuggestionsType.USER &&
+            b.suggestionType === SuggestionsType.USER &&
+            a.user &&
+            b.user
+          ) {
             const indexA = recentSpeakerIds.indexOf(a.user.id);
             const indexB = recentSpeakerIds.indexOf(b.user.id);
 
@@ -972,22 +1076,27 @@ const MainContent = ({
       setFilteredSuggestions(combined);
     } else if (type === SuggestionsType.EMOJI) {
       const allEmojis = guilds.flatMap((g: Guild) =>
-        (g.emojis || []).map((e) => ({
-          emoji: e,
-          suggestionType: SuggestionsType.EMOJI,
-          name: e.name,
-          sourceGuildName: g.name
-        } as Suggestion))
+        (g.emojis || []).map(
+          (e) =>
+            ({
+              emoji: e,
+              suggestionType: SuggestionsType.EMOJI,
+              name: e.name,
+              sourceGuildName: g.name,
+            }) as Suggestion,
+        ),
       );
 
       const filteredEmojis = allEmojis
-        .filter((e: Suggestion) => e.emoji?.name.toLowerCase().includes(q) && e.emoji?.require_colons)
+        .filter(
+          (e: Suggestion) => e.emoji?.name.toLowerCase().includes(q) && e.emoji?.require_colons,
+        )
         .sort((a: Suggestion, b: Suggestion) => {
-          const startsA = a.name!.toLowerCase().startsWith(q);
-          const startsB = b.name!.toLowerCase().startsWith(q);
+          const startsA = a.name.toLowerCase().startsWith(q);
+          const startsB = b.name.toLowerCase().startsWith(q);
           if (startsA && !startsB) return -1;
           if (!startsA && startsB) return 1;
-          return a.name!.localeCompare(b.name!);
+          return a.name.localeCompare(b.name);
         })
         .slice(0, 8);
 
@@ -1000,38 +1109,45 @@ const MainContent = ({
 
       const filteredChannels = selectedGuild.channels
         .filter((c: Channel) => c.name?.toLowerCase().includes(q) && c.type !== 4)
-        .map((c: Channel) => ({
-          channel: c,
-          suggestionType: SuggestionsType.CHANNEL,
-          name: c.name,
-          description: "Channel",
-          isSpecial: false
-        } as Suggestion))
+        .map(
+          (c: Channel) =>
+            ({
+              channel: c,
+              suggestionType: SuggestionsType.CHANNEL,
+              name: c.name,
+              description: 'Channel',
+              isSpecial: false,
+            }) as Suggestion,
+        )
         .sort((a: Suggestion, b: Suggestion) => {
-          const startsA = a.name!.toLowerCase().startsWith(q);
-          const startsB = b.name!.toLowerCase().startsWith(q);
+          const startsA = a.name.toLowerCase().startsWith(q);
+          const startsB = b.name.toLowerCase().startsWith(q);
           if (startsA && !startsB) return -1;
           if (!startsA && startsB) return 1;
-          return a.name!.localeCompare(b.name!);
+          return a.name.localeCompare(b.name);
         })
         .slice(0, 8);
 
       setFilteredSuggestions(filteredChannels);
     } else if (type === SuggestionsType.COMMAND) {
-      const filteredCommands = commands.filter(x => x.name.toLowerCase().includes(q))
-        .map((c: Command) => ({
-          command: c,
-          suggestionType: SuggestionsType.COMMAND,
-          description: c.description,
-          name: c.name,
-          isSpecial: false
-        } as Suggestion))
+      const filteredCommands = commands
+        .filter((x) => x.name.toLowerCase().includes(q))
+        .map(
+          (c: Command) =>
+            ({
+              command: c,
+              suggestionType: SuggestionsType.COMMAND,
+              description: c.description,
+              name: c.name,
+              isSpecial: false,
+            }) as Suggestion,
+        )
         .sort((a: Suggestion, b: Suggestion) => {
-          const startsA = a.name!.toLowerCase().startsWith(q);
-          const startsB = b.name!.toLowerCase().startsWith(q);
+          const startsA = a.name.toLowerCase().startsWith(q);
+          const startsB = b.name.toLowerCase().startsWith(q);
           if (startsA && !startsB) return -1;
           if (!startsA && startsB) return 1;
-          return a.name!.localeCompare(b.name!);
+          return a.name.localeCompare(b.name);
         })
         .slice(0, 8);
 
@@ -1057,7 +1173,7 @@ const MainContent = ({
       setSuggestionTrigger({
         type: type,
         query: query,
-        startIndex: mentionMatch.index
+        startIndex: mentionMatch.index,
       });
       filterSuggestions(type, query);
     } else {
@@ -1152,8 +1268,7 @@ const MainContent = ({
 
     if (item.isSpecial) {
       insertion = `@${item.name} `;
-    }
-    else if (item.suggestionType === SuggestionsType.USER) {
+    } else if (item.suggestionType === SuggestionsType.USER) {
       insertion = `@${item.user?.user.username}#${item.user?.user.discriminator} `;
     } else if (item.suggestionType === SuggestionsType.ROLE) {
       insertion = `@${item.name} `;
@@ -1214,8 +1329,8 @@ const MainContent = ({
             style={
               selectedChannel.type === 1
                 ? {
-                  cursor: 'pointer',
-                }
+                    cursor: 'pointer',
+                  }
                 : {}
             }
           >
@@ -1237,14 +1352,26 @@ const MainContent = ({
                 notifications
               </span>
             </button>
-            <button className='icon-btn'>
-              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+            <button className={`icon-btn ${channelPinsVisible ? 'active-input-btn' : ''}`}>
+              <span
+                className='material-symbols-rounded'
+                style={{ fontSize: '24px' }}
+                onClick={() => {
+                  setChannelPinsVisible(!channelPinsVisible);
+                }}
+              >
                 push_pin
               </span>
             </button>
-            {selectedGuild !== null && selectedChannel && (
-              selectedChannel.type === 1 ? null : (
-                <button className='icon-btn' onClick={() => setMemberListVisible(!memberListVisible)}>
+            {selectedGuild !== null &&
+              selectedChannel &&
+              (selectedChannel.type === 1 ? null : (
+                <button
+                  className='icon-btn'
+                  onClick={() => {
+                    setMemberListVisible(!memberListVisible);
+                  }}
+                >
                   <span
                     className={`material-symbols-rounded ${memberListVisible ? 'active-input-btn' : ''}`}
                     style={{ fontSize: '24px' }}
@@ -1252,8 +1379,7 @@ const MainContent = ({
                     group
                   </span>
                 </button>
-              )
-            )}
+              ))}
             <div className='search-bar'>
               <input type='text' placeholder='Search' />
               <span className='material-symbols-rounded search-icon'>search</span>
@@ -1279,6 +1405,29 @@ const MainContent = ({
 
       <div className='chat-content-row'>
         <div className='chat-view'>
+          {isScrolledUp && (
+            <div
+              className='jump-to-present-bar'
+              onClick={() => {
+                scrollToBottom('smooth');
+              }}
+            >
+              <span className='material-symbols-rounded'>arrow_downward</span>
+              <span>Whoa.. looks like you're in the past!</span>
+              <button className='jump-btn'>Jump to Present</button>
+            </div>
+          )}
+
+          {channelPinsVisible && (
+            <PinnedMessagesShelf
+              channelId={selectedChannel.id}
+              onClose={() => {
+                setChannelPinsVisible(false);
+              }}
+              scrollToMessage={scrollToMessage}
+            />
+          )}
+
           <div
             className='messages-scroller scroller'
             ref={scrollerRef}
@@ -1295,45 +1444,51 @@ const MainContent = ({
             }}
           >
             {suggestionsTrigger && filteredSuggestions.length > 0 && !showGifSearcher9000 && (
-              <SuggestionsBar suggestionsTrigger={suggestionsTrigger} filteredSuggestions={filteredSuggestions} selectedIndex={selectedIndex} applySuggestion={applySuggestion} setSelectedIndex={setSelectedIndex}></SuggestionsBar>
+              <SuggestionsBar
+                suggestionsTrigger={suggestionsTrigger}
+                filteredSuggestions={filteredSuggestions}
+                selectedIndex={selectedIndex}
+                applySuggestion={applySuggestion}
+                setSelectedIndex={setSelectedIndex}
+              ></SuggestionsBar>
             )}
             {showGifSearcher9000 && (
-              <div className="input-wrapper" key={'GifSearcher9000'}>
-                <div className="gif-picker-container">
-                  <div className="gif-picker-header">
-                    <div className="search-bar">
+              <div className='input-wrapper' key={'GifSearcher9000'}>
+                <div className='gif-picker-container'>
+                  <div className='gif-picker-header'>
+                    <div className='search-bar'>
                       <input
-                        type="text"
-                        placeholder="Search Tenor"
+                        type='text'
+                        placeholder='Search Tenor'
                         autoFocus
                         value={gifSearchQuery}
                         onChange={(e) => {
                           handleSearchAndSetGif(e.currentTarget.value);
                         }}
                       />
-                      <span className="material-symbols-rounded search-icon">search</span>
+                      <span className='material-symbols-rounded search-icon'>search</span>
                     </div>
                   </div>
-                  <div className="gif-picker-content scroller">
+                  <div className='gif-picker-content scroller'>
                     {!gifSearchQuery && gifCategories.length > 0 && (
-                      <div className="gif-category-grid">
+                      <div className='gif-category-grid'>
                         {gifCategories.map((cat) => (
                           <div
                             key={cat.name}
-                            className="category-item"
+                            className='category-item'
                             onClick={() => handleSearchAndSetGif(cat.name)}
                           >
                             <img src={cat.src} alt={cat.name} />
-                            <div className="category-label">{cat.name}</div>
+                            <div className='category-label'>{cat.name}</div>
                           </div>
                         ))}
                       </div>
                     )}
-                    <div className="gif-grid">
+                    <div className='gif-grid'>
                       {gifs.map((gif) => (
                         <div
                           key={gif.id}
-                          className="gif-item"
+                          className='gif-item'
                           onClick={() => {
                             setChatMessage(gif.fullUrl);
                             setShowGifSearcher9000(false);
@@ -1409,17 +1564,38 @@ const MainContent = ({
                   }}
                 />
                 <div className='input-icons'>
-                  <button type='button' className={`input-icon-btn ${showGifSearcher9000 ? 'active-input-btn' : ''}`} title={`Search gifs`} onClick={() => setShowGifSearcher9000(!showGifSearcher9000)}>
+                  <button
+                    type='button'
+                    className={`input-icon-btn ${showGifSearcher9000 ? 'active-input-btn' : ''}`}
+                    title={`Search gifs`}
+                    onClick={() => {
+                      setShowGifSearcher9000(!showGifSearcher9000);
+                    }}
+                  >
                     <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                       gif_box
                     </span>
                   </button>
-                  <button type='button' className='input-icon-btn' title={`Search stickers`} onClick={() => setStickernatorActive(!stickernatorActive)}>
+                  <button
+                    type='button'
+                    className='input-icon-btn'
+                    title={`Search stickers`}
+                    onClick={() => {
+                      setStickernatorActive(!stickernatorActive);
+                    }}
+                  >
                     <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                       sticky_note_2
                     </span>
                   </button>
-                  <button type='button' className='input-icon-btn' title={`Search emojis`} onClick={() => setTheESRF(!theESRF)}>
+                  <button
+                    type='button'
+                    className='input-icon-btn'
+                    title={`Search emojis`}
+                    onClick={() => {
+                      setTheESRF(!theESRF);
+                    }}
+                  >
                     <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
                       mood
                     </span>
