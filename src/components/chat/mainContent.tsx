@@ -102,8 +102,8 @@ const MainContent = ({
     description: "Appends ¯\\_(ツ)_/¯ to your message.",
     onUse: (parameters: string[]) => {
       const text = parameters.join(' ');
-      const fullMessage = text ? `${text} ¯\\_(ツ)_/¯` : `¯\\_(ツ)_/¯`;
-      return fullMessage;
+      const shrug = "¯\\\\\\_(ツ)_/¯"; 
+      return text ? `${text} ${shrug}` : shrug; //¯\\\_(ツ)_/¯
     }
   }] //should this go somewhere else?
 
