@@ -1,6 +1,6 @@
 import './memberList.css';
 
-import { act, type JSX, useCallback, useEffect, useState } from 'react';
+import { type JSX, useCallback, useEffect, useState } from 'react';
 
 import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
