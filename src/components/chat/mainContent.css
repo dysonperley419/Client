@@ -120,6 +120,22 @@
   white-space: pre-wrap;
   overflow-wrap: break-word;
   width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.msg-context-btn:hover {
+  opacity: 1.0;
+}
+
+.msg-context-btn {
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.message-content:hover .msg-context-btn {
+  opacity: 0.6;
 }
 
 .chat-input-area {
@@ -609,11 +625,12 @@ div.suggested-item-avi {
     rgba(250, 166, 26, 0.06) 90%,
     transparent 100%
   );
+  /*
   transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) scale(1.01) translateZ(30px);
   image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  image-rendering: crisp-edges;*/
   z-index: 10;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 1px 8px rgba(0, 0, 0, 0.2);
+ /* box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 1px 8px rgba(0, 0, 0, 0.2); rip small screens - leave commented in case we can improve this with add reactions and msg context menu*/
   transition: transform 0.25s cubic-bezier(0.33, 1, 0.68, 1), background 0.2s ease;
 }
 

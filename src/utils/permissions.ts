@@ -38,15 +38,15 @@ export const PermissionBits = {
 
 export class PermissionHelper {
   private bitfield: bigint;
-  private owwnerOrAdmin: boolean;
+  private ownerOrAdmin: boolean;
 
   constructor(bitfield: string | number | bigint, ownerOrAdmin: boolean) {
     this.bitfield = BigInt(bitfield);
-    this.owwnerOrAdmin = ownerOrAdmin;
+    this.ownerOrAdmin = ownerOrAdmin;
   }
 
   has(permission: bigint): boolean {
-    if (this.owwnerOrAdmin) {
+    if (this.ownerOrAdmin) {
       return true;
     }
 
@@ -58,7 +58,7 @@ export class PermissionHelper {
   }
 
   get isOwnerOrAdmin() {
-    return this.owwnerOrAdmin;
+    return this.ownerOrAdmin;
   }
   get canManageRoles() {
     return this.has(PermissionBits.MANAGE_ROLES);
@@ -71,5 +71,8 @@ export class PermissionHelper {
   }
   get canManageMessages() {
     return this.has(PermissionBits.MANAGE_MESSAGES);
+  }
+  get canAddReactions() {
+    return this.has(PermissionBits.ADD_REACTIONS);
   }
 }

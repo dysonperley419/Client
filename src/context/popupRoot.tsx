@@ -6,9 +6,11 @@ import { PopoutProfile } from '../components/modals/popoutProfile';
 import { UserProfileModal } from '../components/modals/userProfile';
 import { type PopupDataMap, usePopup } from './popupContext';
 import { PopoutEmoji } from '@/components/modals/popoutEmoji';
+import { useGuildChannelMemoryStore } from '@/stores/gncmemorystore';
 
 export const PopupRoot = () => {
   const { popupType, popupData, closePopup } = usePopup();
+  const currentGuildId = useGuildChannelMemoryStore((s) => s.currentGuildId);
 
   if (!popupType) return null;
 
@@ -38,7 +40,7 @@ export const PopupRoot = () => {
             role='dialog'
             tabIndex={-1}
           >
-            <PopoutProfile member={data.member} roles={data.roles} contextGuildId={null} />
+            <PopoutProfile member={data.member} roles={data.roles} contextGuildId={currentGuildId} />
           </div>
         );
       }

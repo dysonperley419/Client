@@ -83,7 +83,7 @@ export const MemberMention = ({
           void openUserProfile(e, member! ?? fakeMemberObj);
         }
       }}
-      className='user-msg-mention'
+      className='inline-msg-mention'
     >
       @{name}
     </strong>
@@ -124,8 +124,12 @@ export const ChannelMention = ({
   guild_id: string | undefined;
   channel_id: string;
 }): JSX.Element => {
+  const navigate = useNavigate();
   const render = (channel: Channel | undefined) => {
-    return <strong>#{channel?.name ?? 'unknown'}</strong>;
+    return <strong className='inline-msg-mention' onClick={(e) => {
+      e.stopPropagation();
+      void navigate(`/channels/${channel?.guild_id}/${channel?.id}`);
+    }}>#{channel?.name ?? 'unknown'}</strong>;
   };
 
   const { guilds } = useGateway();

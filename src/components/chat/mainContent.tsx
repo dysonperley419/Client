@@ -24,6 +24,8 @@ import { logger } from '@/utils/logger';
 import { SuggestionsType, type Suggestion, type SuggestionsTrigger } from '@/types/suggestions';
 import type { Command } from '@/types/command';
 import { SuggestionsBar } from './suggestionsBar';
+import { useContextMenu } from '@/context/contextMenuContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface MediaAttachment {
   file: File;
@@ -66,7 +68,9 @@ const MainContent = ({
   mentions,
   onChannelSeen,
 }: MainContentProps): JSX.Element => {
+  const contextPerms = usePermissions(selectedGuild?.id ?? '0');
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
+  const { openContextMenu } = useContextMenu();
   const [suggestionsTrigger, setSuggestionTrigger] = useState<SuggestionsTrigger | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[] | []>([]);
@@ -80,7 +84,6 @@ const MainContent = ({
   const [memberListVisible, setMemberListVisible] = useState(true);
   const [theESRF, setTheESRF] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const getUser = useUserStore((state) => state.getUser);
   const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists, guilds } = useGateway();
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const messageMap = useMemo(() => {
@@ -197,6 +200,36 @@ const MainContent = ({
     }
   };
 
+  const handleShowMsgContextMenu = (e: React.MouseEvent, msg: Message) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const MENU_WIDTH = 180;
+    let x = e.clientX;
+    const y = e.clientY + 20;
+
+    if (x + MENU_WIDTH > window.innerWidth) {
+      x = x - MENU_WIDTH;
+    }
+
+    openContextMenu(
+      x,
+      y,
+      <div className='context-menu-out msg-context-menu'>
+        {msg.author.id === user?.id && (<div className='button'>Edit</div>)}
+        <div
+          className='button'
+          onClick={() => {
+            void navigator.clipboard.writeText(msg.id);
+          }}
+        >
+          Copy ID
+        </div>
+        <div className='button'>Delete</div>
+      </div>,
+    );
+  };
+
   useEffect(() => {
     if (autoScroll.current) scrollToBottom();
   }, [messages]);
@@ -291,17 +324,17 @@ const MainContent = ({
       });
     }
 
-      if (text.includes('@someone')) {
-        const memberNames = Array.from(memberMap.keys());
-        
-        if (memberNames.length > 0) {
-          const randomMember = memberNames[Math.floor(Math.random() * memberNames.length)];
-          const randomEmote = emoticons[Math.floor(Math.random() * emoticons.length)];
- 
-          const replacement = `**@someone** ${randomEmote} ***(${randomMember})***`;
+    if (text.includes('@someone')) {
+      const memberNames = Array.from(memberMap.keys());
 
-          text = text.replace(/@someone/g, replacement);
-        }
+      if (memberNames.length > 0) {
+        const randomMember = memberNames[Math.floor(Math.random() * memberNames.length)];
+        const randomEmote = emoticons[Math.floor(Math.random() * emoticons.length)];
+
+        const replacement = `**@someone** ${randomEmote} ***(${randomMember})***`;
+
+        text = text.replace(/@someone/g, replacement);
+      }
     }
 
     return text.replace(/([@#:])([\w-]+(?:#\d{4})?)(:?)/g, (match, symbol, name) => {
@@ -687,19 +720,42 @@ const MainContent = ({
       const msgContent = (
         <>
           <div
-            className={`message-content ${msg.state === MESSAGE_STATE.FAILED ? 'message-failed' : ''} ${msg.content?.includes("@someone") ? 'april-fools' :''}`}
+            className={`message-content ${msg.state === MESSAGE_STATE.FAILED ? 'message-failed' : ''} ${msg.content?.includes("@someone") ? 'april-fools' : ''}`}
           >
-            {renderDfm(msg.content, selectedGuild?.id)}
-            {msg.attachments.length > 0 && (
-              <div className='message-attachments'>
-                {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
+            <div className={`msg-text-contents`}>
+              {renderDfm(msg.content, selectedGuild?.id)}
+              {msg.attachments.length > 0 && (
+                <div className='message-attachments'>
+                  {msg.attachments.map((attachment: NonNullable<Message['attachments']>[number]) => {
 
-                  return (
-                    <ChatAttachment attachment={attachment} key={attachment.id} msg={msg} formatTimestamp={formatTimestamp} />
-                  );
-                })}
-              </div>
-            )}
+                    return (
+                      <ChatAttachment attachment={attachment} key={attachment.id} msg={msg} formatTimestamp={formatTimestamp} />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+              <>
+                <div id={`msg-contex-tools`}>
+                  <button className={`msg-context-btn`}>
+                    <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
+                      add_reaction
+                    </span>
+                  </button>
+                  {(msg.author.id === user?.id || (selectedGuild && contextPerms.canManageMessages)) && (
+                    <button className={`msg-context-btn`} onClick={(e) => {
+                      handleShowMsgContextMenu(e, msg);
+                    }}>
+                      <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
+                        more_vert
+                      </span>
+                    </button>
+                  )}
+                  
+                </div>
+
+              </>
           </div>
         </>
       );
@@ -788,28 +844,28 @@ const MainContent = ({
       let userSource: any[] = [];
 
       const specialMentions = [
-      { 
-        name: 'everyone', 
-        suggestionType: SuggestionsType.ROLE,
-        isSpecial: true,
-        role: null,
-        description: 'Notify everyone who has permission to view this channel.' 
-      },
-      { 
-        name: 'here', 
-        suggestionType: SuggestionsType.ROLE, 
-        role: null,
-        isSpecial: true, 
-        description: 'Notify everyone online who has permission to view this channel.' 
-      },
-      { 
-        name: 'someone', 
-        suggestionType: SuggestionsType.USER, 
-        isSpecial: true, 
-        user: null,
-        description: "Help I've fallen and I need @someone." 
-      }
-    ] as Suggestion[];
+        {
+          name: 'everyone',
+          suggestionType: SuggestionsType.ROLE,
+          isSpecial: true,
+          role: null,
+          description: 'Notify everyone who has permission to view this channel.'
+        },
+        {
+          name: 'here',
+          suggestionType: SuggestionsType.ROLE,
+          role: null,
+          isSpecial: true,
+          description: 'Notify everyone online who has permission to view this channel.'
+        },
+        {
+          name: 'someone',
+          suggestionType: SuggestionsType.USER,
+          isSpecial: true,
+          user: null,
+          description: "Help I've fallen and I need @someone."
+        }
+      ] as Suggestion[];
 
       if (selectedGuild) {
         const memberState = memberLists![selectedGuild.id];
@@ -837,55 +893,55 @@ const MainContent = ({
             m.nick?.toLowerCase().includes(q) ||
             m.user.global_name?.toLowerCase().includes(q),
         )
-        .map((m: Member) => ({ 
-           suggestionType: SuggestionsType.USER,
-           user: m,
-           isSpecial: false
-         } as Suggestion));
+        .map((m: Member) => ({
+          suggestionType: SuggestionsType.USER,
+          user: m,
+          isSpecial: false
+        } as Suggestion));
 
       const filteredRoles = guildRoles
         .filter((role: any) => role.name.toLowerCase().includes(q) && role.name !== '@everyone')
         .map((r: Role) => ({
-           role: r,
-           suggestionType: SuggestionsType.ROLE,
-           isSpecial: false,
-           name: r.name
-         } as Suggestion));
+          role: r,
+          suggestionType: SuggestionsType.ROLE,
+          isSpecial: false,
+          name: r.name
+        } as Suggestion));
 
       const combined = [...filteredSpecials, ...filteredUsers, ...filteredRoles]
-      .sort((a: Suggestion, b: Suggestion) => {
-        const getName = (item: Suggestion): string => {
-          if (item.suggestionType === SuggestionsType.USER && item.user) {
-            return (item.user.nick || item.user.user.global_name || item.user.user.username).toLowerCase();
+        .sort((a: Suggestion, b: Suggestion) => {
+          const getName = (item: Suggestion): string => {
+            if (item.suggestionType === SuggestionsType.USER && item.user) {
+              return (item.user.nick || item.user.user.global_name || item.user.user.username).toLowerCase();
+            }
+
+            if (item.name) {
+              return item.name.toLowerCase();
+            }
+            return '';
+          };
+
+          const nameA = getName(a);
+          const nameB = getName(b);
+
+          const startsA = nameA.startsWith(q);
+          const startsB = nameB.startsWith(q);
+
+          if (startsA && !startsB) return -1;
+          if (!startsA && startsB) return 1;
+
+          if (a.suggestionType === SuggestionsType.USER && b.suggestionType === SuggestionsType.USER && a.user && b.user) {
+            const indexA = recentSpeakerIds.indexOf(a.user.id);
+            const indexB = recentSpeakerIds.indexOf(b.user.id);
+
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
           }
 
-          if (item.name) {
-            return item.name.toLowerCase();
-          }
-          return '';
-        };
-
-        const nameA = getName(a);
-        const nameB = getName(b);
-
-        const startsA = nameA.startsWith(q);
-        const startsB = nameB.startsWith(q);
-
-        if (startsA && !startsB) return -1;
-        if (!startsA && startsB) return 1;
-
-        if (a.suggestionType === SuggestionsType.USER && b.suggestionType === SuggestionsType.USER && a.user && b.user) {
-          const indexA = recentSpeakerIds.indexOf(a.user.id);
-          const indexB = recentSpeakerIds.indexOf(b.user.id);
-
-          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-          if (indexA !== -1) return -1;
-          if (indexB !== -1) return 1;
-        }
-
-        return nameA.localeCompare(nameB);
-      })
-      .slice(0, 8);
+          return nameA.localeCompare(nameB);
+        })
+        .slice(0, 8);
 
       setFilteredSuggestions(combined);
     } else if (type === SuggestionsType.EMOJI) {
@@ -918,13 +974,13 @@ const MainContent = ({
 
       const filteredChannels = selectedGuild.channels
         .filter((c: Channel) => c.name?.toLowerCase().includes(q) && c.type !== 4)
-        .map((c: Channel) => ({ 
+        .map((c: Channel) => ({
           channel: c,
           suggestionType: SuggestionsType.CHANNEL,
           name: c.name,
           description: "Channel",
           isSpecial: false
-         } as Suggestion))
+        } as Suggestion))
         .sort((a: Suggestion, b: Suggestion) => {
           const startsA = a.name!.toLowerCase().startsWith(q);
           const startsB = b.name!.toLowerCase().startsWith(q);
@@ -937,13 +993,13 @@ const MainContent = ({
       setFilteredSuggestions(filteredChannels);
     } else if (type === SuggestionsType.COMMAND) {
       const filteredCommands = commands.filter(x => x.name.toLowerCase().includes(q))
-        .map((c: Command) => ({ 
+        .map((c: Command) => ({
           command: c,
           suggestionType: SuggestionsType.COMMAND,
           description: c.description,
           name: c.name,
           isSpecial: false
-         } as Suggestion))
+        } as Suggestion))
         .sort((a: Suggestion, b: Suggestion) => {
           const startsA = a.name!.toLowerCase().startsWith(q);
           const startsB = b.name!.toLowerCase().startsWith(q);
@@ -972,11 +1028,11 @@ const MainContent = ({
       else if (symbol === ':') type = SuggestionsType.EMOJI;
       else if (symbol === '/') type = SuggestionsType.COMMAND;
 
-      setSuggestionTrigger({ 
-         type: type,
-         query: query,
-         startIndex: mentionMatch.index
-       });
+      setSuggestionTrigger({
+        type: type,
+        query: query,
+        startIndex: mentionMatch.index
+      });
       filterSuggestions(type, query);
     } else {
       setSuggestionTrigger(null);
@@ -1000,28 +1056,18 @@ const MainContent = ({
   };
 
   const TypingName = ({ userId }: { userId: string }) => {
-    const [name, setName] = useState('Someone');
+    const member = getMember(selectedGuild?.id, userId);
 
-    useEffect(() => {
-      const getName = async () => {
-        const member = getMember(selectedGuild?.id, userId);
+    if (member?.nick || member?.user.username) {
+      return <strong>{member.nick || member.user.username}</strong>;
+    }
 
-        if (member?.nick || member?.user.username) {
-          setName(member.nick || member.user.username);
-          return;
-        }
+    const cachedUser = useUserStore.getState().users[userId];
+    if (cachedUser?.username) {
+      return <strong>{cachedUser.username}</strong>;
+    }
 
-        const user = await getUser(userId);
-
-        if (user?.username) {
-          setName(user.username);
-        }
-      };
-
-      void getName();
-    }, [userId]);
-
-    return <strong>{name}</strong>;
+    return <strong>Someone</strong>;
   };
 
   const handleTypingStatus = () => {

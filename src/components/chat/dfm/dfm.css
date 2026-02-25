@@ -83,7 +83,7 @@
   width: auto;
 }
 
-.user-msg-mention {
+.inline-msg-mention {
   background: var(--bg-alt);
   border-radius: 8px;
   padding: 2px;
@@ -92,7 +92,7 @@
   transition: 0.3s all;
 }
 
-.user-msg-mention:hover {
+.inline-msg-mention:hover {
   background-color: var(--bg-dark-alt);
   color: var(--text-brightness);
 }

@@ -19,6 +19,7 @@ import NoTextChannels from '../components/chat/noTextChannels';
 import Settings from '../components/chat/settings';
 import { useGateway } from '../context/gatewayContext';
 import LoadingScreen from './loading';
+import { useGuildChannelMemoryStore } from '@/stores/gncmemorystore';
 
 const ChatApp = (): JSX.Element => {
   const {
@@ -33,7 +34,7 @@ const ChatApp = (): JSX.Element => {
   const { guildId, channelId } = useParams();
   const { openModal } = useModal();
   const { connectToVoice } = useVoice();
-
+  const setBoth = useGuildChannelMemoryStore((s) => s.setBoth);
   const navigate = useNavigate();
   const [logs, setLogs] = useState<LogEntry[]>(logger.entries);
   const [consolePos, setConsolePos] = useState({ x: 100, y: 100, w: 400, h: 300 });
@@ -157,6 +158,11 @@ const ChatApp = (): JSX.Element => {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   };
+
+
+  useEffect(() => {
+    setBoth(selectedGuild?.id ?? null, selectedChannel?.id ?? null);
+  }, [selectedGuild?.id, selectedChannel?.id]);
 
   useEffect(() => {
     const handleUpdate = () => {

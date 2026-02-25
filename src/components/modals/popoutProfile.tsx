@@ -123,13 +123,13 @@ export const PopoutProfile = ({
           </>
         )}
         <hr className='popout-separator' />
-        {roles != null && (
+        {(member.roles.length > 0 || contextPerms.canManageRoles) && (
           <div className='popout-section'>
             <span className='section-title'>ROLES</span>
+
             <div className='roles-container'>
               {member.roles.map((roleId: string) => {
-                const role = roles.find((r: Role) => r.id === roleId);
-
+                const role = roles?.find((r: Role) => r.id === roleId);
                 if (!role) return null;
 
                 const color = getRoleColor(role.color);
@@ -144,12 +144,24 @@ export const PopoutProfile = ({
                       background: `${color}22`,
                     }}
                   >
-                    {contextPerms.canManageRoles && <span className='role-removal-btn'>×</span>}{' '}
+                    {contextPerms.canManageRoles && (
+                      <span
+                        className='role-removal-btn'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        ×
+                      </span>
+                    )}
                     {role.name}
                   </div>
                 );
               })}
-              {contextPerms.canManageRoles && <div className='add-role-btn'>+</div>}
+
+              {contextPerms.canManageRoles && (
+                <div className='add-role-btn'>+</div>
+              )}
             </div>
           </div>
         )}
