@@ -21,6 +21,7 @@ export const VideoPlayer = ({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const lastVolumeRef = useRef(1);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -137,6 +138,16 @@ export const VideoPlayer = ({
     );
   };
 
+  const handleFullscreen = () => {
+    if (!containerRef.current) return;
+
+    if (!document.fullscreenElement) {
+      void containerRef.current.requestFullscreen();
+    } else {
+      void document.exitFullscreen();
+    }
+  };
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -155,19 +166,16 @@ export const VideoPlayer = ({
         position: 'relative',
         overflow: 'hidden',
       }}
+      ref={containerRef}
       onContextMenu={handleVideoPlayerContextMenu}
     >
       <div className='video-details'>
-        <h1>{filename}</h1>
-        <button
-          type='button'
-          className='icon-btn'
-          onClick={() => {
-            window.open(src);
-          }}
-        >
-          <span className='material-symbols-rounded'>download</span>
-        </button>
+        <div className='video-details-inner'>
+          <h1>{filename}</h1>
+          <button type='button' className='icon-btn' onClick={() => window.open(src)}>
+            <span className='material-symbols-rounded'>download</span>
+          </button>
+        </div>
       </div>
       {}
       <video
@@ -241,13 +249,7 @@ export const VideoPlayer = ({
                 </span>
               </button>
             </div>
-            <button
-              type='button'
-              className='icon-btn'
-              onClick={() => {
-                void videoRef.current?.requestFullscreen();
-              }}
-            >
+            <button type='button' className='icon-btn' onClick={handleFullscreen}>
               <span className='material-symbols-rounded'>fullscreen</span>
             </button>
           </div>
