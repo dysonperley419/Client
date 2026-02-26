@@ -7,6 +7,7 @@ import { type Message, MessageListSchema } from '@/types/messages';
 import { get } from '@/utils/api';
 import { getDefaultAvatar } from '@/utils/avatar';
 import { formatTimestamp } from '@/utils/dateUtils';
+import { useConfig } from '@/context/configContext';
 
 export const PinnedMessagesShelf = ({
   channelId,
@@ -66,9 +67,10 @@ const PinItem = ({
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
     `/assets/${getDefaultAvatar(pin.author) ?? ''}.png`,
   );
+  const { cdnUrl } = useConfig();
 
   const avatarUrl = pin.author.avatar
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${pin.author.id}/${pin.author.avatar}.png`
+    ? `${cdnUrl ?? ''}/avatars/${pin.author.id}/${pin.author.avatar}.png`
     : defaultAvatarUrl;
 
   return (

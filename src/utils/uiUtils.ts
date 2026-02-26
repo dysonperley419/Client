@@ -9,6 +9,11 @@ import type { Guild, Member, Role } from '@/types/guilds';
 import { get } from './api';
 import { logger } from './logger';
 
+export const intToHex = (colorInt?: number): string => {
+  if (!colorInt) return 'var(--bg-secondary)'; 
+  return `#${colorInt.toString(16).padStart(6, '0')}`;
+};
+
 export const useUiUtilityActions = (selectedGuild: Guild | null) => {
   const { openPopup } = usePopup();
   const getUser = useUserStore((state) => state.getUser);

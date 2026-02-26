@@ -6,6 +6,7 @@ import { useAssetsUrl } from '@/context/assetsUrl';
 import { useModal } from '@/context/modalContext';
 import type { User } from '@/types/users';
 import { getDefaultAvatar } from '@/utils/avatar';
+import { useConfig } from '@/context/configContext';
 
 interface SettingsProps {
   user: User | null;
@@ -33,14 +34,15 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
 
     return saved ? (JSON.parse(saved) as DevSettings) : DefaultDevSettings;
   });
+  const { cdnUrl } = useConfig();
 
   const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user) ?? ''}.png`);
 
   const avatarUrl = user?.avatar
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${user.id}/${user.avatar ?? ''}.png`
+    ? `${cdnUrl ?? ''}/avatars/${user.id}/${user.avatar ?? ''}.png`
     : defaultAvatarUrl;
   const bannerUrl = user?.banner
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${user.id}/${user.banner ?? ''}.png`
+    ? `${cdnUrl ?? ''}/banners/${user.id}/${user.banner ?? ''}.png`
     : '';
 
   const maskEmail = (email: string | undefined) => {

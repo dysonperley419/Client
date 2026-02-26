@@ -1,6 +1,6 @@
 import './popoutEmoji.css';
 
-import { type JSX } from 'react';
+import { useMemo, type JSX } from 'react';
 import type { Emoji } from '@/types/guilds';
 import { useNavigate } from 'react-router-dom';
 import { usePopup } from '@/context/popupContext';
@@ -22,7 +22,7 @@ export const PopoutEmoji = ({
 }: PopoutEmojiProps): JSX.Element => {
      const navigate = useNavigate();
      const { closePopup } = usePopup();
-    const cdnUrl = localStorage.getItem('selectedCdnUrl') ?? '';
+    const cdnUrl =  useMemo(() => localStorage.getItem('selectedCdnUrl'), []) ?? '';
     const emojiUrl = `${cdnUrl}/emojis/${emoji.id}.${emoji.animated ? 'gif' : 'png'}`;
     const emojiGuildIconUrl = `${cdnUrl}/icons/${guildId}/${guildIcon}.png`;
 

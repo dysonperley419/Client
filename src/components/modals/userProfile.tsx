@@ -2,7 +2,7 @@
 
 import './userProfile.css';
 
-import { type JSX, useState } from 'react';
+import { type JSX, useMemo, useState } from 'react';
 
 import type { Member } from '@/types/guilds';
 import type { User } from '@/types/users';
@@ -21,8 +21,10 @@ export const UserProfileModal = (): JSX.Element => {
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
     `/assets/${getDefaultAvatar(user) ?? ''}.png`,
   );
+  const cdnUrl = useMemo(() => localStorage.getItem('selectedCdnUrl'), []);
+
   const customAvatarUrl = user?.avatar
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${user.id}/${user.avatar}.png`
+    ? `${cdnUrl ?? ''}/avatars/${user.id}/${user.avatar}.png`
     : null;
 
   const currentAvatarUrl = customAvatarUrl ?? defaultAvatarUrl;
@@ -45,7 +47,7 @@ export const UserProfileModal = (): JSX.Element => {
   }
 
   const bannerUrl = user?.banner
-    ? `url('${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${user.id}/${user.banner}.png')`
+    ? `url('${cdnUrl ?? ''}/banners/${user.id}/${user.banner}.png')`
     : 'none';
 
   const accentColor = user?.accent_color

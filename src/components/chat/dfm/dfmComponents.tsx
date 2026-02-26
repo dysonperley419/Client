@@ -12,6 +12,7 @@ import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
 import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
+import { useConfig } from '@/context/configContext';
 
 export const MemberMention = ({
   guild_id,
@@ -150,11 +151,12 @@ export const EmojiMention = ({
   const { guilds } = useGateway();
   const contextGuild = guilds.find((g) => g.emojis?.some((e) => e.id === emoji_id));
   const { openEmojiPopout } = useUiUtilityActions(contextGuild || null);
+  const { cdnUrl } = useConfig();
 
   const invalid = /\D/.test(emoji_id);
   if (invalid) return <></>; //Invalid and probably dangerous. Do not render or just a fucking idiot made these.
 
-  const emojiUrl = `${localStorage.getItem('selectedCdnUrl') ?? ''}/emojis/${emoji_id}.png`;
+  const emojiUrl = `${cdnUrl ?? ''}/emojis/${emoji_id}.png`;
 
   return (
     <img
@@ -191,6 +193,7 @@ export const InviteMention = ({ code }: { code: string }): JSX.Element => {
   const navigate = useNavigate();
   const [inviteData, setInviteData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { cdnUrl } = useConfig();
 
   useEffect(() => {
     let isMounted = true;
@@ -268,13 +271,13 @@ export const InviteMention = ({ code }: { code: string }): JSX.Element => {
 
   const guild = inviteData.guild;
   const bannerUrl = guild.banner
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${guild.id}/${guild.banner}.png`
+    ? `${cdnUrl ?? ''}/banners/${guild.id}/${guild.banner}.png`
     : null;
   const iconUrl = guild.icon
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/icons/${guild.id}/${guild.icon}.png`
+    ? `${cdnUrl ?? ''}/icons/${guild.id}/${guild.icon}.png`
     : null;
   const inviterAvatar = inviteData.inviter?.avatar
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${inviteData.inviter.id}/${inviteData.inviter.avatar}.png`
+    ? `${cdnUrl ?? ''}/avatars/${inviteData.inviter.id}/${inviteData.inviter.avatar}.png`
     : null;
   const inServerAlready = guilds.some((g: Guild) => g.id === guild.id);
 

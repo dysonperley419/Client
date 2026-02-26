@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import type { Guild } from '@/types/guilds';
 import './emojiChooser.css';
+import { useConfig } from "@/context/configContext";
 
 export interface Emoji {
     id: string;
@@ -18,6 +19,7 @@ interface EmojiChooserProps {
 export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserProps) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeGuildId, setActiveGuildId] = useState<string | null>(null);
+    const { cdnUrl } = useConfig();
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -104,8 +106,9 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
                                         }}
                                     >
                                         <img
-                                            src={`${localStorage.getItem('selectedCdnUrl')}/emojis/${emoji.id}.png`}
+                                            src={`${cdnUrl}/emojis/${emoji.id}.png`}
                                             alt={emoji.name}
+                                            loading='lazy'
                                         />
                                     </div>
                                 ))}
@@ -128,7 +131,7 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
                                 onClick={() => scrollToGuild(guild.id)}
                             >
                                 {guild.icon ? (
-                                    <img src={`${localStorage.getItem('selectedCdnUrl')}/icons/${guild.id}/${guild.icon}.png`} />
+                                    <img src={`${cdnUrl}/icons/${guild.id}/${guild.icon}.png`} loading='lazy' />
                                 ) : (
                                     <div className='icon-fallback'>{guild.name[0]}</div>
                                 )}

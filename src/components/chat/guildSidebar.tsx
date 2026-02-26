@@ -13,6 +13,7 @@ import { useGateway } from '../../context/gatewayContext';
 import { useModal } from '../../context/modalContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { useConfig } from '@/context/configContext';
 
 const GuildSidebar = ({
   privateChannels,
@@ -123,8 +124,10 @@ const GuildSidebar = ({
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
       `/assets/${getDefaultAvatar(user) ?? ''}.png`,
     );
+    const { cdnUrl } = useConfig();
+
     const customAvatarUrl = user?.avatar
-      ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${user.id}/${user.avatar}.png`
+      ? `${cdnUrl ?? ''}/avatars/${user.id}/${user.avatar}.png`
       : defaultAvatarUrl;
 
     return (
@@ -144,6 +147,8 @@ const GuildSidebar = ({
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.style.display = 'none';
   };
+
+  const { cdnUrl } = useConfig();
 
   const isHomeSelected = !selectedGuildId;
   const activeSession = sessions.find((s) => s.active === true);
@@ -209,7 +214,7 @@ const GuildSidebar = ({
                       {recipient?.avatar ? (
                         <img
                           className='guild-icon'
-                          src={`${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${recipient?.id}/${recipient?.avatar}.png`}
+                          src={`${cdnUrl ?? ''}/avatars/${recipient?.id}/${recipient?.avatar}.png`}
                           alt={recipient?.username}
                           onError={handleImgError}
                         />
@@ -263,7 +268,7 @@ const GuildSidebar = ({
                 {guild.icon ? (
                   <img
                     className='guild-icon'
-                    src={`${localStorage.getItem('selectedCdnUrl') ?? ''}/icons/${guild.id}/${guild.icon}.png`}
+                    src={`${cdnUrl ?? ''}/icons/${guild.id}/${guild.icon}.png`}
                     alt={guild.name}
                     onError={handleImgError}
                   />

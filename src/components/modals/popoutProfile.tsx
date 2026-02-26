@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Channel } from '@/types/channel';
 import { post } from '@/utils/api';
 import { usePopup } from '@/context/popupContext';
+import { useConfig } from '@/context/configContext';
 
 interface PopoutProfileProps {
   member: Member;
@@ -33,6 +34,7 @@ export const PopoutProfile = ({
   const contextPerms = usePermissions(contextGuildId ?? '0');
   const status = getPresence(member.id)?.status ?? 'offline';
   const [inLineMessage, setInLineMessage] = useState("");
+  const { cdnUrl } = useConfig();
   const { openFullProfile } = useUiUtilityActions(null);
 
   const MemberAvatar = ({ member, className }: { member: Member; className: string }) => {
@@ -41,7 +43,7 @@ export const PopoutProfile = ({
     );
     const avatarUrl =
       member.avatar || member.user.avatar
-        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${member.id ?? member.user.id}/${member.user.avatar ?? ''}.png`
+        ? `${cdnUrl ?? ''}/avatars/${member.id ?? member.user.id}/${member.user.avatar ?? ''}.png`
         : defaultAvatarUrl;
 
     return (
@@ -102,7 +104,7 @@ export const PopoutProfile = ({
   };
 
   const bannerUrl = member.user.banner
-    ? `url('${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${member.user.id}/${member.user.banner}.png')`
+    ? `url('${cdnUrl ?? ''}/banners/${member.user.id}/${member.user.banner}.png')`
     : 'none';
 
   const accentColor = member.user.accent_color

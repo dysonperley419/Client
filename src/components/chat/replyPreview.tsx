@@ -3,6 +3,7 @@ import type { Message } from '@/types/messages';
 import { getDefaultAvatar } from '@/utils/avatar';
 
 import renderDfm from './dfm/dfmRenderer';
+import { useConfig } from '@/context/configContext';
 
 interface ReplyPreviewProps {
   referencedMessage: Message;
@@ -21,7 +22,7 @@ export const ReplyPreview = ({
   const defaultAvatarFilename = getDefaultAvatar(referencedMessage.author) ?? '0';
   const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${defaultAvatarFilename}.png`);
 
-  const cdnUrl = localStorage.getItem('selectedCdnUrl') ?? '';
+  const { cdnUrl } = useConfig();
   const avatarUrl = avatarId
     ? `${cdnUrl}/avatars/${authorId ?? ''}/${avatarId}.png`
     : defaultAvatarUrl;

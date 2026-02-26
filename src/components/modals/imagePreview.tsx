@@ -7,6 +7,7 @@ import type { Message } from '@/types/messages';
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { useConfig } from '@/context/configContext';
 
 export interface ImagePreviewProps {
   src: string;
@@ -25,12 +26,13 @@ export const ImagePreview = ({ src, alt, author, timestamp }: ImagePreviewProps)
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
+  const { cdnUrl } = useConfig();
 
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
     `/assets/${getDefaultAvatar(author) ?? ''}.png`,
   );
   const customAvatarUrl = author.avatar
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${author.id ?? ''}/${author.avatar}.png`
+    ? `${cdnUrl ?? ''}/avatars/${author.id ?? ''}/${author.avatar}.png`
     : defaultAvatarUrl;
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import { logger } from '@/utils/logger';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { useConfig } from '@/context/configContext';
 
 interface FriendsListProps {
   friends: Relationship[];
@@ -84,8 +85,9 @@ export const FriendsList = ({
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
       `/assets/${getDefaultAvatar(friend) ?? ''}.png`,
     );
+    const { cdnUrl } =  useConfig();
     const avatarUrl = friend.user.avatar
-      ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${friend.id}/${friend.user.avatar}.png`
+      ? `${cdnUrl ?? ''}/avatars/${friend.id}/${friend.user.avatar}.png`
       : defaultAvatarUrl;
 
     return (

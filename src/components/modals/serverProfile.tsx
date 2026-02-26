@@ -13,6 +13,9 @@ import { useAssetsUrl } from '../../context/assetsUrl';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import { MutualItem } from '../chat/mutualItem';
+import { useConfig } from '@/context/configContext';
+import { intToHex } from "@/utils/uiUtils";
+
 
 //import hypesquad from "../../assets/hypesquad.svg";
 
@@ -33,6 +36,8 @@ export const ServerProfileModal = ({
   const { openModal, closeModal, updateModal } = useModal();
   const { guilds, getPresence, user } = useGateway();
   const navigate = useNavigate();
+  const [bannerLoaded, setBannerLoaded] = useState(!member.user.banner);
+  const { cdnUrl } = useConfig();
 
   const status = getPresence(member.id)?.status ?? 'offline';
 
@@ -72,9 +77,10 @@ export const ServerProfileModal = ({
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
       `/assets/${getDefaultAvatar(member.user) ?? ''}.png`,
     );
+
     const avatarUrl =
       member.avatar || member.user.avatar
-        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${member.id ?? member.user.id}/${member.user.avatar ?? ''}.png`
+        ? `${cdnUrl ?? ''}/avatars/${member.id ?? member.user.id}/${member.user.avatar ?? ''}.png`
         : defaultAvatarUrl;
 
     return (
@@ -89,13 +95,26 @@ export const ServerProfileModal = ({
     );
   };
 
-  const bannerUrl = member.user.banner
-    ? `url('${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${member.user.id}/${member.user.banner ?? ''}.png')`
-    : 'none';
+  const bannerColor = intToHex(member?.user?.accent_color ?? 0);
+  const fullBannerUrl = `${cdnUrl}/banners/${member.user.id}/${member.user.banner}.png`;
 
   return (
     <div className='profile-modal-root'>
-      <div className='profile-modal-header' style={{ backgroundImage: bannerUrl }}>
+      {member.user.banner && (
+        <img 
+          src={fullBannerUrl} 
+          style={{ display: 'none' }} 
+          onLoad={() => setBannerLoaded(true)} 
+        />
+      )}
+
+      <div className={`profile-modal-header ${bannerLoaded ? 'loaded' : ''}`}
+        style={{ 
+          backgroundImage: member.user.banner ? `url('${fullBannerUrl}')` : 'none',
+          backgroundColor: bannerColor,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }} >
         <div className='profile-modal-avatar-wrapper'>
           <MemberAvatar member={member} />
           <div
@@ -212,7 +231,7 @@ export const ServerProfileModal = ({
                     const fullGuild = guilds.find((g: any) => g.id === shared.id);
                     const guildName = fullGuild?.name || 'Unknown Server';
                     const guildIcon = fullGuild?.icon
-                      ? `${localStorage.getItem('selectedCdnUrl')}/icons/${fullGuild.id}/${fullGuild.icon}.png`
+                      ? `${cdnUrl}/icons/${fullGuild.id}/${fullGuild.icon}.png`
                       : '';
 
                     return (
@@ -245,7 +264,7 @@ export const ServerProfileModal = ({
                       key={friend.id}
                       title={friend.global_name || friend.username}
                       subtitle={`@${friend.username}`}
-                      icon={`${localStorage.getItem('selectedCdnUrl')}/avatars/${friend.id}/${friend.avatar}.png`}
+                      icon={`${cdnUrl}/avatars/${friend.id}/${friend.avatar}.png`}
                       onClick={() => handleFriendClick(friend)}
                     />
                   ))

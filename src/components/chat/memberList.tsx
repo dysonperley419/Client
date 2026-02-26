@@ -10,6 +10,7 @@ import { useContextMenu } from '../../context/contextMenuContext';
 import { useGateway } from '../../context/gatewayContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { useConfig } from '@/context/configContext';
 
 const MemberListItem = ({
   member,
@@ -25,6 +26,7 @@ const MemberListItem = ({
   const { openContextMenu } = useContextMenu();
   const { openPopup } = usePopup();
   const { getPresence } = useGateway();
+  const { cdnUrl } = useConfig();
 
   const status = getPresence(member.id)?.status ?? 'offline';
 
@@ -34,7 +36,7 @@ const MemberListItem = ({
     );
     const avatarUrl =
       member.avatar || member.user.avatar
-        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${member.id}/${member.user.avatar ?? ''}.png`
+        ? `${cdnUrl ?? ''}/avatars/${member.id}/${member.user.avatar ?? ''}.png`
         : defaultAvatarUrl; //This needs to not be hard coded ASAP.
 
     return (

@@ -16,6 +16,7 @@ import { DmChannel } from './dmChannel';
 import VoiceActivityControls from './voiceActivityControls';
 import { useContextMenu } from '@/context/contextMenuContext';
 import { Snowflake } from '@/utils/snowflake';
+import { useConfig } from '@/context/configContext';
 
 interface ChannelSidebarProps {
   selectedGuild?: Guild | null;
@@ -45,6 +46,7 @@ const PrivateChannelItem = ({
   onCloseLocal: () => void;
 }) => {
   const { getPresence, typingUsers } = useGateway();
+  const { cdnUrl } = useConfig();
 
   const recipient = channel.recipients?.[0];
   const { url: defaultAvatarUrl } = useAssetsUrl(
@@ -54,7 +56,7 @@ const PrivateChannelItem = ({
   const channelName =
     channel.name || recipient?.global_name || recipient?.username || 'Unknown User';
   const avatarUrl = recipient?.avatar
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${recipient.id}/${recipient.avatar}.png`
+    ? `${cdnUrl ?? ''}/avatars/${recipient.id}/${recipient.avatar}.png`
     : defaultAvatarUrl;
 
   const status = getPresence(recipient?.id)?.status ?? 'offline';
@@ -92,6 +94,7 @@ const PrivateChannelItem = ({
 
 const VoiceChannelMember = ({ vs }: { vs: VoiceState }): JSX.Element => {
   const user = useUserStore((state) => state.users[vs.user_id]);
+  const { cdnUrl } = useConfig();
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
@@ -112,7 +115,7 @@ const VoiceChannelMember = ({ vs }: { vs: VoiceState }): JSX.Element => {
 
   const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user) ?? ''}.png`);
   const avatarUrl = user.avatar
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${user.id}/${user.avatar}.png`
+    ? `${cdnUrl ?? ''}/avatars/${user.id}/${user.avatar}.png`
     : defaultAvatarUrl;
 
   return (
@@ -149,6 +152,7 @@ const ChannelSidebar = ({
   const { openContextMenu, closeContextMenu } = useContextMenu();
   const [closedChannelIds, setClosedChannelIds] = useState<string[]>([]);
   const navigate = useNavigate();
+  const { cdnUrl } = useConfig();
 
 const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
   .filter((channel) => !closedChannelIds.includes(channel.id))
@@ -288,6 +292,7 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
     const membersInThisChannel = Object.values(voiceStates || {}).filter(
       (vs) => vs.channel_id === channel.id,
     );
+    
 
     const isSelected = selectedChannel?.id === channel.id;
     const hasUnread = !isSelected && unreads?.get(selectedGuild.id)?.has(channel.id);
@@ -340,7 +345,7 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
   };
 
   const bannerUrl = selectedGuild.banner
-    ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/banners/${selectedGuild.id}/${selectedGuild.banner}.png`
+    ? `${cdnUrl ?? ''}/banners/${selectedGuild.id}/${selectedGuild.banner}.png`
     : null;
 
   return (
@@ -348,7 +353,7 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
       <div className={`sidebar-header ${bannerUrl != null ? 'sidebar-header-banner' : ''}`}>
         {bannerUrl != null && (
           <div className='sidebar-header-banner-bg'>
-            <img src={bannerUrl} alt='' className='sidebar-header-banner-image' />
+            <img src={bannerUrl} alt='' className='sidebar-header-banner-image' loading="eager" fetchPriority='high' />
             <div className='sidebar-header-banner-gradient'></div>
           </div>
         )}

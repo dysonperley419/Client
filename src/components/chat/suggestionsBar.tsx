@@ -1,3 +1,4 @@
+import { useConfig } from "@/context/configContext";
 import { SuggestionsType, type Suggestion, type SuggestionsTrigger } from "@/types/suggestions";
 
 interface SuggestionsBarProps {
@@ -9,6 +10,8 @@ interface SuggestionsBarProps {
 };
 
 export const SuggestionsBar = ({ suggestionsTrigger, filteredSuggestions, selectedIndex, applySuggestion, setSelectedIndex }: SuggestionsBarProps) => {
+    const { cdnUrl } = useConfig();
+
     return (
         <>
             <div className='input-wrapper' key={'SuggestionsBar'}>
@@ -69,12 +72,12 @@ export const SuggestionsBar = ({ suggestionsTrigger, filteredSuggestions, select
                                         >
                                             {isUser && item.user?.user.avatar && !item.isSpecial ? (
                                                 <img
-                                                    src={`${localStorage.getItem('selectedCdnUrl')}/avatars/${item.user.id}/${item.user.user.avatar}.png`}
+                                                    src={`${cdnUrl}/avatars/${item.user.id}/${item.user.user.avatar}.png`}
                                                     className='avatar-img suggested-item-avi'
                                                 />
                                             ) : isEmoji ? (
                                                 <img
-                                                    src={`${localStorage.getItem('selectedCdnUrl')}/emojis/${item.emoji?.id}.${item.emoji?.animated ? 'gif' : 'png'}`}
+                                                    src={`${cdnUrl}/emojis/${item.emoji?.id}.${item.emoji?.animated ? 'gif' : 'png'}`}
                                                     className='suggested-item-avi'
                                                     style={{ objectFit: 'contain' }}
                                                 />

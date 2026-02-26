@@ -20,6 +20,7 @@ import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
+import { localBlobCache } from '@/utils/attachmentCache';
 import { useGateway } from '../../context/gatewayContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import { ChatAttachment } from './chatAttachment';
@@ -32,6 +33,7 @@ import { ReplyPreview } from './replyPreview';
 import { SuggestionsBar } from './suggestionsBar';
 import { GifSearcher9000 } from './gifSearcher9000';
 import { EmojiChooser } from './emojiChooser';
+import { useConfig } from '@/context/configContext';
 
 interface MediaAttachment {
   file: File;
@@ -137,11 +139,17 @@ const MainContent = ({
   }, [selectedChannel.id, selectedChannel.last_message_id, selectedGuild?.id, onChannelSeen]);
 
   const addFiles = (files: File[]) => {
-    const newAttachments: MediaAttachment[] = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-      id: crypto.randomUUID(),
-    }));
+    const newAttachments: MediaAttachment[] = files.map((file) => {
+      const preview = URL.createObjectURL(file);
+
+      localBlobCache.set(`${file.name}-${file.size}`, preview);
+
+      return {
+        file,
+        preview,
+        id: crypto.randomUUID(),
+      };
+    });
 
     setAttachments((prev) => [...prev, ...newAttachments]);
   };
@@ -539,16 +547,10 @@ const MainContent = ({
       el?.classList.remove('move-msg-up', 'message-highlight-no-anim');
     }
 
-    const toCleanup = [...attachments];
-
     setAttachments([]);
 
     try {
       const response = await post(`/channels/${selectedChannel.id}/messages`, formData);
-
-      toCleanup.forEach((at) => {
-        URL.revokeObjectURL(at.preview);
-      });
 
       if (onChannelSeen && response?.id) {
         void onChannelSeen(selectedGuild?.id ?? null, selectedChannel.id, response.id);
@@ -774,8 +776,10 @@ const MainContent = ({
       const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
         `/assets/${getDefaultAvatar(msg.author) ?? ''}.png`,
       );
+      const { cdnUrl } = useConfig();
+
       const avatarUrl = msg.author.avatar
-        ? `${localStorage.getItem('selectedCdnUrl') ?? ''}/avatars/${msg.author.id ?? ''}/${msg.author.avatar}.png`
+        ? `${cdnUrl ?? ''}/avatars/${msg.author.id ?? ''}/${msg.author.avatar}.png`
         : defaultAvatarUrl;
 
       const presence = getPresence(msg.author.id);

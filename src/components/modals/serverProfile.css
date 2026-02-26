@@ -176,3 +176,13 @@ width: 22px;
 .profile-badges:hover {
    background: rgba(0, 0, 0, 0.1);
 }
+
+.profile-modal-header {
+  opacity: 0.5; /* Dimmer while loading */
+  transition: opacity 0.3s ease;
+  background-color: var(--bg-tertiary);
+}
+
+.profile-modal-header.loaded {
+  opacity: 1;
+}
