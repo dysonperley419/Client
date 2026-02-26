@@ -30,6 +30,8 @@ import { MessageEditInput } from './messageeditinput';
 import { PinnedMessagesShelf } from './pinnedMessagesShelf';
 import { ReplyPreview } from './replyPreview';
 import { SuggestionsBar } from './suggestionsBar';
+import { GifSearcher9000 } from './gifSearcher9000';
+import { EmojiChooser } from './emojiChooser';
 
 interface MediaAttachment {
   file: File;
@@ -76,6 +78,7 @@ const MainContent = ({
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
   const { openContextMenu } = useContextMenu();
   const { openModal } = useModal();
+  
   const [suggestionsTrigger, setSuggestionTrigger] = useState<SuggestionsTrigger | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingMsgID, setEditingMsgID] = useState<string | null>(null);
@@ -132,22 +135,6 @@ const MainContent = ({
       void onChannelSeen!(selectedGuild?.id || null, channelId, lastMsgId!);
     }
   }, [selectedChannel.id, selectedChannel.last_message_id, selectedGuild?.id, onChannelSeen]);
-
-  useEffect(() => {
-    if (showGifSearcher9000 && gifSearchQuery === '') {
-      const fetchTrending = async () => {
-        try {
-          const data: any = await get('/gifs/trending?locale=en');
-
-          setGifCategories(data.categories || []);
-        } catch (err) {
-          logger.error(`MAIN_CONTENT`, `Failed to metch trending gifs`, err);
-        }
-      };
-
-      void fetchTrending();
-    }
-  }, [showGifSearcher9000, gifSearchQuery]);
 
   const addFiles = (files: File[]) => {
     const newAttachments: MediaAttachment[] = files.map((file) => ({
@@ -317,6 +304,22 @@ const MainContent = ({
   }, [filteredSuggestions]);
 
   useEffect(() => {
+    if (showGifSearcher9000 && gifSearchQuery === '') {
+      const fetchTrending = async () => {
+        try {
+          const data: any = await get('/gifs/trending?locale=en');
+
+          setGifCategories(data.categories || []);
+        } catch (err) {
+          logger.error(`MAIN_CONTENT`, `Failed to metch trending gifs`, err);
+        }
+      };
+
+      void fetchTrending();
+    }
+  }, [showGifSearcher9000, gifSearchQuery]);
+
+  useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       if (e.clipboardData && e.clipboardData.files.length > 0) {
         const files = Array.from(e.clipboardData.files);
@@ -417,28 +420,25 @@ const MainContent = ({
       }
     }
 
-    return text.replace(/([@#:])([\w-]+(?:#\d{4})?)(:?)/g, (match, symbol, name) => {
+    return text.replace(/(<a?:\w+:\d+>|<@&?\d+>|<#\d+>)|([@#:])([\w-]+(?:#\d{4})?)(:?)/g, (match, alreadyFormatted, symbol, name) => {
+      if (alreadyFormatted) return match;
+
       let lowName = name.toLowerCase();
 
       if (match === '@someone') return match;
 
       if (symbol === '@') {
-        if (lowName.includes('#')) {
-          lowName = lowName.split('#')[0];
-        }
-
+        if (lowName.includes('#')) lowName = lowName.split('#')[0];
         const userId = memberMap.get(lowName);
-
         if (userId) return `<@${userId}>`;
-
         const roleId = roleMap.get(lowName);
-
         if (roleId) return `<@&${roleId}>`;
       }
 
       if (symbol === '#') {
+        const isId = /^\d+$/.test(name);
+        if (isId) return `<#${name}>`;
         const chId = channelMap.get(lowName);
-
         if (chId) return `<#${chId}>`;
       }
 
@@ -446,7 +446,6 @@ const MainContent = ({
         const emoji = emojiMap.get(lowName);
         if (emoji) {
           const prefix = emoji.animated ? 'a:' : ':';
-
           return `<${prefix}${emoji.name}:${emoji.id}>`;
         }
       }
@@ -614,29 +613,6 @@ const MainContent = ({
       }
     }
     autoScroll.current = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight;
-  };
-
-  const handleSearchAndSetGif = async (term: string) => {
-    setGifSearchQuery(term);
-
-    setGifs([]);
-
-    if (!term.trim()) return;
-
-    try {
-      const data: any = await get(`/gifs/search?locale=en&q=${encodeURIComponent(term)}&limit=50`);
-      const mappedGifs = data.map((g: any) => ({
-        id: g.id,
-        title: g.title,
-        previewUrl: g.gif_src,
-        fullUrl: g.gif_src,
-        aspectRatio: g.width / g.height,
-      }));
-
-      setGifs(mappedGifs);
-    } catch (error) {
-      logger.error(`MAIN_CONTENT`, `Failed to search gifs for term: ${term}`, error);
-    }
   };
 
   useEffect(() => {
@@ -1040,6 +1016,29 @@ const MainContent = ({
         setSuggestionTrigger(null);
         setFilteredSuggestions([]);
       }
+    }
+  };
+
+  const handleSearchAndSetGif = async (term: string) => {
+    setGifSearchQuery(term);
+
+    setGifs([]);
+
+    if (!term.trim()) return;
+
+    try {
+      const data: any = await get(`/gifs/search?locale=en&q=${encodeURIComponent(term)}&limit=50`);
+      const mappedGifs = data.map((g: any) => ({
+        id: g.id,
+        title: g.title,
+        previewUrl: g.gif_src,
+        fullUrl: g.gif_src,
+        aspectRatio: g.width / g.height,
+      }));
+
+      setGifs(mappedGifs);
+    } catch (error) {
+      logger.error(`MAIN_CONTENT`, `Failed to search gifs for term: ${term}`, error);
     }
   };
 
@@ -1563,56 +1562,24 @@ const MainContent = ({
                 setSelectedIndex={setSelectedIndex}
               ></SuggestionsBar>
             )}
+            {theESRF && (
+              <EmojiChooser
+                guilds={guilds}
+                onSelectEmoji={(emoji) => {
+                  const prefix = emoji.animated ? 'a:' : ':';
+                  setChatMessage(prev => `${prev}<${prefix}${emoji.name}:${emoji.id}> `);
+                }}
+                onClose={() => setTheESRF(false)}
+              />
+            )}
             {showGifSearcher9000 && (
-              <div className='input-wrapper' key={'GifSearcher9000'}>
-                <div className='gif-picker-container'>
-                  <div className='gif-picker-header'>
-                    <div className='search-bar'>
-                      <input
-                        type='text'
-                        placeholder='Search Tenor'
-                        autoFocus
-                        value={gifSearchQuery}
-                        onChange={(e) => {
-                          handleSearchAndSetGif(e.currentTarget.value);
-                        }}
-                      />
-                      <span className='material-symbols-rounded search-icon'>search</span>
-                    </div>
-                  </div>
-                  <div className='gif-picker-content scroller'>
-                    {!gifSearchQuery && gifCategories.length > 0 && (
-                      <div className='gif-category-grid'>
-                        {gifCategories.map((cat) => (
-                          <div
-                            key={cat.name}
-                            className='category-item'
-                            onClick={() => handleSearchAndSetGif(cat.name)}
-                          >
-                            <img src={cat.src} alt={cat.name} />
-                            <div className='category-label'>{cat.name}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className='gif-grid'>
-                      {gifs.map((gif) => (
-                        <div
-                          key={gif.id}
-                          className='gif-item'
-                          onClick={() => {
-                            setChatMessage(gif.fullUrl);
-                            setShowGifSearcher9000(false);
-                            setGifSearchQuery('');
-                          }}
-                        >
-                          <img src={gif.previewUrl} alt={gif.title} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <GifSearcher9000
+                  gifCategories={gifCategories}
+                  gifs={gifs}
+                  onSearch={handleSearchAndSetGif}
+                  onSelectGif={(url) => setChatMessage(url)}
+                  onClose={() => setShowGifSearcher9000(false)}
+                />
             )}
             <div className='input-wrapper'>
               {attachments.length > 0 && (
@@ -1708,7 +1675,7 @@ const MainContent = ({
                       </button>
                       <button
                         type='button'
-                        className='input-icon-btn'
+                        className={`input-icon-btn ${theESRF ? 'active-input-btn' : ''}`}
                         title={`Search emojis`}
                         onClick={() => {
                           setTheESRF(!theESRF);
