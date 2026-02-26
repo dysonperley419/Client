@@ -4,6 +4,7 @@ import { useModal } from '@/context/modalContext';
 import type { Attachment, Message } from '@/types/messages';
 import { localBlobCache } from '@/utils/attachmentCache';
 import { formatTimestamp } from '@/utils/dateUtils';
+import { VideoPlayer } from './videoplayer';
 
 interface ChatAttachmentProps {
   attachment: Attachment;
@@ -30,13 +31,12 @@ export const ChatAttachment = ({ attachment, msg }: ChatAttachmentProps) => {
   const isVideo = /\.(mp4|webm|mov)$/i.exec(attachment.filename);
   const maxWidth = 400;
   const maxHeight = 300;
-  const originalWidth = attachment.width ?? 1600;
-  const originalHeight = attachment.height ?? 900;
+  const originalWidth = attachment.width || 1600;
+  const originalHeight = attachment.height || 900;
 
-  const ratio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight, 1);
-
-  const displayWidth = Math.floor(originalWidth * ratio);
-  const displayHeight = Math.floor(originalHeight * ratio);
+  const ratio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight);
+  const displayWidth = Math.floor(originalWidth * Math.min(ratio, 1));
+  const displayHeight = Math.floor(originalHeight * Math.min(ratio, 1));
 
   useEffect(() => {
     if (isInstant) return;
@@ -63,7 +63,14 @@ export const ChatAttachment = ({ attachment, msg }: ChatAttachmentProps) => {
     <div
       ref={ref}
       className='attachment-item'
-      style={{ width: `${String(displayWidth)}px`, height: `${String(displayHeight)}px` }}
+      style={{ 
+        width: `${String(displayWidth)}px`, 
+        height: `${String(displayHeight)}px`,
+        display: 'flex',
+        backgroundColor: '#000',
+        borderRadius: '8px',
+        overflow: 'hidden'
+      }}
     >
       {!loaded && !hasLocalMedia && !isVideo && (
         <div className='attachment-placeholder loading-shimmer'>
@@ -75,14 +82,7 @@ export const ChatAttachment = ({ attachment, msg }: ChatAttachmentProps) => {
       {shouldRender && (
         <>
           {isVideo ? (
-            <video
-              src={displaySrc}
-              controls
-              className='chat-video'
-              style={{ width: '100%', height: '100%' }}
-            >
-              <track kind='captions' />
-            </video>
+            <VideoPlayer src={displaySrc} width={displayWidth} height={displayHeight} />
           ) : (
             <button
               type='button'
