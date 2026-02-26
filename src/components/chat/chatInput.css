@@ -14,3 +14,13 @@
   line-height: 1;
   min-height: 0;
 }
+
+.chat-input-wrapper.disabled {
+  background-color: var(--background-secondary-alt);
+  cursor: not-allowed;
+}
+
+.chat-input:disabled {
+  color: var(--text-muted);
+  resize: none;
+}

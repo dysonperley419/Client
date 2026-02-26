@@ -147,18 +147,18 @@
 }
 
 .note-input {
-  background: var(--bg-input);
+  background: transparent;
   color: var(--text-bright);
   font-size: 12px;
   resize: none;
   padding: 8px;
   min-height: 40px;
-  outline: 1px solid var(--outline-color-gray);
   border-radius: 8px;
 }
 
 .note-input:focus {
-  border-color: var(--accent-primary);
+  border: none;
+  outline: none;
 }
 
 .name-line {

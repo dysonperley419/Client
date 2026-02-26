@@ -1,6 +1,6 @@
 import './popoutProfile.css';
 
-import { type JSX } from 'react';
+import { useState, type JSX } from 'react';
 
 import { useGateway } from '@/context/gatewayContext';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -9,6 +9,11 @@ import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { getDefaultAvatar } from '../../utils/avatar';
+import { logger } from '@/utils/logger';
+import { useNavigate } from 'react-router-dom';
+import type { Channel } from '@/types/channel';
+import { post } from '@/utils/api';
+import { usePopup } from '@/context/popupContext';
 
 interface PopoutProfileProps {
   member: Member;
@@ -21,9 +26,13 @@ export const PopoutProfile = ({
   roles,
   contextGuildId,
 }: PopoutProfileProps): JSX.Element => {
-  const { getPresence } = useGateway();
+  const { getPresence, user } = useGateway();
+
+  const navigate = useNavigate();
+  const { closePopup } = usePopup();
   const contextPerms = usePermissions(contextGuildId ?? '0');
   const status = getPresence(member.id)?.status ?? 'offline';
+  const [inLineMessage, setInLineMessage] = useState("");
   const { openFullProfile } = useUiUtilityActions(null);
 
   const MemberAvatar = ({ member, className }: { member: Member; className: string }) => {
@@ -45,6 +54,43 @@ export const PopoutProfile = ({
         }}
       />
     );
+  };
+
+  const sendMessage = async (message: string) => {
+    if (!message.trim()) return;
+
+    try {
+      setInLineMessage("");
+      closePopup(); //to-do improve the UX by having these appear as sending msgs first
+
+      const newDMChannel = await post(`/users/@me/channels`, {
+        recipients: [member.user.id],
+      });
+
+      let dmChannel = newDMChannel as Channel;
+
+      if (dmChannel?.id) {
+        const formData = new FormData();
+
+        const nonce = Math.floor(Math.random() * 1000000000).toString();
+
+        const payload = {
+          content: message, //resolveMentions? maybe?
+          nonce: `flicker-${nonce}`,
+          tts: false,
+          embeds: [],
+        };
+
+        formData.append('payload_json', JSON.stringify(payload));
+
+        await post(`/channels/${dmChannel.id}/messages`, formData);
+
+        void navigate(`/channels/@me/${dmChannel.id}`);
+      }
+    }
+    catch (error) {
+      logger.error(`POPOUT_PROFILE`, `Failed to send inline message`, error);
+    }
   };
 
   const getRoleColor = (colorDecimal: number) => {
@@ -169,6 +215,22 @@ export const PopoutProfile = ({
           <span className='section-title'>NOTE</span>
           <textarea className='note-input' placeholder='Click to add a note' />
         </div>
+        {member.user.id !== user?.id && (
+          <div className='popout-section' style={{
+            marginTop: '-30px'
+          }}>
+            <hr className='popout-separator' />
+            <input className='note-input' placeholder={`Message @${member.user.username}`} style={{
+              backgroundColor: 'var(--bg-dark-alt)'
+            }} value={inLineMessage} onChange={(e) => setInLineMessage(e.target.value)} onKeyDown={(e) => {
+              if (e.key === 'Enter' && inLineMessage.trim() !== "") {
+                e.preventDefault();
+                sendMessage(inLineMessage);
+                setInLineMessage("");
+              }
+            }} />
+          </div>
+        )}
       </div>
     </div>
   );

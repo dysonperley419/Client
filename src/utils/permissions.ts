@@ -78,4 +78,10 @@ export class PermissionHelper {
   get canMentionEveryone() {
     return this.has(PermissionBits.MENTION_EVERYONE);
   }
+  get canMessage() {
+    return this.has(PermissionBits.SEND_MESSAGES);
+  }
+  get canSendAttachments() {
+    return this.has(PermissionBits.ATTACH_FILES);
+  }
 }

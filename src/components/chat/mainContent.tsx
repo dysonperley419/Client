@@ -14,7 +14,7 @@ import type { Guild, Member, Role } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
 import type { User } from '@/types/users';
-import { get, post } from '@/utils/api';
+import { get, patch, post } from '@/utils/api';
 import { formatTimestamp } from '@/utils/dateUtils';
 import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
@@ -72,7 +72,7 @@ const MainContent = ({
   mentions,
   onChannelSeen,
 }: MainContentProps): JSX.Element => {
-  const contextPerms = usePermissions(selectedGuild?.id ?? '0');
+  const contextPerms = usePermissions(selectedGuild?.id, selectedChannel?.id);
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
   const { openContextMenu } = useContextMenu();
   const { openModal } = useModal();
@@ -214,16 +214,27 @@ const MainContent = ({
     }
   };
 
+  const handleReplyToMessage = (e: React.MouseEvent, msg: Message) => {
+
+  };
+
   const handleShowMsgContextMenu = (e: React.MouseEvent, msg: Message) => {
     e.preventDefault();
     e.stopPropagation();
 
     const MENU_WIDTH = 180;
+    const MENU_HEIGHT = 150;
+    const OFFSET = 100;
+    
     let x = e.clientX;
-    const y = e.clientY + 20;
+    let y = e.clientY + OFFSET;
 
     if (x + MENU_WIDTH > window.innerWidth) {
-      x = x - MENU_WIDTH;
+      x = x - MENU_WIDTH + 50;
+    }
+
+    if (y + MENU_HEIGHT > window.innerHeight) {
+      y = e.clientY - MENU_HEIGHT + OFFSET;
     }
 
     openContextMenu(
@@ -791,9 +802,16 @@ const MainContent = ({
 
       const isEditing = editingMsgID === msg.id;
 
-      const handleEditSave = (newContent: string) => {
+      const handleEditSave = async (newContent: string) => {
         if (newContent.trim() !== msg.content) {
-          //to-do actual editing
+          try {
+             await patch(`/channels/${msg.channel_id}/messages/${msg.id}`, {
+                content: newContent
+             });
+          }
+          catch(error) {
+            logger.error(`MAIN_CONTENT`, `Failed to update message`, error);
+          }
         }
         setEditingMsgID(null);
       };
@@ -803,7 +821,9 @@ const MainContent = ({
           <div
             className={`message-content ${msg.state === MESSAGE_STATE.FAILED ? 'message-failed' : ''} ${msg.content?.includes('@someone') ? 'april-fools' : ''}`}
           >
-            <div className={`msg-text-contents`}>
+            <div className={`msg-text-contents`} style={isEditing ? {
+              width: '100%'
+            } : {}}>
               {isEditing ? (
                 <MessageEditInput
                   initialContent={msg.content ?? ''}
@@ -815,7 +835,7 @@ const MainContent = ({
               ) : (
                 <>
                   {renderDfm(msg.content, selectedGuild?.id)}
-                  {msg.edited_timestamp && <span className='edited-tag'>(edited)</span>}
+                  {msg.edited_timestamp && <span className='edited-tag' title={`${formatTimestamp(msg.edited_timestamp)}`}>(edited)</span>}
                 </>
               )}
               {!isEditing && msg.attachments.length > 0 && (
@@ -833,6 +853,13 @@ const MainContent = ({
 
             {!isEditing && (
               <div id={`msg-contex-tools`}>
+                 <button className={`msg-context-btn`} onClick={(e) => {
+                    handleReplyToMessage(e, msg);
+                 }}>
+                  <span className='material-symbols-rounded' style={{ fontSize: '20px', marginRight: '5px'}}>
+                    reply
+                  </span>
+                </button>
                 <button className={`msg-context-btn`}>
                   <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
                     add_reaction
@@ -1283,6 +1310,9 @@ const MainContent = ({
     setFilteredSuggestions([]);
   };
 
+  const canMessage = contextPerms.canMessage;
+  const canSendAttachments = contextPerms.canSendAttachments;
+
   return (
     <main
       className='chat-main'
@@ -1533,24 +1563,29 @@ const MainContent = ({
                 </div>
               )}
               <div className='input-row'>
-                <button
-                  type='button'
-                  className='add-media-btn'
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <div className='add-icon-circle'>
-                    <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-                      add_circle
-                    </span>
-                  </div>
-                </button>
+                {canMessage && canSendAttachments && (
+                  <button
+                    type='button'
+                    className='add-media-btn'
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className='add-icon-circle'>
+                      <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                        add_circle
+                      </span>
+                    </div>
+                  </button>
+                )}
                 <ChatInput
+                  disabled={!canMessage}
                   placeholder={
-                    selectedChannel.name
-                      ? `Message #${selectedChannel.name}`
-                      : selectedChannel.recipients?.[0]
-                        ? `Message @${selectedChannel.recipients[0].global_name ?? selectedChannel.recipients[0].username ?? 'someone'}`
-                        : 'Message...'
+                    !canMessage
+                      ? "You do not have permission to send messages in this channel."
+                      : selectedChannel.name
+                        ? `Message #${selectedChannel.name}`
+                        : selectedChannel.recipients?.[0]
+                          ? `Message @${selectedChannel.recipients[0].global_name ?? selectedChannel.recipients[0].username ?? 'someone'}`
+                          : 'Message...'
                   }
                   value={chatMessage}
                   onChange={(e) => {
@@ -1561,52 +1596,56 @@ const MainContent = ({
                     void handleSendMessage(e);
                   }}
                 />
-                <div className='input-icons'>
-                  <button
-                    type='button'
-                    className={`input-icon-btn ${showGifSearcher9000 ? 'active-input-btn' : ''}`}
-                    title={`Search gifs`}
-                    onClick={() => {
-                      setShowGifSearcher9000(!showGifSearcher9000);
-                    }}
-                  >
-                    <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-                      gif_box
-                    </span>
-                  </button>
-                  <button
-                    type='button'
-                    className='input-icon-btn'
-                    title={`Search stickers`}
-                    onClick={() => {
-                      setStickernatorActive(!stickernatorActive);
-                    }}
-                  >
-                    <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-                      sticky_note_2
-                    </span>
-                  </button>
-                  <button
-                    type='button'
-                    className='input-icon-btn'
-                    title={`Search emojis`}
-                    onClick={() => {
-                      setTheESRF(!theESRF);
-                    }}
-                  >
-                    <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-                      mood
-                    </span>
-                  </button>
-                </div>
+                {canMessage && (
+                  <>
+                    <div className='input-icons'>
+                      <button
+                        type='button'
+                        className={`input-icon-btn ${showGifSearcher9000 ? 'active-input-btn' : ''}`}
+                        title={`Search gifs`}
+                        onClick={() => {
+                          setShowGifSearcher9000(!showGifSearcher9000);
+                        }}
+                      >
+                        <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                          gif_box
+                        </span>
+                      </button>
+                      <button
+                        type='button'
+                        className='input-icon-btn'
+                        title={`Search stickers`}
+                        onClick={() => {
+                          setStickernatorActive(!stickernatorActive);
+                        }}
+                      >
+                        <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                          sticky_note_2
+                        </span>
+                      </button>
+                      <button
+                        type='button'
+                        className='input-icon-btn'
+                        title={`Search emojis`}
+                        onClick={() => {
+                          setTheESRF(!theESRF);
+                        }}
+                      >
+                        <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                          mood
+                        </span>
+                      </button>
+                    </div>
 
-                <input
-                  type='file'
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  style={{ display: 'none' }}
-                  multiple
-                />
+                    <input
+                      type='file'
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      style={{ display: 'none' }}
+                      multiple
+                    />
+                  </>
+                )}
               </div>
             </div>
           </form>

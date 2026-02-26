@@ -8,7 +8,7 @@ interface ChatInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElemen
   onSubmit?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }
 
-const ChatInput = ({ value, onChange, onSubmit, ...props }: ChatInputProps) => {
+const ChatInput = ({ value, onChange, onSubmit, disabled, ...props }: ChatInputProps) => {
   const ref = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -19,6 +19,8 @@ const ChatInput = ({ value, onChange, onSubmit, ...props }: ChatInputProps) => {
   }, [value]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (disabled) return;
+
     props.onKeyDown?.(e);
 
     if (!e.defaultPrevented && e.key === "Enter" && !e.shiftKey) {
@@ -33,7 +35,7 @@ const ChatInput = ({ value, onChange, onSubmit, ...props }: ChatInputProps) => {
     if (newValue.toLowerCase().includes('b1nzy')) {
       window.open('https://takeb1nzyto.space/', '_blank');
 
-      e.target.value = newValue.replace(/b1nzy/gi, ''); //You're gonna get ratelimited.
+      return;  //You're gonna get ratelimited.
     }
 
     onChange(e);
@@ -46,6 +48,7 @@ const ChatInput = ({ value, onChange, onSubmit, ...props }: ChatInputProps) => {
       value={value}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
+      disabled={disabled}
       className="chat-input"
     />
   );
