@@ -138,13 +138,6 @@
   white-space: pre-wrap;
 }
 
-.status-text {
-  color: #949ba4;
-  text-align: center;
-  padding: 60px 20px;
-  font-size: 15px;
-}
-
 .pin-meta {
   display: flex;
   justify-content: space-between;

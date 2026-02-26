@@ -79,6 +79,7 @@ const MainContent = ({
   const [suggestionsTrigger, setSuggestionTrigger] = useState<SuggestionsTrigger | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingMsgID, setEditingMsgID] = useState<string | null>(null);
+  const [replyingMsgID, setReplyingMgID] = useState<string | null>(null);
   const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[] | []>([]);
   const [gifs, setGifs] = useState<GifResult[] | []>([]);
   const [gifCategories, setGifCategories] = useState<{ name: string; src: string }[]>([]);
@@ -214,7 +215,45 @@ const MainContent = ({
     }
   };
 
-  const handleReplyToMessage = (_e: React.MouseEvent, _msg: Message) => {};
+  const clearReplyingMsg = (e: React.MouseEvent, msg: Message) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const element = scrollerRef.current?.querySelector(`[data-message-id="${msg.id}"]`);
+
+    if (element) {
+      element.classList.remove('message-highlight-no-anim');
+      element.classList.remove('move-msg-up');
+    }
+
+    setReplyingMgID(null);
+  };
+
+  const handleReplyToMessage = (e: React.MouseEvent, msg: Message) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const element = scrollerRef.current?.querySelector(`[data-message-id="${msg.id}"]`);
+    const isLastMessage = messages[messages.length - 1]?.id === msg.id;
+
+    if (element) {
+      element.classList.add('message-highlight-no-anim');
+
+      if (isLastMessage) {
+        element.classList.add('move-msg-up');
+
+        /*
+        setTimeout(() => {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }, 50); */ //figure out a reliable way to scroll
+      }
+    }
+
+    setReplyingMgID(msg.id);
+  };
 
   const handleShowMsgContextMenu = (e: React.MouseEvent, msg: Message) => {
     e.preventDefault();
@@ -443,6 +482,7 @@ const MainContent = ({
     const formData = new FormData();
 
     const nonce = Math.floor(Math.random() * 1000000000).toString();
+    const repliedMessage = messages.find(m => m.id === replyingMsgID);
 
     const ghostMessage: Message = {
       id: `temp-${nonce}`,
@@ -458,6 +498,12 @@ const MainContent = ({
         size: at.file.size,
         proxy_url: at.preview,
       })),
+      referenced_message: repliedMessage, 
+      message_reference: replyingMsgID ? {
+        message_id: replyingMsgID,
+        channel_id: selectedChannel.id,
+        guild_id: selectedGuild?.id,
+      } : undefined,
       embeds: [],
       mentions: [],
       pinned: false,
@@ -471,6 +517,12 @@ const MainContent = ({
       nonce: `flicker-${nonce}`,
       tts: false,
       embeds: [],
+      message_reference: replyingMsgID ? {
+        message_id: replyingMsgID,
+        channel_id: selectedChannel.id,
+        guild_id: selectedGuild?.id,
+        fail_if_not_exists: false
+      } : undefined
     };
 
     formData.append('payload_json', JSON.stringify(payload));
@@ -481,6 +533,12 @@ const MainContent = ({
 
     setMessages((prev) => [...prev, ghostMessage]);
     setChatMessage('');
+    setReplyingMgID(null);
+
+    if (replyingMsgID) {
+      const el = scrollerRef.current?.querySelector(`[data-message-id="${replyingMsgID}"]`);
+      el?.classList.remove('move-msg-up', 'message-highlight-no-anim');
+    }
 
     const toCleanup = [...attachments];
 
@@ -1326,6 +1384,7 @@ const MainContent = ({
 
   const canMessage = contextPerms.canMessage;
   const canSendAttachments = contextPerms.canSendAttachments;
+  const replyingMsg = replyingMsgID != null && messages.find(x => x.id === replyingMsgID);
 
   return (
     <main
@@ -1468,6 +1527,16 @@ const MainContent = ({
               }}
               scrollToMessage={scrollToMessage}
             />
+          )}
+          {replyingMsg && (
+             <div
+              className='reply-bar'
+            >
+              <span>Replying to <strong>{replyingMsg.author.username}</strong></span>
+              <button onClick={(e) => clearReplyingMsg(e, replyingMsg)}>
+                <span className='material-symbols-rounded vc-icon-state'>close</span>
+              </button>
+            </div>
           )}
 
           <div
