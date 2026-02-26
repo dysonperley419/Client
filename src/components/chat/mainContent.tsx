@@ -214,9 +214,7 @@ const MainContent = ({
     }
   };
 
-  const handleReplyToMessage = (e: React.MouseEvent, msg: Message) => {
-
-  };
+  const handleReplyToMessage = (_e: React.MouseEvent, _msg: Message) => {};
 
   const handleShowMsgContextMenu = (e: React.MouseEvent, msg: Message) => {
     e.preventDefault();
@@ -225,7 +223,7 @@ const MainContent = ({
     const MENU_WIDTH = 180;
     const MENU_HEIGHT = 150;
     const OFFSET = 100;
-    
+
     let x = e.clientX;
     let y = e.clientY + OFFSET;
 
@@ -805,11 +803,10 @@ const MainContent = ({
       const handleEditSave = async (newContent: string) => {
         if (newContent.trim() !== msg.content) {
           try {
-             await patch(`/channels/${msg.channel_id}/messages/${msg.id}`, {
-                content: newContent
-             });
-          }
-          catch(error) {
+            await patch(`/channels/${msg.channel_id}/messages/${msg.id}`, {
+              content: newContent,
+            });
+          } catch (error) {
             logger.error(`MAIN_CONTENT`, `Failed to update message`, error);
           }
         }
@@ -821,9 +818,16 @@ const MainContent = ({
           <div
             className={`message-content ${msg.state === MESSAGE_STATE.FAILED ? 'message-failed' : ''} ${msg.content?.includes('@someone') ? 'april-fools' : ''}`}
           >
-            <div className={`msg-text-contents`} style={isEditing ? {
-              width: '100%'
-            } : {}}>
+            <div
+              className={`msg-text-contents`}
+              style={
+                isEditing
+                  ? {
+                      width: '100%',
+                    }
+                  : {}
+              }
+            >
               {isEditing ? (
                 <MessageEditInput
                   initialContent={msg.content ?? ''}
@@ -835,7 +839,11 @@ const MainContent = ({
               ) : (
                 <>
                   {renderDfm(msg.content, selectedGuild?.id)}
-                  {msg.edited_timestamp && <span className='edited-tag' title={`${formatTimestamp(msg.edited_timestamp)}`}>(edited)</span>}
+                  {msg.edited_timestamp && (
+                    <span className='edited-tag' title={formatTimestamp(msg.edited_timestamp)}>
+                      (edited)
+                    </span>
+                  )}
                 </>
               )}
               {!isEditing && msg.attachments.length > 0 && (
@@ -853,10 +861,16 @@ const MainContent = ({
 
             {!isEditing && (
               <div id={`msg-contex-tools`}>
-                 <button className={`msg-context-btn`} onClick={(e) => {
+                <button
+                  className={`msg-context-btn`}
+                  onClick={(e) => {
                     handleReplyToMessage(e, msg);
-                 }}>
-                  <span className='material-symbols-rounded' style={{ fontSize: '20px', marginRight: '5px'}}>
+                  }}
+                >
+                  <span
+                    className='material-symbols-rounded'
+                    style={{ fontSize: '20px', marginRight: '5px' }}
+                  >
                     reply
                   </span>
                 </button>
@@ -1580,7 +1594,7 @@ const MainContent = ({
                   disabled={!canMessage}
                   placeholder={
                     !canMessage
-                      ? "You do not have permission to send messages in this channel."
+                      ? 'You do not have permission to send messages in this channel.'
                       : selectedChannel.name
                         ? `Message #${selectedChannel.name}`
                         : selectedChannel.recipients?.[0]
