@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useModal } from '@/context/modalContext';
 import type { Attachment, Message } from '@/types/messages';
-import { formatTimestamp } from '@/utils/dateUtils';
 import { localBlobCache } from '@/utils/attachmentCache';
-import { useGateway } from '@/context/gatewayContext';
+import { formatTimestamp } from '@/utils/dateUtils';
 
 interface ChatAttachmentProps {
   attachment: Attachment;
@@ -13,26 +12,26 @@ interface ChatAttachmentProps {
 
 export const ChatAttachment = ({ attachment, msg }: ChatAttachmentProps) => {
   const { openModal } = useModal();
-  const { user } = useGateway();
 
   const [loaded, setLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const cacheKey = `${attachment.filename}-${attachment.size}`;
+  const cacheKey = `${attachment.filename}-${String(attachment.size)}`;
   const localBlob = localBlobCache.get(cacheKey);
+  const hasLocalMedia = localBlob !== undefined;
+  const isInstant = hasLocalMedia;
 
-  const displaySrc = localBlob || attachment.url;
+  const displaySrc = localBlob ?? attachment.url;
 
-  const isMine = msg.author.id === user?.id;
-  const isLocal = !!localBlob || isMine;
+  const isLocal = hasLocalMedia;
   const shouldRender = isInView || isLocal;
 
   const isVideo = /\.(mp4|webm|mov)$/i.exec(attachment.filename);
   const maxWidth = 400;
   const maxHeight = 300;
-  const originalWidth = attachment.width || 1600;
-  const originalHeight = attachment.height || 900;
+  const originalWidth = attachment.width ?? 1600;
+  const originalHeight = attachment.height ?? 900;
 
   const ratio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight, 1);
 
@@ -40,10 +39,7 @@ export const ChatAttachment = ({ attachment, msg }: ChatAttachmentProps) => {
   const displayHeight = Math.floor(originalHeight * ratio);
 
   useEffect(() => {
-    if (isLocal) {
-      setIsInView(true);
-      return;
-    }
+    if (isInstant) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -52,35 +48,45 @@ export const ChatAttachment = ({ attachment, msg }: ChatAttachmentProps) => {
           observer.disconnect();
         }
       },
-      { rootMargin: '500px' }
+      { rootMargin: '500px' },
     );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [isLocal]);
+
+    const currentRef = ref.current;
+    if (currentRef) observer.observe(currentRef);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isInstant]);
 
   return (
-    <div ref={ref}
+    <div
+      ref={ref}
       className='attachment-item'
-      style={{ width: `${displayWidth}px`, height: `${displayHeight}px` }}
+      style={{ width: `${String(displayWidth)}px`, height: `${String(displayHeight)}px` }}
     >
-      {(!loaded && !isLocal) && !isVideo && (
+      {!loaded && !hasLocalMedia && !isVideo && (
         <div className='attachment-placeholder loading-shimmer'>
           <span className='material-symbols-rounded' style={{ color: `var(--accent-primary)` }}>
             image
           </span>
         </div>
       )}
-
       {shouldRender && (
         <>
           {isVideo ? (
-            <video src={displaySrc} controls className='chat-video' style={{ width: '100%', height: '100%' }}>
+            <video
+              src={displaySrc}
+              controls
+              className='chat-video'
+              style={{ width: '100%', height: '100%' }}
+            >
               <track kind='captions' />
             </video>
           ) : (
             <button
               type='button'
-              className={(loaded || isLocal) ? '' : 'hidden-img'}
+              className={loaded || hasLocalMedia ? '' : 'hidden-img'}
               onClick={() => {
                 openModal('IMAGE_PREVIEW', {
                   src: displaySrc,
@@ -92,13 +98,22 @@ export const ChatAttachment = ({ attachment, msg }: ChatAttachmentProps) => {
                   timestamp: formatTimestamp(msg.timestamp),
                 });
               }}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%', height: '100%' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                width: '100%',
+                height: '100%',
+              }}
             >
               <img
                 src={displaySrc}
                 alt={attachment.filename}
-                className={`chat-image ${(loaded || isLocal) ? '' : 'loading'}`}
-                onLoad={() => setLoaded(true)}
+                className={`chat-image ${loaded || hasLocalMedia ? '' : 'loading'}`}
+                onLoad={() => {
+                  setLoaded(true);
+                }}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </button>
