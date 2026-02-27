@@ -868,7 +868,8 @@ const MainContent = ({
 
       const isMentioned =
         msg.mentions.some((m) => m.id === user?.id) ||
-        msg.content?.includes(user?.username || `<@${user?.id ?? ''}>`) ||
+        (user?.username ? msg.content?.includes(`@${user.username}`) : false) ||
+        msg.content?.includes(`<@${user?.id ?? ''}>`) ||
         msg.mention_everyone;
 
       const mentionClass = isMentioned ? 'message-mention' : '';
