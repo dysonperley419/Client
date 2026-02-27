@@ -3,6 +3,7 @@ import './mainContent.css';
 
 import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useConfig } from '@/context/configContext';
 import { useContextMenu } from '@/context/contextMenuContext';
 import { useModal } from '@/context/modalContext';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -10,30 +11,34 @@ import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
 import type { Command } from '@/types/command';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
-import type { Guild, Member, Role } from '@/types/guilds';
+import type { Guild, Member } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
 import type { User } from '@/types/users';
 import { get, patch, post } from '@/utils/api';
+import { localBlobCache } from '@/utils/attachmentCache';
 import { formatTimestamp } from '@/utils/dateUtils';
 import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
-import { localBlobCache } from '@/utils/attachmentCache';
 import { useGateway } from '../../context/gatewayContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import { ChatAttachment } from './chatAttachment';
 import ChatInput from './chatInput';
 import renderDfm from './dfm/dfmRenderer';
+import { EmojiChooser } from './emojiChooser';
+import { GifSearcher9000 } from './gifSearcher9000';
 import MemberList from './memberList';
 import { MessageEditInput } from './messageeditinput';
 import { PinnedMessagesShelf } from './pinnedMessagesShelf';
 import { ReplyPreview } from './replyPreview';
 import { SuggestionsBar } from './suggestionsBar';
-import { GifSearcher9000 } from './gifSearcher9000';
-import { EmojiChooser } from './emojiChooser';
-import { useConfig } from '@/context/configContext';
+
+interface MemberListItem {
+  member?: Member | null;
+  group?: { id: string; count: number } | null;
+}
 
 interface MediaAttachment {
   file: File;
@@ -67,6 +72,18 @@ interface GifResult {
   aspectRatio: number;
 }
 
+interface GifTrendingResponse {
+  categories: { name: string; src: string }[];
+}
+
+interface RawGifResponse {
+  id: string;
+  title: string;
+  gif_src: string;
+  width: number;
+  height: number;
+}
+
 type LocalMessage = Message & { state: number };
 
 const MainContent = ({
@@ -76,11 +93,11 @@ const MainContent = ({
   mentions,
   onChannelSeen,
 }: MainContentProps): JSX.Element => {
-  const contextPerms = usePermissions(selectedGuild?.id, selectedChannel?.id);
+  const contextPerms = usePermissions(selectedGuild?.id, selectedChannel.id);
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
   const { openContextMenu } = useContextMenu();
   const { openModal } = useModal();
-  
+
   const [suggestionsTrigger, setSuggestionTrigger] = useState<SuggestionsTrigger | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingMsgID, setEditingMsgID] = useState<string | null>(null);
@@ -123,26 +140,29 @@ const MainContent = ({
   ]; //should this go somewhere else?
 
   useEffect(() => {
-    if (!selectedChannel) {
-      return;
-    }
-
     const channelId = selectedChannel.id;
     const lastMsgId = selectedChannel.last_message_id ?? null;
     const key = selectedGuild?.id ?? 'direct_messages';
     const isUnread = unreads?.get(key)?.has(channelId);
     const hasMentions = mentions?.get(key)?.has(channelId);
 
-    if (isUnread || hasMentions) {
-      void onChannelSeen!(selectedGuild?.id || null, channelId, lastMsgId!);
+    if ((isUnread || hasMentions) && onChannelSeen && lastMsgId) {
+      void onChannelSeen(selectedGuild?.id || null, channelId, lastMsgId);
     }
-  }, [selectedChannel.id, selectedChannel.last_message_id, selectedGuild?.id, onChannelSeen]);
+  }, [
+    selectedChannel.id,
+    selectedChannel.last_message_id,
+    selectedGuild?.id,
+    onChannelSeen,
+    mentions,
+    unreads,
+  ]);
 
   const addFiles = (files: File[]) => {
     const newAttachments: MediaAttachment[] = files.map((file) => {
       const preview = URL.createObjectURL(file);
 
-      localBlobCache.set(`${file.name}-${file.size}`, preview);
+      localBlobCache.set(`${file.name}-${file.size.toString()}`, preview);
 
       return {
         file,
@@ -170,7 +190,7 @@ const MainContent = ({
     e.stopPropagation();
     setIsDragging(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    if (e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files);
 
       addFiles(files);
@@ -315,9 +335,9 @@ const MainContent = ({
     if (showGifSearcher9000 && gifSearchQuery === '') {
       const fetchTrending = async () => {
         try {
-          const data: any = await get('/gifs/trending?locale=en');
+          const data = (await get('/gifs/trending?locale=en')) as GifTrendingResponse;
 
-          setGifCategories(data.categories || []);
+          setGifCategories(data.categories);
         } catch (err) {
           logger.error(`MAIN_CONTENT`, `Failed to metch trending gifs`, err);
         }
@@ -348,10 +368,9 @@ const MainContent = ({
       const url = `/channels/${selectedChannel.id}/messages?limit=${String(limit)}${before ? `&before=${before}` : ''}`;
 
       try {
-        const response = await get(url);
-        const data: unknown = response;
+        const response = (await get(url)) as Message[];
 
-        return MessageListSchema.parse(data);
+        return MessageListSchema.parse(response);
       } catch (error) {
         console.error('Failed to fetch messages: ', error);
         return [];
@@ -376,22 +395,24 @@ const MainContent = ({
     ];
 
     const channelMap = new Map(
-      selectedGuild?.channels?.map((c) => [c.name?.toLowerCase(), c.id]) ?? [],
+      selectedGuild?.channels.map((c) => [c.name?.toLowerCase(), c.id]) ?? [],
     );
-    const roleMap = new Map(selectedGuild?.roles?.map((r) => [r.name.toLowerCase(), r.id]) ?? []);
+    const roleMap = new Map(selectedGuild?.roles.map((r) => [r.name.toLowerCase(), r.id]) ?? []);
 
     const emojiMap = new Map(
-      guilds.flatMap((g) => g.emojis || []).map((e) => [e.name?.toLowerCase(), e]),
+      guilds.flatMap((g) => g.emojis || []).map((e) => [e.name.toLowerCase(), e]),
     );
 
-    const memberMap = new Map();
+    const memberMap = new Map<string, string>();
 
     if (selectedGuild) {
-      const memberState = memberLists![selectedGuild.id];
-      const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
+      const memberState = memberLists?.[selectedGuild.id];
+      const listItems: MemberListItem[] = Array.isArray(memberState)
+        ? memberState
+        : memberState?.items || [];
 
-      listItems.forEach((item: any) => {
-        if (item.member) {
+      listItems.forEach((item) => {
+        if ('member' in item && item.member) {
           const m = item.member;
 
           if (m.nick) {
@@ -407,59 +428,68 @@ const MainContent = ({
       });
     } else if (selectedChannel.recipients) {
       selectedChannel.recipients.forEach((user) => {
-        if (user.global_name) {
-          memberMap.set(user.global_name.toLowerCase(), user.id);
-        }
-
-        memberMap.set(user.username!.toLowerCase(), user.id);
+        if (user.id && user.username) {
+          memberMap.set(user.global_name ?? user.username.toLowerCase(), user.id);
+        } //probs the worst practice but shut up linter and we do need these values there
       });
     }
 
     if (text.includes('@someone')) {
-      const memberNames = Array.from(memberMap.keys());
+      const memberNames: string[] = Array.from(memberMap.keys());
 
       if (memberNames.length > 0) {
         const randomMember = memberNames[Math.floor(Math.random() * memberNames.length)];
         const randomEmote = emoticons[Math.floor(Math.random() * emoticons.length)];
 
-        const replacement = `**@someone** ${randomEmote} ***(${randomMember})***`;
-
-        text = text.replace(/@someone/g, replacement);
+        if (randomMember && randomEmote) {
+          const replacement = `**@someone** ${randomEmote} ***(${randomMember})***`;
+          text = text.replace(/@someone/g, replacement);
+        }
       }
     }
 
-    return text.replace(/(<a?:\w+:\d+>|<@&?\d+>|<#\d+>)|([@#:])([\w-]+(?:#\d{4})?)(:?)/g, (match, alreadyFormatted, symbol, name) => {
-      if (alreadyFormatted) return match;
+    return text.replace(
+      /(<a?:\w+:\d+>|<@&?\d+>|<#\d+>)|([@#:])([\w-]+(?:#\d{4})?)(:?)/g,
+      (match: string, alreadyFormatted: string, symbol: string, name: string): string => {
+        if (alreadyFormatted) return match;
 
-      let lowName = name.toLowerCase();
+        let lowName = name.toLowerCase();
 
-      if (match === '@someone') return match;
+        if (match === '@someone') return match;
 
-      if (symbol === '@') {
-        if (lowName.includes('#')) lowName = lowName.split('#')[0];
-        const userId = memberMap.get(lowName);
-        if (userId) return `<@${userId}>`;
-        const roleId = roleMap.get(lowName);
-        if (roleId) return `<@&${roleId}>`;
-      }
+        if (symbol === '@') {
+          if (lowName.includes('#')) {
+            lowName = lowName.split('#')[0] ?? lowName;
+          }
 
-      if (symbol === '#') {
-        const isId = /^\d+$/.test(name);
-        if (isId) return `<#${name}>`;
-        const chId = channelMap.get(lowName);
-        if (chId) return `<#${chId}>`;
-      }
+          const userId = memberMap.get(lowName);
+          if (userId) return `<@${userId}>`;
 
-      if (symbol === ':') {
-        const emoji = emojiMap.get(lowName);
-        if (emoji) {
-          const prefix = emoji.animated ? 'a:' : ':';
-          return `<${prefix}${emoji.name}:${emoji.id}>`;
+          const roleId = roleMap.get(lowName);
+          if (roleId) return `<@&${roleId}>`;
         }
-      }
 
-      return match;
-    });
+        if (symbol === '#' && lowName && name) {
+          const isId = /^\d+$/.test(name);
+          if (isId) return `<#${name}>`;
+
+          const chId = channelMap.get(lowName);
+          if (chId) return `<#${chId}>`;
+        }
+
+        if (symbol === ':' && lowName) {
+          const emoji = emojiMap.get(lowName);
+          if (emoji && 'id' in emoji && 'name' in emoji) {
+            const prefix = emoji.animated ? 'a:' : ':';
+            const emojiName = emoji.name;
+            const emojiId = emoji.id;
+            return `<${prefix}${emojiName}:${emojiId}>`;
+          }
+        }
+
+        return match;
+      },
+    );
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -489,14 +519,14 @@ const MainContent = ({
     const formData = new FormData();
 
     const nonce = Math.floor(Math.random() * 1000000000).toString();
-    const repliedMessage = messages.find(m => m.id === replyingMsgID);
+    const repliedMessage = messages.find((m) => m.id === replyingMsgID);
 
     const ghostMessage: Message = {
       id: `temp-${nonce}`,
       nonce: `flicker-${nonce}`,
       channel_id: selectedChannel.id,
       content: finalContent,
-      author: user!,
+      author: user,
       timestamp: new Date().toISOString(),
       attachments: attachments.map((at) => ({
         id: at.id,
@@ -505,12 +535,14 @@ const MainContent = ({
         size: at.file.size,
         proxy_url: at.preview,
       })),
-      referenced_message: repliedMessage, 
-      message_reference: replyingMsgID ? {
-        message_id: replyingMsgID,
-        channel_id: selectedChannel.id,
-        guild_id: selectedGuild?.id,
-      } : undefined,
+      referenced_message: repliedMessage,
+      message_reference: replyingMsgID
+        ? {
+            message_id: replyingMsgID,
+            channel_id: selectedChannel.id,
+            guild_id: selectedGuild?.id,
+          }
+        : undefined,
       embeds: [],
       mentions: [],
       pinned: false,
@@ -524,12 +556,14 @@ const MainContent = ({
       nonce: `flicker-${nonce}`,
       tts: false,
       embeds: [],
-      message_reference: replyingMsgID ? {
-        message_id: replyingMsgID,
-        channel_id: selectedChannel.id,
-        guild_id: selectedGuild?.id,
-        fail_if_not_exists: false
-      } : undefined
+      message_reference: replyingMsgID
+        ? {
+            message_id: replyingMsgID,
+            channel_id: selectedChannel.id,
+            guild_id: selectedGuild?.id,
+            fail_if_not_exists: false,
+          }
+        : undefined,
     };
 
     formData.append('payload_json', JSON.stringify(payload));
@@ -550,9 +584,12 @@ const MainContent = ({
     setAttachments([]);
 
     try {
-      const response = await post(`/channels/${selectedChannel.id}/messages`, formData);
+      const response = (await post(
+        `/channels/${selectedChannel.id}/messages`,
+        formData,
+      )) as Message;
 
-      if (onChannelSeen && response?.id) {
+      if (onChannelSeen && response.id) {
         void onChannelSeen(selectedGuild?.id ?? null, selectedChannel.id, response.id);
       }
     } catch (error) {
@@ -646,8 +683,7 @@ const MainContent = ({
       setMessages((prev) => {
         const matchIdx = prev.findIndex(
           (m) =>
-            (newMessage.nonce && String(m.nonce) === String(newMessage.nonce)) ||
-            m.id === newMessage.id,
+            (newMessage.nonce && String(m.nonce) === newMessage.nonce) || m.id === newMessage.id,
         );
 
         if (matchIdx !== -1) {
@@ -718,9 +754,9 @@ const MainContent = ({
       try {
         isloadingMore.current = true;
 
-        const response = await get(
+        const response = (await get(
           `/channels/${selectedChannel.id}/messages?limit=50&around=${messageId}`,
-        );
+        )) as Message[];
         const data = MessageListSchema.parse(response);
 
         if (data.length > 0) {
@@ -786,7 +822,7 @@ const MainContent = ({
       const status = presence?.status ?? 'offline';
 
       const memberObj: Member = member ?? {
-        id: msg.author.id!,
+        id: msg.author.id || '',
         user: msg.author as User,
         presence: {
           user: msg.author as User,
@@ -831,9 +867,10 @@ const MainContent = ({
         msg.state == MESSAGE_STATE.PENDING ? { opacity: 0.5, filter: 'grayscale(100%)' } : {};
 
       const isMentioned =
-        msg.mentions?.some((m) => m.id === user?.id) ||
-        msg.content?.includes(`@${user?.username}`) ||
+        msg.mentions.some((m) => m.id === user?.id) ||
+        msg.content?.includes(user?.username || `<@${user?.id ?? ''}>`) ||
         msg.mention_everyone;
+
       const mentionClass = isMentioned ? 'message-mention' : '';
 
       const isEditing = editingMsgID === msg.id;
@@ -869,7 +906,9 @@ const MainContent = ({
               {isEditing ? (
                 <MessageEditInput
                   initialContent={msg.content ?? ''}
-                  onSave={handleEditSave}
+                  onSave={(newContent) => {
+                    void handleEditSave(newContent);
+                  }}
                   onCancel={() => {
                     setEditingMsgID(null);
                   }}
@@ -898,7 +937,7 @@ const MainContent = ({
             </div>
 
             {!isEditing && (
-              <div id={`msg-contex-tools`}>
+              <div id={`msg-context-tools`}>
                 <button
                   className={`msg-context-btn`}
                   onClick={(e) => {
@@ -941,7 +980,7 @@ const MainContent = ({
         const currentStatus = userPresence?.status || 'offline';
 
         const member = (selectedGuild ? getMember(selectedGuild.id, msg.author.id) : null) ?? {
-          id: msg.author.id!,
+          id: msg.author.id || '', //Look into this..
           user: msg.author as User,
           presence: {
             user: msg.author as User,
@@ -1014,7 +1053,10 @@ const MainContent = ({
         );
       } else if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
-        applySuggestion(filteredSuggestions[selectedIndex]!);
+        const suggestion = filteredSuggestions[selectedIndex];
+        if (suggestion) {
+          applySuggestion(suggestion);
+        }
       } else if (e.key === 'Escape') {
         e.preventDefault();
         setSuggestionTrigger(null);
@@ -1031,8 +1073,10 @@ const MainContent = ({
     if (!term.trim()) return;
 
     try {
-      const data: any = await get(`/gifs/search?locale=en&q=${encodeURIComponent(term)}&limit=50`);
-      const mappedGifs = data.map((g: any) => ({
+      const data = (await get(
+        `/gifs/search?locale=en&q=${encodeURIComponent(term)}&limit=50`,
+      )) as RawGifResponse[];
+      const mappedGifs: GifResult[] = data.map((g) => ({
         id: g.id,
         title: g.title,
         previewUrl: g.gif_src,
@@ -1050,7 +1094,7 @@ const MainContent = ({
     const q = query.toLowerCase();
 
     if (type === SuggestionsType.USER) {
-      let userSource: any[] = [];
+      let userSource: Member[] = [];
 
       const specialMentions = [
         {
@@ -1077,17 +1121,21 @@ const MainContent = ({
       ] as Suggestion[];
 
       if (selectedGuild) {
-        const memberState = memberLists![selectedGuild.id];
-        const listItems = Array.isArray(memberState) ? memberState : memberState?.items || [];
+        const memberState = memberLists?.[selectedGuild.id];
+        const listItems = (
+          Array.isArray(memberState) ? memberState : memberState?.items || []
+        ) as MemberListItem[];
 
-        userSource = listItems.filter((item: any) => !!item.member).map((item: any) => item.member);
+        userSource = listItems
+          .filter((item): item is { member: Member } => !!item.member)
+          .map((item) => item.member);
       } else if (selectedChannel.recipients) {
         userSource = selectedChannel.recipients.map((user) => ({
           user,
           nick: null,
           roles: [],
           joined_at: new Date().toISOString(),
-        }));
+        })) as unknown as Member[];
       }
 
       const filteredSpecials = specialMentions.filter((m) => {
@@ -1095,7 +1143,7 @@ const MainContent = ({
 
         if (m.name === 'someone') return true;
 
-        return contextPerms?.canMentionEveryone;
+        return contextPerms.canMentionEveryone;
       });
 
       const guildRoles = selectedGuild?.roles || [];
@@ -1103,13 +1151,13 @@ const MainContent = ({
 
       const filteredUsers = userSource
         .filter(
-          (m: any) =>
+          (m) =>
             m.user.username.toLowerCase().includes(q) ||
             m.nick?.toLowerCase().includes(q) ||
             m.user.global_name?.toLowerCase().includes(q),
         )
         .map(
-          (m: Member) =>
+          (m) =>
             ({
               suggestionType: SuggestionsType.USER,
               user: m,
@@ -1118,9 +1166,9 @@ const MainContent = ({
         );
 
       const filteredRoles = guildRoles
-        .filter((role: any) => role.name.toLowerCase().includes(q) && role.name !== '@everyone')
+        .filter((role) => role.name.toLowerCase().includes(q) && role.name !== '@everyone')
         .map(
-          (r: Role) =>
+          (r) =>
             ({
               role: r,
               suggestionType: SuggestionsType.ROLE,
@@ -1175,7 +1223,7 @@ const MainContent = ({
 
       setFilteredSuggestions(combined);
     } else if (type === SuggestionsType.EMOJI) {
-      const allEmojis = guilds.flatMap((g: Guild) =>
+      const allEmojis = guilds.flatMap((g) =>
         (g.emojis || []).map(
           (e) =>
             ({
@@ -1189,7 +1237,7 @@ const MainContent = ({
 
       const filteredEmojis = allEmojis
         .filter(
-          (e: Suggestion) => e.emoji?.name.toLowerCase().includes(q) && e.emoji?.require_colons,
+          (e: Suggestion) => e.emoji?.name.toLowerCase().includes(q) && e.emoji.require_colons,
         )
         .sort((a: Suggestion, b: Suggestion) => {
           const startsA = a.name.toLowerCase().startsWith(q);
@@ -1261,8 +1309,8 @@ const MainContent = ({
     const mentionMatch = /(@|<@!?|#|:|\/)([\w\s]*)$/.exec(message);
 
     if (mentionMatch) {
-      const symbol = mentionMatch[1]!;
-      const query = mentionMatch[2]!;
+      const symbol = mentionMatch[1];
+      const query = mentionMatch[2];
 
       let type: SuggestionsType = SuggestionsType.USER;
 
@@ -1272,10 +1320,10 @@ const MainContent = ({
 
       setSuggestionTrigger({
         type: type,
-        query: query,
+        query: query ?? '',
         startIndex: mentionMatch.index,
       });
-      filterSuggestions(type, query);
+      filterSuggestions(type, query ?? '');
     } else {
       setSuggestionTrigger(null);
       setFilteredSuggestions([]);
@@ -1368,8 +1416,9 @@ const MainContent = ({
 
     if (item.isSpecial) {
       insertion = `@${item.name} `;
-    } else if (item.suggestionType === SuggestionsType.USER) {
-      insertion = `@${item.user?.user.username}#${item.user?.user.discriminator} `;
+    } else if (item.suggestionType === SuggestionsType.USER && item.user) {
+      const { username, discriminator } = item.user.user;
+      insertion = `@${username}#${discriminator} `;
     } else if (item.suggestionType === SuggestionsType.ROLE) {
       insertion = `@${item.name} `;
     } else if (item.suggestionType === SuggestionsType.EMOJI) {
@@ -1387,7 +1436,7 @@ const MainContent = ({
 
   const canMessage = contextPerms.canMessage;
   const canSendAttachments = contextPerms.canSendAttachments;
-  const replyingMsg = replyingMsgID != null && messages.find(x => x.id === replyingMsgID);
+  const replyingMsg = replyingMsgID != null && messages.find((x) => x.id === replyingMsgID);
 
   return (
     <main
@@ -1407,16 +1456,17 @@ const MainContent = ({
           <span
             className='header-title'
             onClick={(e: React.MouseEvent) => {
-              if (selectedChannel?.type === 1 && selectedChannel.recipients) {
-                const recipient = selectedChannel.recipients[0];
-                const presence = getPresence(recipient!.id);
+              const firstRecipient = selectedChannel.recipients?.[0];
+
+              if (selectedChannel.type === 1 && firstRecipient?.id) {
+                const presence = getPresence(firstRecipient.id);
                 const status = presence?.status ?? 'offline';
 
                 const memberObj: Member = {
-                  id: recipient?.id!,
-                  user: recipient as User,
+                  id: firstRecipient.id,
+                  user: firstRecipient as User,
                   presence: {
-                    user: recipient as User,
+                    user: firstRecipient as User,
                     status: status,
                     activities: [],
                   },
@@ -1438,7 +1488,7 @@ const MainContent = ({
                 : {}
             }
           >
-            {selectedChannel.name || selectedChannel?.recipients?.[0]?.username || 'Direct Message'}
+            {selectedChannel.name || selectedChannel.recipients?.[0]?.username || 'Direct Message'}
           </span>
           {selectedChannel.topic && (
             <span className='header-topic'> | {selectedChannel.topic}</span>
@@ -1467,8 +1517,7 @@ const MainContent = ({
                 push_pin
               </span>
             </button>
-            {selectedGuild !== null &&
-              selectedChannel &&
+            {selectedGuild &&
               (selectedChannel.type === 1 ? null : (
                 <button
                   className='icon-btn'
@@ -1517,7 +1566,7 @@ const MainContent = ({
               }}
             >
               <span className='material-symbols-rounded'>arrow_downward</span>
-              <span>Whoa.. looks like you're in the past!</span>
+              <span>{`Whoa.. looks like you're in the past!`}</span>
               <button className='jump-btn'>Jump to Present</button>
             </div>
           )}
@@ -1532,11 +1581,15 @@ const MainContent = ({
             />
           )}
           {replyingMsg && (
-             <div
-              className='reply-bar'
-            >
-              <span>Replying to <strong>{replyingMsg.author.username}</strong></span>
-              <button onClick={(e) => clearReplyingMsg(e, replyingMsg)}>
+            <div className='reply-bar'>
+              <span>
+                Replying to <strong>{replyingMsg.author.username}</strong>
+              </span>
+              <button
+                onClick={(e) => {
+                  clearReplyingMsg(e, replyingMsg);
+                }}
+              >
                 <span className='material-symbols-rounded vc-icon-state'>close</span>
               </button>
             </div>
@@ -1571,19 +1624,25 @@ const MainContent = ({
                 guilds={guilds}
                 onSelectEmoji={(emoji) => {
                   const prefix = emoji.animated ? 'a:' : ':';
-                  setChatMessage(prev => `${prev}<${prefix}${emoji.name}:${emoji.id}> `);
+                  setChatMessage((prev) => `${prev}<${prefix}${emoji.name}:${emoji.id}> `);
                 }}
-                onClose={() => setTheESRF(false)}
+                onClose={() => {
+                  setTheESRF(false);
+                }}
               />
             )}
             {showGifSearcher9000 && (
               <GifSearcher9000
-                  gifCategories={gifCategories}
-                  gifs={gifs}
-                  onSearch={handleSearchAndSetGif}
-                  onSelectGif={(url) => setChatMessage(url)}
-                  onClose={() => setShowGifSearcher9000(false)}
-                />
+                gifCategories={gifCategories}
+                gifs={gifs}
+                onSearch={handleSearchAndSetGif}
+                onSelectGif={(url) => {
+                  setChatMessage(url);
+                }}
+                onClose={() => {
+                  setShowGifSearcher9000(false);
+                }}
+              />
             )}
             <div className='input-wrapper'>
               {attachments.length > 0 && (

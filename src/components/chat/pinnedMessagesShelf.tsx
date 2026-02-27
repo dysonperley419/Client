@@ -3,11 +3,11 @@ import './pinnedMessagesShelf.css';
 import { useEffect, useState } from 'react';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
+import { useConfig } from '@/context/configContext';
 import { type Message, MessageListSchema } from '@/types/messages';
 import { get } from '@/utils/api';
 import { getDefaultAvatar } from '@/utils/avatar';
 import { formatTimestamp } from '@/utils/dateUtils';
-import { useConfig } from '@/context/configContext';
 
 export const PinnedMessagesShelf = ({
   channelId,
@@ -16,7 +16,7 @@ export const PinnedMessagesShelf = ({
 }: {
   channelId: string;
   onClose: () => void;
-  scrollToMessage: (messageId: string) => void;
+  scrollToMessage: (messageId: string) => Promise<void>;
 }) => {
   const [pins, setPins] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export const PinnedMessagesShelf = ({
   useEffect(() => {
     const fetchPins = async () => {
       try {
-        const data = await get(`/channels/${channelId}/pins`);
+        const data = (await get(`/channels/${channelId}/pins`)) as Message[];
 
         setPins(MessageListSchema.parse(data));
       } catch (err) {
@@ -33,7 +33,7 @@ export const PinnedMessagesShelf = ({
         setLoading(false);
       }
     };
-    fetchPins();
+    void fetchPins();
   }, [channelId]);
 
   return (
@@ -62,7 +62,7 @@ const PinItem = ({
   scrollToMessage,
 }: {
   pin: Message;
-  scrollToMessage: (messageId: string) => void;
+  scrollToMessage: (messageId: string) => Promise<void>;
 }) => {
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
     `/assets/${getDefaultAvatar(pin.author) ?? ''}.png`,
@@ -70,7 +70,7 @@ const PinItem = ({
   const { cdnUrl } = useConfig();
 
   const avatarUrl = pin.author.avatar
-    ? `${cdnUrl ?? ''}/avatars/${pin.author.id}/${pin.author.avatar}.png`
+    ? `${cdnUrl ?? ''}/avatars/${pin.author.id ?? ''}/${pin.author.avatar}.png`
     : defaultAvatarUrl;
 
   return (
@@ -93,7 +93,7 @@ const PinItem = ({
             className='pin-jump-button'
             onClick={(e) => {
               e.stopPropagation();
-              scrollToMessage(pin.id);
+              void scrollToMessage(pin.id);
             }}
           >
             Jump

@@ -1,14 +1,14 @@
 import { useAssetsUrl } from '@/context/assetsUrl';
+import { useConfig } from '@/context/configContext';
 import type { Message } from '@/types/messages';
 import { getDefaultAvatar } from '@/utils/avatar';
 
 import renderDfm from './dfm/dfmRenderer';
-import { useConfig } from '@/context/configContext';
 
 interface ReplyPreviewProps {
   referencedMessage: Message;
   selectedGuildId?: string | null;
-  scrollToMessage: (messageId: string) => void;
+  scrollToMessage: (messageId: string) => Promise<void>;
 }
 
 export const ReplyPreview = ({
@@ -24,7 +24,7 @@ export const ReplyPreview = ({
 
   const { cdnUrl } = useConfig();
   const avatarUrl = avatarId
-    ? `${cdnUrl}/avatars/${authorId ?? ''}/${avatarId}.png`
+    ? `${cdnUrl ?? ''}/avatars/${authorId ?? ''}/${avatarId}.png`
     : defaultAvatarUrl;
 
   let displayContent = referencedMessage.content ?? '';
@@ -43,13 +43,13 @@ export const ReplyPreview = ({
     displayContent = displayContent.trim() ? `${displayContent} ${attachmentText}` : attachmentText;
   }
 
-  if (referencedMessage.content?.endsWith(".gif")) {
-    displayContent = `(Gif)`
+  if (referencedMessage.content?.endsWith('.gif')) {
+    displayContent = `(Gif)`;
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
-      scrollToMessage(referencedMessage.id);
+      void scrollToMessage(referencedMessage.id);
     }
   };
 
@@ -59,7 +59,7 @@ export const ReplyPreview = ({
       role='button'
       tabIndex={0}
       onClick={() => {
-        scrollToMessage(referencedMessage.id);
+        void scrollToMessage(referencedMessage.id);
       }}
       onKeyDown={handleKeyDown}
     >

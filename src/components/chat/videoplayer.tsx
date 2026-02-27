@@ -157,6 +157,8 @@ export const VideoPlayer = ({
     }
   }, [src]);
 
+  const MAX_FILENAME_LENGTH = 40;
+
   return (
     <div
       className='video-player-container'
@@ -171,7 +173,11 @@ export const VideoPlayer = ({
     >
       <div className='video-details'>
         <div className='video-details-inner'>
-          <h1>{filename}</h1>
+          <h1>
+            {filename.length > MAX_FILENAME_LENGTH
+              ? filename.substring(0, MAX_FILENAME_LENGTH) + '...'
+              : filename}
+          </h1>
           <button type='button' className='icon-btn' onClick={() => window.open(src)}>
             <span className='material-symbols-rounded'>download</span>
           </button>

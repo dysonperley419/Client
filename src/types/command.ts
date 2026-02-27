@@ -1,5 +1,5 @@
 export interface Command {
-    name: string;
-    description: string;
-    onUse: (parameters: string[]) => any;
-};
+  name: string;
+  description: string;
+  onUse: (parameters: string[]) => string | null | undefined;
+}
