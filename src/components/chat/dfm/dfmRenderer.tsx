@@ -170,7 +170,6 @@ export default function renderDfm(
 
       //find closing delimiter
       const endAcc = accumulate(text, closingDelimiters);
-      console.log(endAcc);
       if (closingDelimiters.includes(endAcc.terminator)) {
         innerText = endAcc.accumulated;
         text = endAcc.remaining;
