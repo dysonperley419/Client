@@ -4,7 +4,8 @@ import { useModal } from '@/context/modalContext';
 import type { Attachment, Message } from '@/types/messages';
 import { localBlobCache } from '@/utils/attachmentCache';
 import { formatTimestamp } from '@/utils/dateUtils';
-import { VideoPlayer } from './videoplayer';
+
+import { VideoPlayer } from './videoPlayer';
 
 interface ChatAttachmentProps {
   attachment: Attachment;
@@ -63,13 +64,13 @@ export const ChatAttachment = ({ attachment, msg }: ChatAttachmentProps) => {
     <div
       ref={ref}
       className='attachment-item'
-      style={{ 
-        width: `${String(displayWidth)}px`, 
+      style={{
+        width: `${String(displayWidth)}px`,
         height: `${String(displayHeight)}px`,
         display: 'flex',
         backgroundColor: '#000',
         borderRadius: '8px',
-        overflow: 'hidden'
+        overflow: 'hidden',
       }}
     >
       {!loaded && !hasLocalMedia && !isVideo && (

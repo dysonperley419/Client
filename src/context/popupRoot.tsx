@@ -2,11 +2,12 @@ import './popup.css';
 
 import { createPortal } from 'react-dom';
 
+import { PopoutEmoji } from '@/components/modals/popoutEmoji';
+import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
+
 import { PopoutProfile } from '../components/modals/popoutProfile';
 import { UserProfileModal } from '../components/modals/userProfile';
 import { type PopupDataMap, usePopup } from './popupContext';
-import { PopoutEmoji } from '@/components/modals/popoutEmoji';
-import { useGuildChannelMemoryStore } from '@/stores/gncmemorystore';
 
 export const PopupRoot = () => {
   const { popupType, popupData, closePopup } = usePopup();
@@ -40,7 +41,11 @@ export const PopupRoot = () => {
             role='dialog'
             tabIndex={-1}
           >
-            <PopoutProfile member={data.member} roles={data.roles} contextGuildId={currentGuildId} />
+            <PopoutProfile
+              member={data.member}
+              roles={data.roles}
+              contextGuildId={currentGuildId}
+            />
           </div>
         );
       }
@@ -83,20 +88,22 @@ export const PopupRoot = () => {
         return (
           <div
             className='popup-wrapper'
-            style={{ 
-              top: fixedY, 
-              left: fixedX, 
+            style={{
+              top: fixedY,
+              left: fixedX,
               position: 'fixed',
-              zIndex: 10001
+              zIndex: 10001,
             }}
             role='dialog'
             tabIndex={-1}
           >
-            <PopoutEmoji emoji={data.emoji}
-            guildIcon={data.guildIcon}
-            guildId={data.guildId}
-              guildName={data.guildName} 
-              isPrivate={data.isPrivate} />
+            <PopoutEmoji
+              emoji={data.emoji}
+              guildIcon={data.guildIcon}
+              guildId={data.guildId}
+              guildName={data.guildName}
+              isPrivate={data.isPrivate}
+            />
           </div>
         );
       }

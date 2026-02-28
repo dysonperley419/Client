@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useUserStore } from '@/stores/userstore';
+import { useUserStore } from '@/stores/userStore';
 import type { Channel } from '@/types/channel';
 import {
   GatewayPayloadSchema,
@@ -116,8 +116,8 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
 
   const updateReadState = useCallback((channelId: string, messageId: string) => {
     setReadStates((prev: any) => {
-      const currentList = Array.isArray(prev) ? prev : (prev?.entries || []);
-    
+      const currentList = Array.isArray(prev) ? prev : prev?.entries || [];
+
       const targetCid = String(channelId);
       const targetMid = String(messageId);
 
@@ -193,7 +193,9 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           setPrivateChannels(parsed.private_channels ?? []);
 
           const readStateData = parsed.read_state;
-          const entries = Array.isArray(readStateData) ? readStateData : (readStateData?.entries || []);
+          const entries = Array.isArray(readStateData)
+            ? readStateData
+            : readStateData?.entries || [];
 
           setReadStates(entries);
           setRelationships(parsed.relationships);
@@ -253,16 +255,16 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
             return { ...prev, [parsed.channel_id]: remainingTyping };
           });
 
-          setPrivateChannels((prev) => 
+          setPrivateChannels((prev) =>
             prev.map((channel) => {
               if (channel.id === parsed.channel_id) {
                 return {
                   ...channel,
-                  last_message_id: parsed.id
+                  last_message_id: parsed.id,
                 };
               }
               return channel;
-            })
+            }),
           );
           break;
         }
@@ -473,17 +475,17 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           }));
 
           setTimeout(() => {
-            setTypingUsers(currentTyping => {
+            setTypingUsers((currentTyping) => {
               const channel = currentTyping[parsed.channel_id];
 
-              if (channel && channel[parsed.user_id] === startTime) {
+              if (channel?.[parsed.user_id] === startTime) {
                 const newChannel = { ...channel };
-                
+
                 delete newChannel[parsed.user_id];
 
                 return {
                   ...currentTyping,
-                  [parsed.channel_id]: newChannel
+                  [parsed.channel_id]: newChannel,
                 };
               }
 

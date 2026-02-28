@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-
 import './userProfile.css';
 
 import { type JSX, useMemo, useState } from 'react';
@@ -18,9 +16,7 @@ export const UserProfileModal = (): JSX.Element => {
   const { closePopup } = usePopup();
   const { openFullProfile } = useUiUtilityActions(null);
 
-  const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-    `/assets/${getDefaultAvatar(user) ?? ''}.png`,
-  );
+  const { url: defaultAvatarUrl, rollover } = useAssetsUrl(`/assets/${getDefaultAvatar(user)}.png`);
   const cdnUrl = useMemo(() => localStorage.getItem('selectedCdnUrl'), []);
 
   const customAvatarUrl = user?.avatar

@@ -2,6 +2,7 @@ import './memberList.css';
 
 import { type JSX, useCallback, useEffect, useState } from 'react';
 
+import { useConfig } from '@/context/configContext';
 import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
 
@@ -10,7 +11,6 @@ import { useContextMenu } from '../../context/contextMenuContext';
 import { useGateway } from '../../context/gatewayContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
-import { useConfig } from '@/context/configContext';
 
 const MemberListItem = ({
   member,
@@ -32,11 +32,11 @@ const MemberListItem = ({
 
   const MemberAvatar = ({ member, className }: { member: Member; className: string }) => {
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-      `/assets/${getDefaultAvatar(member.user) ?? ''}.png`,
+      `/assets/${getDefaultAvatar(member.user)}.png`,
     );
     const avatarUrl =
       member.avatar || member.user.avatar
-        ? `${cdnUrl ?? ''}/avatars/${member.id}/${member.user.avatar ?? ''}.png`
+        ? `${cdnUrl ?? ''}/avatars/${member.id}/${member.user.avatar}.png`
         : defaultAvatarUrl; //This needs to not be hard coded ASAP.
 
     return (
@@ -141,7 +141,7 @@ const LEEWAY_HEIGHT = 100;
 const MemberList = ({
   selectedGuild,
   selectedChannel,
-  active
+  active,
 }: {
   selectedGuild: Guild | null;
   selectedChannel: Channel | null;
@@ -219,7 +219,9 @@ const MemberList = ({
   const totalHeight = items.length * ITEM_HEIGHT;
   const offsetY = startIndex * ITEM_HEIGHT;
 
-  return !active ? <></> : (
+  return !active ? (
+    <></>
+  ) : (
     <>
       <aside className='members-column'>
         <header className='members-column-header-base'>Members ({listData.member_count})</header>
@@ -266,7 +268,6 @@ const MemberList = ({
         </div>
       </aside>
     </>
-
   );
 };
 

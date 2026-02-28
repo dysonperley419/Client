@@ -1,4 +1,4 @@
-import './videoplayer.css';
+import './videoPlayer.css';
 
 import { useEffect, useRef, useState } from 'react';
 

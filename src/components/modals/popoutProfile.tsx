@@ -1,20 +1,20 @@
 import './popoutProfile.css';
 
-import { useState, type JSX } from 'react';
+import { type JSX, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
+import { usePopup } from '@/context/popupContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import type { Channel } from '@/types/channel';
 import type { Member, Role } from '@/types/guilds';
+import { post } from '@/utils/api';
+import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { getDefaultAvatar } from '../../utils/avatar';
-import { logger } from '@/utils/logger';
-import { useNavigate } from 'react-router-dom';
-import type { Channel } from '@/types/channel';
-import { post } from '@/utils/api';
-import { usePopup } from '@/context/popupContext';
-import { useConfig } from '@/context/configContext';
 
 interface PopoutProfileProps {
   member: Member;
@@ -33,13 +33,13 @@ export const PopoutProfile = ({
   const { closePopup } = usePopup();
   const contextPerms = usePermissions(contextGuildId ?? '0');
   const status = getPresence(member.id)?.status ?? 'offline';
-  const [inLineMessage, setInLineMessage] = useState("");
+  const [inLineMessage, setInLineMessage] = useState('');
   const { cdnUrl } = useConfig();
   const { openFullProfile } = useUiUtilityActions(null);
 
   const MemberAvatar = ({ member, className }: { member: Member; className: string }) => {
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-      `/assets/${getDefaultAvatar(member.user) ?? ''}.png`,
+      `/assets/${getDefaultAvatar(member.user)}.png`,
     );
     const avatarUrl =
       member.avatar || member.user.avatar
@@ -62,14 +62,14 @@ export const PopoutProfile = ({
     if (!message.trim()) return;
 
     try {
-      setInLineMessage("");
+      setInLineMessage('');
       closePopup(); //to-do improve the UX by having these appear as sending msgs first
 
       const newDMChannel = await post(`/users/@me/channels`, {
         recipients: [member.user.id],
       });
 
-      let dmChannel = newDMChannel as Channel;
+      const dmChannel = newDMChannel as Channel;
 
       if (dmChannel?.id) {
         const formData = new FormData();
@@ -89,8 +89,7 @@ export const PopoutProfile = ({
 
         void navigate(`/channels/@me/${dmChannel.id}`);
       }
-    }
-    catch (error) {
+    } catch (error) {
       logger.error(`POPOUT_PROFILE`, `Failed to send inline message`, error);
     }
   };
@@ -207,9 +206,7 @@ export const PopoutProfile = ({
                 );
               })}
 
-              {contextPerms.canManageRoles && (
-                <div className='add-role-btn'>+</div>
-              )}
+              {contextPerms.canManageRoles && <div className='add-role-btn'>+</div>}
             </div>
           </div>
         )}
@@ -218,19 +215,31 @@ export const PopoutProfile = ({
           <textarea className='note-input' placeholder='Click to add a note' />
         </div>
         {member.user.id !== user?.id && (
-          <div className='popout-section' style={{
-            marginTop: '-30px'
-          }}>
+          <div
+            className='popout-section'
+            style={{
+              marginTop: '-30px',
+            }}
+          >
             <hr className='popout-separator' />
-            <input className='note-input' placeholder={`Message @${member.user.username}`} style={{
-              backgroundColor: 'var(--bg-dark-alt)'
-            }} value={inLineMessage} onChange={(e) => setInLineMessage(e.target.value)} onKeyDown={(e) => {
-              if (e.key === 'Enter' && inLineMessage.trim() !== "") {
-                e.preventDefault();
-                sendMessage(inLineMessage);
-                setInLineMessage("");
-              }
-            }} />
+            <input
+              className='note-input'
+              placeholder={`Message @${member.user.username}`}
+              style={{
+                backgroundColor: 'var(--bg-dark-alt)',
+              }}
+              value={inLineMessage}
+              onChange={(e) => {
+                setInLineMessage(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && inLineMessage.trim() !== '') {
+                  e.preventDefault();
+                  sendMessage(inLineMessage);
+                  setInLineMessage('');
+                }
+              }}
+            />
           </div>
         )}
       </div>

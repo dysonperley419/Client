@@ -16,5 +16,5 @@ export const getDefaultAvatar = (user: Partial<User> | null | undefined) => {
     4: '1cbd08c76f8af6dddce02c5138971129', // Red
   };
 
-  return assetHashes[index] ?? assetHashes[0];
+  return assetHashes[index] ?? '0e291f67c9274a1abdddeb3fd919cbaa';
 };

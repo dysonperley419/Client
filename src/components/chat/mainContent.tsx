@@ -6,7 +6,7 @@ import { useConfig } from '@/context/configContext';
 import { useContextMenu } from '@/context/contextMenuContext';
 import { useModal } from '@/context/modalContext';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useUserStore } from '@/stores/userstore';
+import { useUserStore } from '@/stores/userStore';
 import type { Channel } from '@/types/channel';
 import type { Command } from '@/types/command';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
@@ -27,7 +27,7 @@ import { ChatAttachment } from './chatAttachment';
 import ChatInput from './chatInput';
 import renderDfm from './dfm/dfmRenderer';
 import { EmojiChooser } from './emojiChooser';
-import { GifSearcher9000 } from './gifSearcher9000';
+import { GifSearcher9000 } from './gifSearcher';
 import MemberList from './memberList';
 import { MessageEditInput } from './messageeditinput';
 import { PinnedMessagesShelf } from './pinnedMessagesShelf';
@@ -823,7 +823,7 @@ const MainContent = ({
 
     const AuthorAvatar = ({ msg, member }: { msg: Message; member?: Member }) => {
       const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-        `/assets/${getDefaultAvatar(msg.author) ?? ''}.png`,
+        `/assets/${getDefaultAvatar(msg.author)}.png`,
       );
       const { cdnUrl } = useConfig();
 

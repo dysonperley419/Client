@@ -4,7 +4,7 @@ import { type ServerProfileProps } from '@/components/modals/serverProfile';
 import { useGateway } from '@/context/gatewayContext';
 import { useModal } from '@/context/modalContext';
 import { usePopup } from '@/context/popupContext';
-import { type UserWithPresence, useUserStore } from '@/stores/userstore';
+import { type UserWithPresence, useUserStore } from '@/stores/userStore';
 import type { Guild, Member, Role } from '@/types/guilds';
 
 import { get } from './api';

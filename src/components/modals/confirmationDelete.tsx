@@ -1,10 +1,10 @@
 import type { JSX } from 'react';
 
+import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
 import { del, post } from '@/utils/api';
+import { logger } from '@/utils/logger';
 
 import { useModal } from '../../context/modalContext';
-import { logger } from '@/utils/logger';
-import { useGuildChannelMemoryStore } from '@/stores/gncmemorystore';
 
 export const ConfirmationDeleteModal = ({
   id,
@@ -42,7 +42,7 @@ export const ConfirmationDeleteModal = ({
       logger.error(`CONFIRM_DELETE`, 'Failed to delete message', error);
       return false;
     }
-  }
+  };
 
   const deletePlace = async (id: string, type: string) => {
     if (type === 'server') {
@@ -57,9 +57,7 @@ export const ConfirmationDeleteModal = ({
 
   return (
     <div className='confirmation-leave-modal'>
-      <p>
-        Are you sure you want to delete this {type}?
-      </p>
+      <p>Are you sure you want to delete this {type}?</p>
       <p>
         <b>Once it&rsquo;s gone, it&rsquo;s gone.</b>
       </p>

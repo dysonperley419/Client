@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { useModal } from '@/context/modalContext';
 import { useVoice } from '@/hooks/useVoice';
+import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
 import type { Channel } from '@/types/channel';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
 import type { Guild } from '@/types/guilds';
@@ -19,7 +20,6 @@ import NoTextChannels from '../components/chat/noTextChannels';
 import Settings from '../components/chat/settings';
 import { useGateway } from '../context/gatewayContext';
 import LoadingScreen from './loading';
-import { useGuildChannelMemoryStore } from '@/stores/gncmemorystore';
 
 const ChatApp = (): JSX.Element => {
   const {
@@ -158,7 +158,6 @@ const ChatApp = (): JSX.Element => {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   };
-
 
   useEffect(() => {
     setBoth(selectedGuild?.id ?? null, selectedChannel?.id ?? null);

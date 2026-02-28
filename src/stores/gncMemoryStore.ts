@@ -15,25 +15,29 @@ export const useGuildChannelMemoryStore = create<GuildChannelMemoryStore>((set) 
   currentGuildId: null,
   currentChannelId: null,
 
-  setGuild: (guildId) =>
+  setGuild: (guildId) => {
     set(() => ({
       currentGuildId: guildId,
-    })),
+    }));
+  },
 
-  setChannel: (channelId) =>
+  setChannel: (channelId) => {
     set(() => ({
       currentChannelId: channelId,
-    })),
+    }));
+  },
 
-  setBoth: (guildId, channelId) =>
+  setBoth: (guildId, channelId) => {
     set(() => ({
       currentGuildId: guildId,
       currentChannelId: channelId,
-    })),
+    }));
+  },
 
-  clear: () =>
+  clear: () => {
     set(() => ({
       currentGuildId: null,
       currentChannelId: null,
-    })),
+    }));
+  },
 }));

@@ -85,7 +85,7 @@ export const ServerProfileModal = ({
 
   const MemberAvatar = ({ member }: { member: Member }) => {
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-      `/assets/${getDefaultAvatar(member.user) ?? ''}.png`,
+      `/assets/${getDefaultAvatar(member.user)}.png`,
     );
 
     const avatarUrl =

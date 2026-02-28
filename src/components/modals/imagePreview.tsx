@@ -2,12 +2,12 @@ import './imagePreview.css';
 
 import { type JSX, useEffect, useRef, useState } from 'react';
 
+import { useConfig } from '@/context/configContext';
 import type { Message } from '@/types/messages';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
-import { useConfig } from '@/context/configContext';
 
 export interface ImagePreviewProps {
   src: string;
@@ -29,7 +29,7 @@ export const ImagePreview = ({ src, alt, author, timestamp }: ImagePreviewProps)
   const { cdnUrl } = useConfig();
 
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-    `/assets/${getDefaultAvatar(author) ?? ''}.png`,
+    `/assets/${getDefaultAvatar(author)}.png`,
   );
   const customAvatarUrl = author.avatar
     ? `${cdnUrl ?? ''}/avatars/${author.id ?? ''}/${author.avatar}.png`

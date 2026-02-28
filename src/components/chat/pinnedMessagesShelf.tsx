@@ -24,7 +24,7 @@ export const PinnedMessagesShelf = ({
   useEffect(() => {
     const fetchPins = async () => {
       try {
-        const data = (await get(`/channels/${channelId}/pins`)) as Message[];
+        const data = await get(`/channels/${channelId}/pins`);
 
         setPins(MessageListSchema.parse(data));
       } catch (err) {
@@ -65,7 +65,7 @@ const PinItem = ({
   scrollToMessage: (messageId: string) => Promise<void>;
 }) => {
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-    `/assets/${getDefaultAvatar(pin.author) ?? ''}.png`,
+    `/assets/${getDefaultAvatar(pin.author)}.png`,
   );
   const { cdnUrl } = useConfig();
 

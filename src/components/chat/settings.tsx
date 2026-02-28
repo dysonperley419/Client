@@ -3,10 +3,10 @@ import './settings.css';
 import { type JSX, useEffect, useState } from 'react';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
+import { useConfig } from '@/context/configContext';
 import { useModal } from '@/context/modalContext';
 import type { User } from '@/types/users';
 import { getDefaultAvatar } from '@/utils/avatar';
-import { useConfig } from '@/context/configContext';
 
 interface SettingsProps {
   user: User | null;
@@ -22,7 +22,7 @@ interface DevSettings {
 const DefaultDevSettings: DevSettings = {
   log_gateway: false,
   webrtc_p2p: false,
-  popout_console: false
+  popout_console: false,
 };
 
 const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
@@ -36,7 +36,7 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
   });
   const { cdnUrl } = useConfig();
 
-  const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user) ?? ''}.png`);
+  const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user)}.png`);
 
   const avatarUrl = user?.avatar
     ? `${cdnUrl ?? ''}/avatars/${user.id}/${user.avatar ?? ''}.png`
@@ -183,7 +183,8 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
                           marginTop: '10px',
                         }}
                       >
-                        Displays a console for easy logging that pops out of the client, and can be dragged/resized at will.
+                        Displays a console for easy logging that pops out of the client, and can be
+                        dragged/resized at will.
                       </p>
                     </div>
                   </div>

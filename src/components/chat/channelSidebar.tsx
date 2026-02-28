@@ -4,19 +4,19 @@ import { type JSX, useEffect, useState } from 'react';
 import { type NavigateFunction, useNavigate } from 'react-router-dom';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
+import { useConfig } from '@/context/configContext';
+import { useContextMenu } from '@/context/contextMenuContext';
 import { useGateway } from '@/context/gatewayContext';
-import { useUserStore } from '@/stores/userstore';
+import { useUserStore } from '@/stores/userStore';
 import type { Channel } from '@/types/channel';
 import type { Guild, VoiceState } from '@/types/guilds';
 import { del } from '@/utils/api';
 import { getDefaultAvatar } from '@/utils/avatar';
 import { logger } from '@/utils/logger';
+import { Snowflake } from '@/utils/snowflake';
 
 import { DmChannel } from './dmChannel';
 import VoiceActivityControls from './voiceActivityControls';
-import { useContextMenu } from '@/context/contextMenuContext';
-import { Snowflake } from '@/utils/snowflake';
-import { useConfig } from '@/context/configContext';
 
 interface ChannelSidebarProps {
   selectedGuild?: Guild | null;
@@ -49,9 +49,7 @@ const PrivateChannelItem = ({
   const { cdnUrl } = useConfig();
 
   const recipient = channel.recipients?.[0];
-  const { url: defaultAvatarUrl } = useAssetsUrl(
-    `/assets/${getDefaultAvatar(recipient) ?? ''}.png`,
-  );
+  const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(recipient)}.png`);
 
   const channelName =
     channel.name || recipient?.global_name || recipient?.username || 'Unknown User';
@@ -67,7 +65,7 @@ const PrivateChannelItem = ({
 
   if (channel.last_message_id) {
     const snowflake = new Snowflake(channel.last_message_id);
-    
+
     subTitle = `Last Message ${snowflake.format()}`;
   }
 
@@ -113,7 +111,7 @@ const VoiceChannelMember = ({ vs }: { vs: VoiceState }): JSX.Element => {
 
   if (!user) return <></>;
 
-  const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user) ?? ''}.png`);
+  const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user)}.png`);
   const avatarUrl = user.avatar
     ? `${cdnUrl ?? ''}/avatars/${user.id}/${user.avatar}.png`
     : defaultAvatarUrl;
@@ -154,16 +152,16 @@ const ChannelSidebar = ({
   const navigate = useNavigate();
   const { cdnUrl } = useConfig();
 
-const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
-  .filter((channel) => !closedChannelIds.includes(channel.id))
-  .sort((a, b) => {
-    const idA = BigInt(a.last_message_id ?? '0');
-    const idB = BigInt(b.last_message_id ?? '0');
+  const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
+    .filter((channel) => !closedChannelIds.includes(channel.id))
+    .sort((a, b) => {
+      const idA = BigInt(a.last_message_id ?? '0');
+      const idB = BigInt(b.last_message_id ?? '0');
 
-    if (idB > idA) return 1;
-    if (idB < idA) return -1;
-    return 0;
-  });
+      if (idB > idA) return 1;
+      if (idB < idA) return -1;
+      return 0;
+    });
 
   useEffect(() => {
     const handleRemoteDelete = (event: Event) => {
@@ -267,24 +265,23 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
       e.clientX,
       e.clientY,
       <div className='context-menu-out guild-context-menu'>
-        <div className='button' onClick={() => {
-
-        }}>
+        <div className='button' onClick={() => {}}>
           Mark as read
         </div>
-        <div className='button'>
-          Make invite
-        </div>
+        <div className='button'>Make invite</div>
         <hr />
-        <div className='button' onClick={() => {
-          if (channel.id) {
-            closeContextMenu();
-            void navigator.clipboard.writeText(channel.id);
-          }
-        }}>
+        <div
+          className='button'
+          onClick={() => {
+            if (channel.id) {
+              closeContextMenu();
+              void navigator.clipboard.writeText(channel.id);
+            }
+          }}
+        >
           Copy ID
         </div>
-      </div>
+      </div>,
     );
   };
 
@@ -292,7 +289,6 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
     const membersInThisChannel = Object.values(voiceStates || {}).filter(
       (vs) => vs.channel_id === channel.id,
     );
-    
 
     const isSelected = selectedChannel?.id === channel.id;
     const hasUnread = !isSelected && unreads?.get(selectedGuild.id)?.has(channel.id);
@@ -305,8 +301,7 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
           className={`sidebar-btn 
             ${selectedChannel?.id === channel.id ? 'active' : ''} 
             ${hasUnread ? 'unread' : ''} 
-            ${channel.type === 2 ? 'not-selectable' : ''}`
-          }
+            ${channel.type === 2 ? 'not-selectable' : ''}`}
           onClick={() => {
             onSelectChannel(channel);
           }}
@@ -316,15 +311,11 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
         >
           <div className='sidebar-icon'>
             <span className='material-symbols-rounded' style={{ fontSize: '20px' }}>
-              {channel.type === 2 ? 'volume_up' : (channel.nsfw ? 'lock' : 'tag')}
+              {channel.type === 2 ? 'volume_up' : channel.nsfw ? 'lock' : 'tag'}
             </span>
           </div>
           <span className='sidebar-text'>{channel.name}</span>
-          {mentionCount > 0 && (
-            <div className="channel-mention-badge">
-              {mentionCount}
-            </div>
-          )}
+          {mentionCount > 0 && <div className='channel-mention-badge'>{mentionCount}</div>}
         </button>
         {channel.type === 2 && membersInThisChannel.length > 0 && (
           <div className='voice-channel-members'>
@@ -353,7 +344,13 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
       <div className={`sidebar-header ${bannerUrl != null ? 'sidebar-header-banner' : ''}`}>
         {bannerUrl != null && (
           <div className='sidebar-header-banner-bg'>
-            <img src={bannerUrl} alt='' className='sidebar-header-banner-image' loading="eager" fetchPriority='high' />
+            <img
+              src={bannerUrl}
+              alt=''
+              className='sidebar-header-banner-image'
+              loading='eager'
+              fetchPriority='high'
+            />
             <div className='sidebar-header-banner-gradient'></div>
           </div>
         )}
@@ -369,10 +366,14 @@ const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
       </div>
 
       <div className='scroller_hide'>
-         {nonCategorizedChannels.map((channel: Channel) => (
-          <div key={`wrapper-${channel.id}`} className='category-children' style={{
-            marginBottom: '10px'
-          }}>
+        {nonCategorizedChannels.map((channel: Channel) => (
+          <div
+            key={`wrapper-${channel.id}`}
+            className='category-children'
+            style={{
+              marginBottom: '10px',
+            }}
+          >
             {renderChannel(channel)}
           </div>
         ))}

@@ -3,6 +3,7 @@ import './friendsList.css';
 import { type JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
 import type { Channel } from '@/types/channel';
 import type { Relationship } from '@/types/relationship';
@@ -11,7 +12,6 @@ import { logger } from '@/utils/logger';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { getDefaultAvatar } from '../../utils/avatar';
-import { useConfig } from '@/context/configContext';
 
 interface FriendsListProps {
   friends: Relationship[];
@@ -83,9 +83,9 @@ export const FriendsList = ({
 
   const FriendAvatar = ({ friend }: { friend: Relationship }) => {
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-      `/assets/${getDefaultAvatar(friend) ?? ''}.png`,
+      `/assets/${getDefaultAvatar(friend)}.png`,
     );
-    const { cdnUrl } =  useConfig();
+    const { cdnUrl } = useConfig();
     const avatarUrl = friend.user.avatar
       ? `${cdnUrl ?? ''}/avatars/${friend.id}/${friend.user.avatar}.png`
       : defaultAvatarUrl;
@@ -210,7 +210,8 @@ export const FriendsList = ({
               return (
                 <div
                   key={friend.id}
-                  className='friend-item-row' onClick={() => {
+                  className='friend-item-row'
+                  onClick={() => {
                     openDMChannel(friend.id);
                   }}
                 >
@@ -285,10 +286,13 @@ export const FriendsList = ({
                       if (friend.type === 1) {
                         return (
                           <>
-                            <button className='icon-action-btn' onClick={(e) => {
-                              e.stopPropagation();
-                              openDMChannel(friend.id);
-                            }}>
+                            <button
+                              className='icon-action-btn'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDMChannel(friend.id);
+                              }}
+                            >
                               <span
                                 className='material-symbols-rounded'
                                 style={{ fontSize: '20px' }}
@@ -296,11 +300,14 @@ export const FriendsList = ({
                                 chat_bubble
                               </span>
                             </button>
-                            <button className='icon-action-btn' onClick={(e) => {
-                              e.stopPropagation();
+                            <button
+                              className='icon-action-btn'
+                              onClick={(e) => {
+                                e.stopPropagation();
 
-                              //uh.. do something here
-                            }}>
+                                //uh.. do something here
+                              }}
+                            >
                               <span
                                 className='material-symbols-rounded'
                                 style={{ fontSize: '20px' }}

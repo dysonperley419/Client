@@ -4,6 +4,7 @@ import { type JSX } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
+import { useConfig } from '@/context/configContext';
 import type { Channel } from '@/types/channel';
 import type { Guild } from '@/types/guilds';
 
@@ -13,7 +14,6 @@ import { useGateway } from '../../context/gatewayContext';
 import { useModal } from '../../context/modalContext';
 import { usePopup } from '../../context/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
-import { useConfig } from '@/context/configContext';
 
 const GuildSidebar = ({
   privateChannels,
@@ -122,7 +122,7 @@ const GuildSidebar = ({
 
   const UserAvatar = () => {
     const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-      `/assets/${getDefaultAvatar(user) ?? ''}.png`,
+      `/assets/${getDefaultAvatar(user)}.png`,
     );
     const { cdnUrl } = useConfig();
 

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
-import { useUserStore } from '@/stores/userstore';
+import { useUserStore } from '@/stores/userStore';
 import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
 import type { User } from '@/types/users';
