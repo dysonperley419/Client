@@ -235,7 +235,7 @@ export const PopoutProfile = ({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && inLineMessage.trim() !== '') {
                   e.preventDefault();
-                  sendMessage(inLineMessage);
+                  void sendMessage(inLineMessage);
                   setInLineMessage('');
                 }
               }}

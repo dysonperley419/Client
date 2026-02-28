@@ -4,6 +4,37 @@ import { useGateway } from '@/context/gatewayContext';
 import type { Channel } from '@/types/channel';
 import { logger } from '@/utils/logger';
 
+interface VoiceGatewayPayload {
+  op: number;
+  d: Record<string, unknown>;
+}
+
+interface GatewayVoiceStateDetail {
+  user_id?: string;
+  session_id?: string;
+}
+
+interface GatewayVoiceServerDetail {
+  token?: string;
+  endpoint?: string;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const parseVoiceGatewayPayload = (raw: string): VoiceGatewayPayload | null => {
+  const parsed: unknown = JSON.parse(raw);
+
+  if (!isRecord(parsed) || typeof parsed.op !== 'number' || !isRecord(parsed.d)) {
+    return null;
+  }
+
+  return {
+    op: parsed.op,
+    d: parsed.d,
+  };
+};
+
 export const useVoice = () => {
   const { sendOp, user } = useGateway();
   const [connectionStatus, setConnectionStatus] = useState<
@@ -45,8 +76,9 @@ export const useVoice = () => {
     if (!sdp) return 111;
 
     const match = /a=rtpmap:(\d+)\s+opus\/48000\/2/i.exec(sdp);
+    if (!match?.[1]) return 111;
 
-    return match ? parseInt(match[1]!, 10) : 111;
+    return parseInt(match[1], 10);
   };
 
   const transformSDP = (sdp: string): string | null => {
@@ -78,14 +110,14 @@ export const useVoice = () => {
     const session = ['v=0', 'o=- 0 0 IN IP4 127.0.0.1', 's=-', 't=0 0', 'a=msid-semantic: WMS *'];
 
     const media = [
-      `m=audio 9 UDP/TLS/RTP/SAVPF ${opusPayload}`,
+      `m=audio 9 UDP/TLS/RTP/SAVPF ${String(opusPayload)}`,
       discordConn || 'c=IN IP4 0.0.0.0',
       'a=rtcp-mux',
-      `a=mid:${mid}`,
-      `a=rtpmap:${opusPayload} opus/48000/2`,
-      `a=fmtp:${opusPayload} minptime=10;useinbandfec=1`,
+      `a=mid:${mid ?? '0'}`,
+      `a=rtpmap:${String(opusPayload)} opus/48000/2`,
+      `a=fmtp:${String(opusPayload)} minptime=10;useinbandfec=1`,
       'a=setup:active',
-      `a=fingerprint:sha-256 ${remoteFingerprint}`,
+      `a=fingerprint:sha-256 ${remoteFingerprint ?? ''}`,
       iceUfrag,
       icePwd,
       ...iceCandidates,
@@ -96,171 +128,13 @@ export const useVoice = () => {
     return [...session, ...media].join('\r\n') + '\r\n';
   };
 
-  const tryConnectVoiceSocket = useCallback(async () => {
-    const { sessionId, token, endpoint } = sessionRef.current;
-    if (!sessionId || !token || !endpoint) return;
-
-    const url = `ws://${endpoint}/?v=3`;
-    const vs = new WebSocket(url);
-
-    voiceSocket.current = vs;
-
-    vs.onopen = () => {
-      vs.send(
-        JSON.stringify({
-          op: 0,
-          d: {
-            server_id: activeGuildId,
-            user_id: user?.id,
-            session_id: sessionId,
-            token: token,
-            video: false,
-          },
-        }),
-      );
-    };
-
-    vs.onmessage = async (e) => {
-      const { op, d } = JSON.parse(e.data);
-
-      if (op === 2) {
-        await handleVoiceReady();
-      }
-
-      if (op === 4) {
-        const pc = pcRef.current;
-
-        if (!pc?.localDescription) return;
-
-        const fullSdp = transformSDP(d.sdp);
-        if (fullSdp === null) return;
-
-        try {
-          await pc.setRemoteDescription({
-            type: 'answer',
-            sdp: fullSdp,
-          });
-
-          if (voiceSocket.current?.readyState === WebSocket.OPEN) {
-            voiceSocket.current.send(
-              JSON.stringify({
-                op: 12,
-                d: {
-                  audio_ssrc: getSsrc(),
-                  video_ssrc: 0,
-                  rtx_ssrc: 0,
-                  streams: [],
-                },
-              }),
-            );
-
-            readyToSpeak = true;
-
-            logger.info(`WEBRTC`, `Connected with Audio SSRC: ${getSsrc()}`);
-
-            setConnectionStatus('connected');
-          }
-        } catch (err) {
-          logger.error(`WEBRTC`, `SDP transformation failed`, err);
-        }
-      }
-
-      if (op === 5) {
-        window.dispatchEvent(
-          new CustomEvent('ui_vc_member_speaking', {
-            detail: {
-              userId: d.user_id,
-              speaking: !!d.speaking,
-            },
-          }),
-        );
-      }
-
-      if (op === 8) {
-        setInterval(() => {
-          voiceSocket.current!.send(
-            JSON.stringify({
-              op: 3,
-              d: Date.now(),
-            }),
-          );
-        }, d.heartbeat_interval);
-      }
-
-      if (op === 12) {
-        const { user_id, audio_ssrc } = d;
-
-        logger.info('WEBRTC', `UserID: ${user_id} joined with ${audio_ssrc} audio_ssrc`);
-      }
-    };
-  }, [activeGuildId, user?.id]);
-
-  const setupLocalSpeakingDetection = useCallback(
-    (stream: MediaStream) => {
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-
-      source.connect(analyser);
-
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-      let isSpeaking = false;
-
-      const checkVolume = async () => {
-        if (audioContext.state === 'suspended') {
-          await audioContext.resume();
-        }
-
-        if (voiceSocket.current?.readyState !== WebSocket.OPEN) {
-          void audioContext.close();
-          return;
-        }
-
-        analyser.getByteFrequencyData(dataArray);
-
-        const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        const currentlySpeaking = volume > 10;
-
-        if (currentlySpeaking !== isSpeaking && readyToSpeak) {
-          isSpeaking = currentlySpeaking;
-
-          logger.info(`WEBRTC`, `Speaking`);
-
-          window.dispatchEvent(
-            new CustomEvent('ui_vc_member_speaking', {
-              detail: { userId: user?.id, speaking: isSpeaking },
-            }),
-          );
-
-          if (voiceSocket.current?.readyState === WebSocket.OPEN) {
-            voiceSocket.current.send(
-              JSON.stringify({
-                op: 5,
-                d: {
-                  speaking: isSpeaking ? 1 : 0,
-                  delay: 0,
-                  ssrc: getSsrc(),
-                },
-              }),
-            );
-          }
-        }
-
-        requestAnimationFrame(() => void checkVolume());
-      };
-
-      void checkVolume();
-    },
-    [user?.id],
-  );
-
-  const handleVoiceReady = async () => {
-    const vs = voiceSocket.current!;
+  const handleVoiceReady = useCallback(async () => {
+    const vs = voiceSocket.current;
+    if (!vs) return;
 
     const pc = new RTCPeerConnection({
-      rtcpMuxPolicy: 'require', //Simplifies NAT traversal apparently, and ICE/SDP signaling is easier with only one candidate instead of two
-      iceServers: [], //Local testing only for now
+      rtcpMuxPolicy: 'require',
+      iceServers: [],
     });
 
     pcRef.current = pc;
@@ -271,22 +145,71 @@ export const useVoice = () => {
 
     stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-    setupLocalSpeakingDetection(stream);
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+
+    source.connect(analyser);
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    let isSpeaking = false;
+
+    const checkVolume = async (): Promise<void> => {
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
+
+      if (voiceSocket.current?.readyState !== WebSocket.OPEN) {
+        void audioContext.close();
+        return;
+      }
+
+      analyser.getByteFrequencyData(dataArray);
+      const volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
+      const currentlySpeaking = volume > 10;
+
+      if (currentlySpeaking !== isSpeaking && readyToSpeak) {
+        isSpeaking = currentlySpeaking;
+
+        window.dispatchEvent(
+          new CustomEvent('ui_vc_member_speaking', {
+            detail: { userId: user?.id, speaking: isSpeaking },
+          }),
+        );
+
+        if (voiceSocket.current?.readyState === WebSocket.OPEN) {
+          voiceSocket.current.send(
+            JSON.stringify({
+              op: 5,
+              d: {
+                speaking: isSpeaking ? 1 : 0,
+                delay: 0,
+                ssrc: getSsrc(),
+              },
+            }),
+          );
+        }
+      }
+
+      requestAnimationFrame(() => {
+        void checkVolume();
+      });
+    };
+
+    void checkVolume();
 
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'connected') {
-        logger.info(`WEBRTC`, `ICE Connected`);
+        logger.info('WEBRTC', 'ICE Connected');
       }
     };
 
     pc.ontrack = (event) => {
-      logger.info('WEBRTC', 'Track received', event.track.kind);
-
       const remoteStream = event.streams[0] || new MediaStream([event.track]);
       const audio = new Audio();
 
       audio.srcObject = remoteStream;
-      audio.play().catch(console.error);
+      void audio.play();
 
       setRemoteStreams((prev) => new Map(prev).set(event.track.id, remoteStream));
     };
@@ -312,7 +235,118 @@ export const useVoice = () => {
         },
       }),
     );
-  };
+  }, [user?.id]);
+
+  const tryConnectVoiceSocket = useCallback(() => {
+    const { sessionId, token, endpoint } = sessionRef.current;
+    if (!sessionId || !token || !endpoint) return;
+
+    const url = `ws://${endpoint}/?v=3`;
+    const vs = new WebSocket(url);
+
+    voiceSocket.current = vs;
+
+    vs.onopen = () => {
+      vs.send(
+        JSON.stringify({
+          op: 0,
+          d: {
+            server_id: activeGuildId,
+            user_id: user?.id,
+            session_id: sessionId,
+            token: token,
+            video: false,
+          },
+        }),
+      );
+    };
+
+    vs.onmessage = async (e) => {
+      if (typeof e.data !== 'string') return;
+      const payload = parseVoiceGatewayPayload(e.data);
+      if (!payload) return;
+
+      const { op, d } = payload;
+
+      if (op === 2) {
+        await handleVoiceReady();
+      }
+
+      if (op === 4) {
+        const pc = pcRef.current;
+
+        if (!pc?.localDescription) return;
+
+        const fullSdp = transformSDP(typeof d.sdp === 'string' ? d.sdp : '');
+        if (!fullSdp) return;
+
+        try {
+          await pc.setRemoteDescription({
+            type: 'answer',
+            sdp: fullSdp,
+          });
+
+          if (voiceSocket.current?.readyState === WebSocket.OPEN) {
+            voiceSocket.current.send(
+              JSON.stringify({
+                op: 12,
+                d: {
+                  audio_ssrc: getSsrc(),
+                  video_ssrc: 0,
+                  rtx_ssrc: 0,
+                  streams: [],
+                },
+              }),
+            );
+
+            readyToSpeak = true;
+            logger.info('WEBRTC', `Connected with Audio SSRC: ${String(getSsrc())}`);
+            setConnectionStatus('connected');
+          }
+        } catch (err) {
+          logger.error('WEBRTC', 'SDP transformation failed', err);
+        }
+      }
+
+      if (op === 5) {
+        window.dispatchEvent(
+          new CustomEvent('ui_vc_member_speaking', {
+            detail: {
+              userId: typeof d.user_id === 'string' ? d.user_id : '',
+              speaking: Boolean(d.speaking),
+            },
+          }),
+        );
+      }
+
+      if (op === 8) {
+        const heartbeatInterval =
+          typeof d.heartbeat_interval === 'number' ? d.heartbeat_interval : null;
+
+        if (!heartbeatInterval) return;
+
+        setInterval(() => {
+          if (voiceSocket.current?.readyState === WebSocket.OPEN) {
+            voiceSocket.current.send(
+              JSON.stringify({
+                op: 3,
+                d: Date.now(),
+              }),
+            );
+          }
+        }, heartbeatInterval);
+      }
+
+      if (op === 12 && typeof d.user_id === 'string') {
+        const audioSsrc =
+          typeof d.audio_ssrc === 'string' || typeof d.audio_ssrc === 'number'
+            ? d.audio_ssrc
+            : 'unknown';
+
+        logger.info('WEBRTC', `UserID: ${d.user_id} joined with ${String(audioSsrc)} audio_ssrc`);
+      }
+    };
+  }, [activeGuildId, handleVoiceReady, user?.id]);
 
   const connectToVoice = useCallback(
     (guildId: string | null, channel: Channel) => {
@@ -322,32 +356,34 @@ export const useVoice = () => {
       setActiveChannel(channel);
       setActiveGuildId(guildId);
 
-      const onVoiceState = (e: any) => {
-        if (e.detail.user_id === user?.id) {
-          sessionRef.current.sessionId = e.detail.session_id;
-
+      const onVoiceState = (e: Event) => {
+        const detail = (e as CustomEvent<GatewayVoiceStateDetail>).detail;
+        if (detail.user_id === user?.id && detail.session_id) {
+          sessionRef.current.sessionId = detail.session_id;
           tryConnectVoiceSocket();
         }
       };
 
-      const onVoiceServer = (e: any) => {
-        sessionRef.current.token = e.detail.token;
-        sessionRef.current.endpoint = e.detail.endpoint;
-
+      const onVoiceServer = (e: Event) => {
+        const detail = (e as CustomEvent<GatewayVoiceServerDetail>).detail;
+        sessionRef.current.token = detail.token;
+        sessionRef.current.endpoint = detail.endpoint;
         tryConnectVoiceSocket();
       };
 
       window.addEventListener('gateway_voice_state', onVoiceState);
       window.addEventListener('gateway_voice_server', onVoiceServer);
 
-      sendOp!(4, {
-        guild_id: guildId,
-        channel_id: channel.id,
-        self_mute: false,
-        self_deaf: false,
-      });
+      if (sendOp) {
+        sendOp(4, {
+          guild_id: guildId,
+          channel_id: channel.id,
+          self_mute: false,
+          self_deaf: false,
+        });
+      }
     },
-    [activeChannel, sendOp, user?.id, tryConnectVoiceSocket],
+    [activeChannel, sendOp, tryConnectVoiceSocket, user?.id],
   );
 
   const disconnect = useCallback(() => {

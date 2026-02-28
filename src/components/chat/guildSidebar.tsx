@@ -186,7 +186,7 @@ const GuildSidebar = ({
         <div className='online-stats'>
           <span className='stat-text'>{onlineFriendsCount} ONLINE</span>
           {privateChannels.length > 0 && (
-            <div className='privateChannels-section'>
+            <div className='private-channels-section'>
               {privateChannels.map((privateChannel: Channel) => {
                 const recipient = privateChannel.recipients?.[0];
                 const mentions = privateChannelMentions.get(privateChannel.id);
@@ -214,7 +214,7 @@ const GuildSidebar = ({
                       {recipient?.avatar ? (
                         <img
                           className='guild-icon'
-                          src={`${cdnUrl ?? ''}/avatars/${recipient?.id}/${recipient?.avatar}.png`}
+                          src={`${cdnUrl ?? ''}/avatars/${recipient?.id ?? ''}/${recipient?.avatar ?? ''}.png`}
                           alt={recipient?.username}
                           onError={handleImgError}
                         />

@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
-export const MessageEditInput = ({ 
-  initialContent, 
-  onSave, 
-  onCancel 
-}: { 
-  initialContent: string, 
-  onSave: (content: string) => void, 
-  onCancel: () => void 
+export const MessageEditInput = ({
+  initialContent,
+  onSave,
+  onCancel,
+}: {
+  initialContent: string;
+  onSave: (content: string) => void;
+  onCancel: () => void;
 }) => {
   const [content, setContent] = useState(initialContent);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -17,7 +17,7 @@ export const MessageEditInput = ({
       textareaRef.current.focus();
       textareaRef.current.setSelectionRange(content.length, content.length);
     }
-  }, []);
+  }, [content.length]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -29,24 +29,38 @@ export const MessageEditInput = ({
   };
 
   return (
-    <div className="message-edit-container">
+    <div className='message-edit-container'>
       <textarea
-        autoFocus
-        className="message-edit-input"
+        className='message-edit-input'
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e) => {
+          setContent(e.target.value);
+        }}
         onKeyDown={handleKeyDown}
       />
-      <div className="edit-help-text">
-        escape to{' '}<a href="#" 
-        className="login-link" 
-        onClick={(e) => {
+      <div className='edit-help-text'>
+        escape to{' '}
+        <button
+          type='button'
+          className='login-link'
+          onClick={(e) => {
             e.preventDefault();
             onCancel();
-        }}>cancel</a>{' '}• enter to{' '}<a href="#" className="login-link" onClick={(e) => {
+          }}
+        >
+          cancel
+        </button>{' '}
+        • enter to{' '}
+        <button
+          type='button'
+          className='login-link'
+          onClick={(e) => {
             e.preventDefault();
             onSave(content);
-        }}>save</a>
+          }}
+        >
+          save
+        </button>
       </div>
     </div>
   );

@@ -271,7 +271,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px !important;
+  font-size: 40px;
   color: var(--bg-dnd);
   background-color: rgb(242 63 67 / 10%);
   border-radius: 50%;

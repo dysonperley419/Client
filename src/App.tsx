@@ -5,13 +5,13 @@ import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import { useModal } from './context/modalContext';
 import ChatApp from './pages/chat';
+import Landing from './pages/landing';
 import LoadingScreen from './pages/loading';
 import Login from './pages/login';
 import Register from './pages/register';
 import type { Instance } from './types/instance';
 import { type DomainsResponse, DomainsResponseSchema } from './types/responses';
 import { get } from './utils/api';
-import Landing from './pages/landing';
 
 function App(): JSX.Element {
   const { openModal } = useModal();

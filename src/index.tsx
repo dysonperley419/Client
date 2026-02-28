@@ -3,12 +3,12 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
+import { ConfigProvider } from './context/configProvider';
 import { ContextMenuProvider } from './context/contextMenuProvider';
 import { GatewayProvider } from './context/gatewayProvider';
 import { ModalProvider } from './context/modalProvider';
 import { PopupProvider } from './context/popupProvider';
-import { VoiceProvider } from './context/voiceContext';
-import { ConfigProvider } from './context/configContext';
+import { VoiceProvider } from './context/voiceProvider';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {

@@ -32,7 +32,7 @@ export const ConfirmationDeleteModal = ({
 
   const deleteMessage = async (id: string) => {
     try {
-      await del(`/channels/${currentChannelId}/messages/${id}`);
+      await del(`/channels/${currentChannelId ?? ''}/messages/${id}`);
 
       closeModal();
       return true;

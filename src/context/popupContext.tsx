@@ -13,7 +13,7 @@ export interface PopupDataMap {
     guildId: string;
     guildName: string;
     isPrivate: boolean;
-  }
+  };
 }
 
 export type PopupType = keyof PopupDataMap;

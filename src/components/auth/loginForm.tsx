@@ -44,8 +44,7 @@ const LoginForm = ({
           {instanceStatus === 'valid' && 'Instance is online'}
         </span>
       );
-    else
-      return (<></>);
+    else return <></>;
   };
 
   return (

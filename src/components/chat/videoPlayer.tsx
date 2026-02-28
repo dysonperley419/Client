@@ -75,8 +75,8 @@ export const VideoPlayer = ({
   ) => {
     if (!progressBarRef.current || !videoRef.current || duration === 0) return;
 
-    let clickX = 0;
     const rect = progressBarRef.current.getBoundingClientRect();
+    let clickX: number;
 
     if ('clientX' in e) {
       clickX = e.clientX - rect.left;

@@ -54,8 +54,7 @@ const RegisterForm = ({
           {instanceStatus === 'valid' && 'Instance is online'}
         </span>
       );
-    else
-      return (<></>)
+    else return <></>;
   };
 
   return (

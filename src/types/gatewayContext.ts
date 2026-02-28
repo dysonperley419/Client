@@ -35,7 +35,7 @@ export interface GatewayContextSchema {
   getPresence: (userId: string | undefined) => Presence | null;
   typingUsers: Record<string, Record<string, number>>;
   memberLists?: Record<string, GuildMemberListState>;
-  updateReadState: any;
+  updateReadState: (channelId: string, messageId: string) => void;
   memberListsRef?: React.RefObject<Record<string, GuildMemberListState> | undefined>;
   sendOp?: (op: number, d: unknown) => void;
 }

@@ -16,10 +16,16 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateModal = <T extends ModalType>(data: Partial<ModalDataMap[T]>) => {
-    setModalData((prev: any) => ({
-      ...prev,
-      ...data,
-    }));
+    setModalData((prev) => {
+      if (!prev || typeof prev !== 'object') {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        ...(data as object),
+      } as ModalDataMap[ModalType];
+    });
   };
 
   const closeModal = () => {

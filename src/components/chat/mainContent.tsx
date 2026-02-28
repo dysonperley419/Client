@@ -54,7 +54,7 @@ interface MainContentProps {
   onChannelSeen?: (guild_id: string | null, channel_id: string, lastMsgId: string) => Promise<void>;
 }
 
-export const MESSAGE_STATE = Object.freeze({
+const MESSAGE_STATE = Object.freeze({
   PENDING: 0,
   SENT: 1,
   FAILED: -1,
@@ -495,7 +495,7 @@ const MainContent = ({
     );
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     let finalContent = chatMessage;
@@ -1433,22 +1433,17 @@ const MainContent = ({
     const queryLength = suggestionsTrigger.query.length + 1;
     const after = chatMessage.substring(suggestionsTrigger.startIndex + queryLength);
 
-    let insertion = '';
-
-    if (item.isSpecial) {
-      insertion = `@${item.name} `;
-    } else if (item.suggestionType === SuggestionsType.USER && item.user) {
-      const { username, discriminator } = item.user.user;
-      insertion = `@${username}#${discriminator} `;
-    } else if (item.suggestionType === SuggestionsType.ROLE) {
-      insertion = `@${item.name} `;
-    } else if (item.suggestionType === SuggestionsType.EMOJI) {
-      insertion = `:${item.name}: `;
-    } else if (item.suggestionType === SuggestionsType.COMMAND) {
-      insertion = `/${item.name} `;
-    } else {
-      insertion = `#${item.name} `;
-    }
+    const insertion = (() => {
+      if (item.isSpecial) return `@${item.name} `;
+      if (item.suggestionType === SuggestionsType.USER && item.user) {
+        const { username, discriminator } = item.user.user;
+        return `@${username}#${discriminator} `;
+      }
+      if (item.suggestionType === SuggestionsType.ROLE) return `@${item.name} `;
+      if (item.suggestionType === SuggestionsType.EMOJI) return `:${item.name}: `;
+      if (item.suggestionType === SuggestionsType.COMMAND) return `/${item.name} `;
+      return `#${item.name} `;
+    })();
 
     setChatMessage(before + insertion + after);
     setSuggestionTrigger(null);

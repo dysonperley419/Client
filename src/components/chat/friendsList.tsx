@@ -212,7 +212,7 @@ export const FriendsList = ({
                   key={friend.id}
                   className='friend-item-row'
                   onClick={() => {
-                    openDMChannel(friend.id);
+                    void openDMChannel(friend.id);
                   }}
                 >
                   <div className='friend-info'>
@@ -290,7 +290,7 @@ export const FriendsList = ({
                               className='icon-action-btn'
                               onClick={(e) => {
                                 e.stopPropagation();
-                                openDMChannel(friend.id);
+                                void openDMChannel(friend.id);
                               }}
                             >
                               <span
@@ -328,7 +328,7 @@ export const FriendsList = ({
           </div>
         </div>
         <div className='active-now-column'>
-          <div className='scroller_hide'>
+          <div className='scroller-hide'>
             <h3 className='active-now-header'>Active now</h3>
             <div className='active-now-empty'>
               <h4>Hello? Is anybody on?</h4>

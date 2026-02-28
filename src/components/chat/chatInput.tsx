@@ -1,6 +1,6 @@
 import './chatInput.css';
 
-import { useLayoutEffect,useRef } from "react";
+import { useLayoutEffect, useRef } from 'react';
 
 interface ChatInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   value: string;
@@ -14,7 +14,7 @@ const ChatInput = ({ value, onChange, onSubmit, disabled, ...props }: ChatInputP
     const el = ref.current;
     if (!el) return;
 
-    el.style.height = "1em";
+    el.style.height = '1em';
     el.style.height = `${String(el.scrollHeight)}px`;
   }, [value]);
 
@@ -23,7 +23,7 @@ const ChatInput = ({ value, onChange, onSubmit, disabled, ...props }: ChatInputP
 
     props.onKeyDown?.(e);
 
-    if (!e.defaultPrevented && e.key === "Enter" && !e.shiftKey) {
+    if (!e.defaultPrevented && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSubmit?.(e);
     }
@@ -31,11 +31,11 @@ const ChatInput = ({ value, onChange, onSubmit, disabled, ...props }: ChatInputP
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-   
+
     if (newValue.toLowerCase().includes('b1nzy')) {
       window.open('https://takeb1nzyto.space/', '_blank');
 
-      return;  //You're gonna get ratelimited.
+      return; //You're gonna get ratelimited.
     }
 
     onChange(e);
@@ -49,7 +49,7 @@ const ChatInput = ({ value, onChange, onSubmit, disabled, ...props }: ChatInputP
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       disabled={disabled}
-      className="chat-input"
+      className='chat-input'
     />
   );
 };

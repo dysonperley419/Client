@@ -319,7 +319,7 @@
 }
 
 .sidebar-btn.unread::before {
-  content: "";
+  content: '';
   position: absolute;
   left: -4px;
   width: 7px;

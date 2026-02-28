@@ -1,172 +1,166 @@
 .emoji-picker-container {
-    height: 440px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 0 10px var(--bg-dark-alt);
-    overflow: hidden;
-    user-select: none;
+  height: 440px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 10px var(--bg-dark-alt);
+  overflow: hidden;
+  user-select: none;
 }
 
 .emoji-picker-header {
-    padding: 12px;
-
+  padding: 12px;
 }
 
 .emoji-picker-header .search-bar {
-    flex: 1;
-    background-color: var(--bg-dark-alt);
-    outline: 1px solid rgb(187 154 247 / 20%);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    opacity: 0.8;
-    justify-content: space-between;
+  flex: 1;
+  background-color: var(--bg-dark-alt);
+  outline: 1px solid rgb(187 154 247 / 20%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  opacity: 0.8;
+  justify-content: space-between;
 }
 
 .emoji-picker-header input {
-    background: none;
-    color: var(--text-muted);
-    font-size: 14px;
-    width: 100%;
+  background: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  width: 100%;
 }
 
 .emoji-picker-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 12px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  scroll-behavior: smooth;
 }
 
 .emoji-section .section-header {
-    font-size: 12px;
-    font-weight: 700;
-    color: #4f5660;
-    margin: 16px 0 8px 0;
-    text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4f5660;
+  margin: 16px 0 8px;
+  text-transform: uppercase;
 }
 
 .emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
-    gap: 2px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  gap: 2px;
 }
 
 .emoji-item {
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    cursor: pointer;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .emoji-item:hover {
-    background-color: var(--bg-alt);
+  background-color: var(--bg-alt);
 }
 
 .emoji-item img {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 .emoji-picker-footer {
-    height: 44px;
-    background: var(--bg-header-alt);
-    border-top: 1px solid var(--bg-sidebar-secondary);
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
+  height: 44px;
+  background: var(--bg-header-alt);
+  border-top: 1px solid var(--bg-sidebar-secondary);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
 }
 
 .footer-nav-scroll {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    overflow-x: auto;
-    width: 100%;
-    scrollbar-width: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  width: 100%;
+  scrollbar-width: none;
 }
 
 .footer-nav-scroll::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .nav-icon {
-    font-size: 20px;
-    color: var(--bg-offline);
-    cursor: pointer;
+  font-size: 20px;
+  color: var(--bg-offline);
+  cursor: pointer;
 }
 
 .nav-icon:hover,
 .nav-icon.active {
-    color: var(--bg-bright);
+  color: var(--bg-bright);
 }
 
 .nav-guild-icon {
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    transition: transform 0.1s;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
+  filter: grayscale(100%);
 }
 
 .nav-guild-icon img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .nav-guild-icon .icon-fallback {
-    width: 100%;
-    height: 100%;
-    background: var(--bg-dark-alt);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
-    color: var(--bg-offline);
+  width: 100%;
+  height: 100%;
+  background: var(--bg-dark-alt);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--bg-offline);
 }
 
 .nav-guild-icon:hover {
-    transform: scale(1.1);
+  transform: scale(1.1);
 }
 
 .scroller::-webkit-scrollbar {
-    width: 8px;
+  width: 8px;
 }
 
 .scroller::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .scroller::-webkit-scrollbar-thumb {
-    background: var(--bg-offline);
-    border-radius: 4px;
-}
-
-.nav-guild-icon {
-    opacity: 0.6;
-    transition: opacity 0.2s, transform 0.1s;
-    filter: grayscale(100%);
+  background: var(--bg-offline);
+  border-radius: 4px;
 }
 
 .nav-guild-icon.active,
 .nav-guild-icon:hover {
-    opacity: 1;
-    filter: grayscale(0%);
-    transform: scale(1.1);
+  opacity: 1;
+  filter: grayscale(0%);
+  transform: scale(1.1);
 }
 
 .nav-guild-icon.active {
-    border-bottom: 2px solid var(--accent-primary);
-    border-radius: 8px;
-}
-
-.emoji-picker-content {
-    scroll-behavior: smooth;
+  border-bottom: 2px solid var(--accent-primary);
+  border-radius: 8px;
 }

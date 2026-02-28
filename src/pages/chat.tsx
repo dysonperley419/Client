@@ -21,6 +21,36 @@ import Settings from '../components/chat/settings';
 import { useGateway } from '../context/gatewayContext';
 import LoadingScreen from './loading';
 
+interface DeveloperSettings {
+  webrtc_p2p?: boolean;
+  popout_console?: boolean;
+}
+
+interface GatewayMessageCreateDetail {
+  guild_id?: string | null;
+  channel_id: string;
+  id: string;
+  author: { id?: string };
+  mentions?: User[];
+  mention_everyone?: boolean;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getDeveloperSettings = (): DeveloperSettings => {
+  const raw = localStorage.getItem('developerSettings');
+  if (!raw) return {};
+
+  const parsed: unknown = JSON.parse(raw);
+  if (!isRecord(parsed)) return {};
+
+  return {
+    webrtc_p2p: typeof parsed.webrtc_p2p === 'boolean' ? parsed.webrtc_p2p : undefined,
+    popout_console: typeof parsed.popout_console === 'boolean' ? parsed.popout_console : undefined,
+  };
+};
+
 const ChatApp = (): JSX.Element => {
   const {
     isReady,
@@ -52,8 +82,8 @@ const ChatApp = (): JSX.Element => {
 
   const clearChannelReadState = useCallback(
     async (gId: string | null, cId: string, lastMsgId: string | null) => {
-      const key = String(gId ?? 'direct_messages');
-      const channelIdToClear = String(cId);
+      const key = gId ?? 'direct_messages';
+      const channelIdToClear = cId;
 
       setUnreads((prev) => {
         const next = new Map(prev);
@@ -92,7 +122,7 @@ const ChatApp = (): JSX.Element => {
       });
 
       if (lastMsgId && updateReadState) {
-        updateReadState(channelIdToClear, String(lastMsgId));
+        updateReadState(channelIdToClear, lastMsgId);
       }
 
       if (!lastMsgId) return;
@@ -115,10 +145,9 @@ const ChatApp = (): JSX.Element => {
     ? (selectedGuild.channels.find((c) => c.id === channelId) ?? null)
     : ((privateChannels as Channel[])?.find((c) => c.id === channelId) ?? null);
 
-  const isUsingWebRTCP2P =
-    JSON.parse(localStorage.getItem('developerSettings') ?? '{}').webrtc_p2p ?? false;
-  const isUsingPopoutConsole =
-    JSON.parse(localStorage.getItem('developerSettings') ?? '{}').popout_console ?? false;
+  const developerSettings = getDeveloperSettings();
+  const isUsingWebRTCP2P = developerSettings.webrtc_p2p ?? false;
+  const isUsingPopoutConsole = developerSettings.popout_console ?? false;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).classList.contains('popout-console-titlebar')) {
@@ -161,7 +190,7 @@ const ChatApp = (): JSX.Element => {
 
   useEffect(() => {
     setBoth(selectedGuild?.id ?? null, selectedChannel?.id ?? null);
-  }, [selectedGuild?.id, selectedChannel?.id]);
+  }, [selectedGuild?.id, selectedChannel?.id, setBoth]);
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -238,8 +267,9 @@ const ChatApp = (): JSX.Element => {
     };
 
     const handleNewMessage = (event: Event) => {
-      const newMessage = (event as CustomEvent).detail;
+      const newMessage = (event as CustomEvent<GatewayMessageCreateDetail>).detail;
       const { guild_id: gId, channel_id: cId, id: msgId, author } = newMessage;
+      const guildKey = gId ?? 'direct_messages';
 
       setPassedGuilds((prev) =>
         prev.map((g) =>
@@ -255,14 +285,16 @@ const ChatApp = (): JSX.Element => {
       );
 
       if (cId === selectedChannel?.id) {
-        clearChannelReadState(gId, cId, msgId);
-        updateReadState(cId, msgId);
+        void clearChannelReadState(gId ?? null, cId, msgId);
+        if (updateReadState) {
+          updateReadState(cId, msgId);
+        }
         return;
       }
 
       const targetChannel = (privateChannels as Channel[])?.find((c) => c.id === cId);
 
-      if (targetChannel && author.id !== user?.id) {
+      if (targetChannel && author.id && author.id !== user?.id) {
         setPrivateChannelMentions((prev) => {
           const newMap = new Map(prev);
           const currentCount = newMap.get(cId) ?? 0;
@@ -276,8 +308,8 @@ const ChatApp = (): JSX.Element => {
           const updatedChannel = { ...targetChannel, last_message_id: msgId };
 
           return [...otherChannels, updatedChannel].sort((a, b) => {
-            const idA = BigInt(a.last_message_id ?? '0');
-            const idB = BigInt(b.last_message_id ?? '0');
+            const idA = BigInt(a.last_message_id || '0');
+            const idB = BigInt(b.last_message_id || '0');
             return idB > idA ? 1 : -1;
           });
         });
@@ -289,20 +321,20 @@ const ChatApp = (): JSX.Element => {
       if (isMentioned) {
         setMentions((prev) => {
           const next = new Map(prev);
-          const guildMap = new Map(next.get(gId) ?? []);
+          const guildMap = new Map(next.get(guildKey) ?? []);
           const currentCount = guildMap.get(cId) ?? 0;
 
           guildMap.set(cId, currentCount + 1);
-          next.set(gId, guildMap);
+          next.set(guildKey, guildMap);
           return next;
         });
       } else {
         setUnreads((prev) => {
           const next = new Map(prev);
-          const guildSet = new Set(next.get(gId) ?? []);
+          const guildSet = new Set(next.get(guildKey) ?? []);
 
           guildSet.add(cId);
-          next.set(gId, guildSet);
+          next.set(guildKey, guildSet);
           return next;
         });
       }
@@ -321,10 +353,18 @@ const ChatApp = (): JSX.Element => {
       window.removeEventListener('gateway_relationship_add', handleRelationshipAdd);
       window.removeEventListener('gateway_relationship_remove', handleRelationshipRemove);
     };
-  }, [selectedChannel?.id, selectedGuild, user, navigate]);
+  }, [
+    clearChannelReadState,
+    navigate,
+    privateChannels,
+    selectedChannel?.id,
+    selectedGuild,
+    updateReadState,
+    user,
+  ]);
 
   useEffect(() => {
-    if (selectedGuild && selectedGuild.id && selectedChannel && selectedChannel.id) {
+    if (selectedGuild?.id && selectedChannel?.id) {
       setUnreads((prev) => {
         if (!prev.has(selectedGuild.id)) {
           return prev;
@@ -364,11 +404,7 @@ const ChatApp = (): JSX.Element => {
       });
     }
 
-    if (
-      selectedChannel &&
-      selectedChannel.id &&
-      (selectedChannel.type === 1 || selectedChannel.type === 3)
-    ) {
+    if (selectedChannel?.id && (selectedChannel.type === 1 || selectedChannel.type === 3)) {
       const exists = newPrivateChannels.some((c: Channel) => c.id === selectedChannel.id);
 
       if (exists) {
@@ -389,7 +425,7 @@ const ChatApp = (): JSX.Element => {
         });
       }
     }
-  }, [selectedGuild, selectedChannel]);
+  }, [newPrivateChannels, selectedGuild, selectedChannel]);
 
   const handleManualRemoveFriend = (userId: string) => {
     setLocalFriends((prev) => prev.filter((f) => f.id !== userId));
@@ -423,7 +459,7 @@ const ChatApp = (): JSX.Element => {
     if (isUsingWebRTCP2P) {
       openModal('CONFIRMATION_CONNECT_P2P', {
         channel: channel,
-        name: channel.name!,
+        name: channel.name ?? '',
         guild_id: channel.guild_id ?? null,
       });
     } else {
@@ -442,10 +478,11 @@ const ChatApp = (): JSX.Element => {
 
   const handleMarkGuildAsRead = async (guild_id: string) => {
     try {
-      const ApiVer =
-        parseInt((localStorage.getItem('defaultApiVersion') ?? 'v9').split('v')[1]!) ?? 0;
+      const apiVerRaw = localStorage.getItem('defaultApiVersion') ?? 'v9';
+      const apiVerPart = apiVerRaw.startsWith('v') ? apiVerRaw.slice(1) : apiVerRaw;
+      const apiVer = parseInt(apiVerPart, 10) || 0;
 
-      if (ApiVer < 9) {
+      if (apiVer < 9) {
         await post(`/guilds/${guild_id}/ack`, {});
       } else {
         const guildUnreadSet = unreads.get(guild_id);

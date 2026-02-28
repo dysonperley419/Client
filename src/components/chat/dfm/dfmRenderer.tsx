@@ -172,19 +172,18 @@ export default function renderDfm(
 
     switch (openingDelimiter) {
       case 'https://':
-      case 'http://':
+      case 'http://': {
         innerText = openingDelimiter + innerText;
 
         const inviteRegex = /\/invite\/([a-zA-Z0-9]+)/.exec(innerText);
 
         const isDirectGif = innerText.toLowerCase().endsWith('.gif');
-        const isTenor = innerText.includes('tenor.com/view/') ?? innerText.includes('media.tenor.com/');
+        const isTenor =
+          innerText.includes('tenor.com/view/') ?? innerText.includes('media.tenor.com/');
         const isKlipy = innerText.includes('klipy.com');
 
-        
-
         if (isDirectGif || isTenor || isKlipy) {
-          result.push(<OffsiteMedia src={innerText}/>);
+          result.push(<OffsiteMedia src={innerText} />);
         } else {
           result.push(
             <a title={innerText} href={innerText} target='_blank' rel='noreferrer'>
@@ -198,6 +197,7 @@ export default function renderDfm(
           result.push(<InviteMention code={inviteCode} />);
         }
         break;
+      }
 
       case '```':
         result.push(<code className='block'>{innerText}</code>);

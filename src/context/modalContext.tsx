@@ -22,7 +22,7 @@ export interface ModalDataMap {
     member: Member;
     mutual_guilds?: Guild[] | [];
     mutual_friends?: User[] | [];
-    connected_accounts?: any[] | [];
+    connected_accounts?: unknown[] | [];
     premium_since?: string | null;
     premium_type?: number;
   };

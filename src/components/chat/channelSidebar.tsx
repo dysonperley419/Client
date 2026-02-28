@@ -1,6 +1,6 @@
 import './channelSidebar.css';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useEffect, useMemo, useState } from 'react';
 import { type NavigateFunction, useNavigate } from 'react-router-dom';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
@@ -54,7 +54,7 @@ const PrivateChannelItem = ({
   const channelName =
     channel.name || recipient?.global_name || recipient?.username || 'Unknown User';
   const avatarUrl = recipient?.avatar
-    ? `${cdnUrl ?? ''}/avatars/${recipient.id}/${recipient.avatar}.png`
+    ? `${cdnUrl ?? ''}/avatars/${recipient.id ?? ''}/${recipient.avatar}.png`
     : defaultAvatarUrl;
 
   const status = getPresence(recipient?.id)?.status ?? 'offline';
@@ -78,10 +78,9 @@ const PrivateChannelItem = ({
       isTyping={isTyping}
       selected={selected}
       status={status}
-      onClose={async () => {
+      onClose={() => {
         onCloseLocal();
-
-        await handleCloseDM(channel.id);
+        void handleCloseDM(channel.id);
       }}
       onClick={() => {
         void navigate(`/channels/@me/${channel.id}`);
@@ -109,9 +108,8 @@ const VoiceChannelMember = ({ vs }: { vs: VoiceState }): JSX.Element => {
     };
   }, [vs.user_id]);
 
-  if (!user) return <></>;
-
   const { url: defaultAvatarUrl } = useAssetsUrl(`/assets/${getDefaultAvatar(user)}.png`);
+  if (!user) return <></>;
   const avatarUrl = user.avatar
     ? `${cdnUrl ?? ''}/avatars/${user.id}/${user.avatar}.png`
     : defaultAvatarUrl;
@@ -151,9 +149,13 @@ const ChannelSidebar = ({
   const [closedChannelIds, setClosedChannelIds] = useState<string[]>([]);
   const navigate = useNavigate();
   const { cdnUrl } = useConfig();
+  const validClosedChannelIds = useMemo(
+    () => closedChannelIds.filter((id) => globalPrivateChannels.some((c) => c.id === id)),
+    [closedChannelIds, globalPrivateChannels],
+  );
 
   const visiblePrivateChannels = ((globalPrivateChannels as Channel[]) || [])
-    .filter((channel) => !closedChannelIds.includes(channel.id))
+    .filter((channel) => !validClosedChannelIds.includes(channel.id))
     .sort((a, b) => {
       const idA = BigInt(a.last_message_id ?? '0');
       const idB = BigInt(b.last_message_id ?? '0');
@@ -179,12 +181,6 @@ const ChannelSidebar = ({
     };
   }, [selectedChannel, navigate, onSelectChannel]);
 
-  useEffect(() => {
-    setClosedChannelIds((prev) =>
-      prev.filter((id) => !globalPrivateChannels.some((c) => c.id === id)),
-    );
-  }, [globalPrivateChannels]);
-
   if (!selectedGuild) {
     return (
       <div id='channels-column'>
@@ -194,7 +190,7 @@ const ChannelSidebar = ({
           </div>
         </div>
 
-        <div className='scroller_hide'>
+        <div className='scroller-hide'>
           <div className='no-channels-sidebar-wrapper'>
             <button
               className={`sidebar-btn ${!selectedChannel ? 'active' : ''}`}
@@ -265,9 +261,7 @@ const ChannelSidebar = ({
       e.clientX,
       e.clientY,
       <div className='context-menu-out guild-context-menu'>
-        <div className='button' onClick={() => {}}>
-          Mark as read
-        </div>
+        <div className='button'>Mark as read</div>
         <div className='button'>Make invite</div>
         <hr />
         <div
@@ -365,7 +359,7 @@ const ChannelSidebar = ({
         </div>
       </div>
 
-      <div className='scroller_hide'>
+      <div className='scroller-hide'>
         {nonCategorizedChannels.map((channel: Channel) => (
           <div
             key={`wrapper-${channel.id}`}

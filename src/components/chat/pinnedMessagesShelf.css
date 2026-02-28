@@ -85,7 +85,7 @@
   color: var(--text-main);
   font-size: 14px;
   line-height: 1.4;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .pins-content > p {
@@ -134,7 +134,7 @@
   color: #a9b1d6;
   font-size: 14px;
   line-height: 1.4;
-  word-break: break-word;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
@@ -175,6 +175,6 @@
   opacity: 1;
 }
 
-.pin-jump-button:hover {
+.pin-item .pin-jump-button:hover {
   filter: brightness(1.2);
 }

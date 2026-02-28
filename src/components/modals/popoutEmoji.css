@@ -1,51 +1,51 @@
 .emoji-origin-card {
-    background: var(--bg-sidebar);
-    border-radius: 8px;
-    padding: 12px;
-    border: 1px solid var(--outline-color-gray);
+  background: var(--bg-sidebar);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--outline-color-gray);
 }
 
 .guild-name-text {
-    color: var(--text-bright);
-    font-size: 14px;
-    margin: 0;
-    font-weight: 600;
+  color: var(--text-bright);
+  font-size: 14px;
+  margin: 0;
+  font-weight: 600;
 }
 
 .private-guild-tag {
-    color: var(--text-muted);
-    font-size: 12px;
-    display: block;
-    margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  display: block;
+  margin-top: 2px;
 }
 
 .emoji-details-popout .avatar-img-large {
-    border-radius: 4px;
-    border: 1px solid var(--outline-color-gray);
+  border-radius: 4px;
+  border: 1px solid var(--outline-color-gray);
 }
 
 .popout-section .section-title {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-alt);
-    display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-alt);
+  display: block;
 }
 
 .guild-icon-name {
-    display: flex;
-    align-items: center;
-    align-content: center;
-    gap: 15px;
-    user-select: none;
-    cursor: pointer;
-    padding: 3px;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  gap: 15px;
+  user-select: none;
+  cursor: pointer;
+  padding: 3px;
 }
 
 .guild-icon-name:active {
-    background: var(--outline-color-gray);
+  background: var(--outline-color-gray);
 }
 
 .popout-emoji-guild-icon {
-    width: 30px;
-    height: 30px;
+  width: 30px;
+  height: 30px;
 }

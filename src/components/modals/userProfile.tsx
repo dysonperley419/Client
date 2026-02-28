@@ -1,5 +1,6 @@
 import './userProfile.css';
 
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { type JSX, useMemo, useState } from 'react';
 
 import type { Member } from '@/types/guilds';
@@ -149,20 +150,24 @@ export const UserProfileModal = (): JSX.Element => {
           <div
             className='icon-btn-small'
             title={`View user profile`}
-            onClick={(e: any) => {
+            onClick={(e: MouseEvent<HTMLDivElement>) => {
               e.preventDefault();
               e.stopPropagation();
 
-              viewUserProfile(user!);
+              if (user) {
+                viewUserProfile(user);
+              }
             }}
             tabIndex={0}
             role='button'
-            onKeyDown={(e) => {
+            onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 e.stopPropagation();
 
-                viewUserProfile(user!);
+                if (user) {
+                  viewUserProfile(user);
+                }
               }
             }}
           >

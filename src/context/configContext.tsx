@@ -1,15 +1,15 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext } from 'react';
 
-const ConfigContext = createContext<{ cdnUrl: string | null }>(null!);
+interface ConfigContextValue {
+  cdnUrl: string | null;
+}
 
-export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
-    const cdnUrl = useMemo(() => localStorage.getItem('selectedCdnUrl'), []);
+export const ConfigContext = createContext<ConfigContextValue | undefined>(undefined);
 
-    return (
-        <ConfigContext.Provider value={{ cdnUrl }}>
-            {children}
-        </ConfigContext.Provider>
-    );
+export const useConfig = (): ConfigContextValue => {
+  const context = useContext(ConfigContext);
+  if (!context) {
+    throw new Error('useConfig must be used within ConfigProvider');
+  }
+  return context;
 };
-
-export const useConfig = () => useContext(ConfigContext);

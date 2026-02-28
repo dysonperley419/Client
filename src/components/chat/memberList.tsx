@@ -36,7 +36,7 @@ const MemberListItem = ({
     );
     const avatarUrl =
       member.avatar || member.user.avatar
-        ? `${cdnUrl ?? ''}/avatars/${member.id}/${member.user.avatar}.png`
+        ? `${cdnUrl ?? ''}/avatars/${member.id}/${member.user.avatar ?? ''}.png`
         : defaultAvatarUrl; //This needs to not be hard coded ASAP.
 
     return (
@@ -226,7 +226,7 @@ const MemberList = ({
       <aside className='members-column'>
         <header className='members-column-header-base'>Members ({listData.member_count})</header>
         <div
-          className='scroller_hide members-column-scroller'
+          className='scroller-hide members-column-scroller'
           onScroll={handleScroll}
           style={{ height: `${String(viewportHeight)}px`, overflowY: 'auto' }}
         >

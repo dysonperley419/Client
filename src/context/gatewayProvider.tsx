@@ -1,9 +1,10 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useUserStore } from '@/stores/userStore';
-import type { Channel } from '@/types/channel';
+import type { Channel, ChannelReadState } from '@/types/channel';
 import {
   GatewayPayloadSchema,
+  type GuildMemberListOperationItem,
   GuildMemberListUpdateSchema,
   HelloSchema,
   MessageCreateSchema,
@@ -29,6 +30,25 @@ interface GatewayProviderProps {
   guilds?: Guild[];
   user?: User;
 }
+
+interface DeveloperSettings {
+  log_gateway?: boolean;
+}
+
+const getDeveloperSettings = (): DeveloperSettings => {
+  const raw = localStorage.getItem('developerSettings');
+  if (!raw) return {};
+
+  const parsed: unknown = JSON.parse(raw);
+  if (typeof parsed !== 'object' || parsed === null) return {};
+
+  return {
+    log_gateway:
+      'log_gateway' in parsed && typeof parsed.log_gateway === 'boolean'
+        ? parsed.log_gateway
+        : undefined,
+  };
+};
 
 export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const socket = useRef<WebSocket | null>(null);
@@ -115,27 +135,27 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   );
 
   const updateReadState = useCallback((channelId: string, messageId: string) => {
-    setReadStates((prev: any) => {
-      const currentList = Array.isArray(prev) ? prev : prev?.entries || [];
-
-      const targetCid = String(channelId);
-      const targetMid = String(messageId);
-
-      const exists = currentList.find((rs: any) => String(rs.channel_id) === targetCid);
+    setReadStates((prev) => {
+      const currentList = prev;
+      const targetCid = channelId;
+      const targetMid = messageId;
+      const exists = currentList.find((rs) => rs.channel_id === targetCid);
 
       if (!exists) {
         return [
           ...currentList,
           {
+            id: targetCid,
             channel_id: targetCid,
             last_message_id: targetMid,
+            last_pin_timestamp: null,
             mention_count: 0,
-          },
+          } satisfies ChannelReadState,
         ];
       }
 
-      return currentList.map((rs: any) => {
-        if (String(rs.channel_id) === targetCid) {
+      return currentList.map((rs) => {
+        if (rs.channel_id === targetCid) {
           const currentAckId = rs.last_message_id ? BigInt(rs.last_message_id) : 0n;
           const newAckId = BigInt(targetMid);
 
@@ -218,23 +238,26 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           break;
         }
 
-        case 'VOICE_STATE_UPDATE':
+        case 'VOICE_STATE_UPDATE': {
           const parsed = VoiceStateSchema.parse(data);
 
           setVoiceStates((prev) => {
-            const newState = { ...prev };
-
             if (!parsed.channel_id) {
-              delete newState[parsed.user_id];
+              const remaining = Object.fromEntries(
+                Object.entries(prev).filter(([userId]) => userId !== parsed.user_id),
+              ) as Record<string, VoiceState>;
+              return remaining;
             } else {
-              newState[parsed.user_id] = parsed;
+              return {
+                ...prev,
+                [parsed.user_id]: parsed,
+              };
             }
-
-            return newState;
           });
 
           window.dispatchEvent(new CustomEvent('gateway_voice_state', { detail: data }));
           break;
+        }
 
         case 'VOICE_SERVER_UPDATE':
           window.dispatchEvent(new CustomEvent('gateway_voice_server', { detail: data }));
@@ -334,7 +357,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           const usersToStore: User[] = [];
           const newPresences: Record<string, Presence> = {};
           parsed.ops.forEach((op) => {
-            const processItem = (item: any) => {
+            const processItem = (item: GuildMemberListOperationItem) => {
               if (item.member?.user) {
                 usersToStore.push(item.member.user);
               }
@@ -479,13 +502,13 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
               const channel = currentTyping[parsed.channel_id];
 
               if (channel?.[parsed.user_id] === startTime) {
-                const newChannel = { ...channel };
-
-                delete newChannel[parsed.user_id];
+                const remainingTyping = Object.fromEntries(
+                  Object.entries(channel).filter(([userId]) => userId !== parsed.user_id),
+                );
 
                 return {
                   ...currentTyping,
-                  [parsed.channel_id]: newChannel,
+                  [parsed.channel_id]: remainingTyping,
                 };
               }
 
@@ -562,11 +585,16 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
       };
 
       ws.onmessage = (event: MessageEvent<string>) => {
-        if (JSON.parse(localStorage.getItem('developerSettings') ?? '{}').log_gateway ?? false) {
-          const raw = JSON.parse(event.data.toString());
-          const summary = `Incoming OP ${raw.op}${raw.t ? ` (${raw.t})` : ''}`;
+        if (getDeveloperSettings().log_gateway ?? false) {
+          const raw: unknown = JSON.parse(event.data);
+          if (typeof raw === 'object' && raw !== null && 'op' in raw) {
+            const rawRecord = raw as Record<string, unknown>;
+            const op = String(rawRecord.op);
+            const eventType = typeof rawRecord.t === 'string' ? rawRecord.t : '';
+            const summary = `Incoming OP ${op}${eventType ? ` (${eventType})` : ''}`;
 
-          logger.info('GATEWAY', summary, raw);
+            logger.info('GATEWAY', summary, raw);
+          }
         }
 
         const payload = GatewayPayloadSchema.parse(JSON.parse(event.data));

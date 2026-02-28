@@ -1,103 +1,128 @@
-import { useConfig } from "@/context/configContext";
-import { SuggestionsType, type Suggestion, type SuggestionsTrigger } from "@/types/suggestions";
+import { useConfig } from '@/context/configContext';
+import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
 
 interface SuggestionsBarProps {
-    suggestionsTrigger: SuggestionsTrigger;
-    filteredSuggestions: Suggestion[] | [];
-    selectedIndex: number;
-    applySuggestion: (item: any) => void;
-    setSelectedIndex: (index: number) => void;
-};
+  suggestionsTrigger: SuggestionsTrigger;
+  filteredSuggestions: Suggestion[] | [];
+  selectedIndex: number;
+  applySuggestion: (item: Suggestion) => void;
+  setSelectedIndex: (index: number) => void;
+}
 
-export const SuggestionsBar = ({ suggestionsTrigger, filteredSuggestions, selectedIndex, applySuggestion, setSelectedIndex }: SuggestionsBarProps) => {
-    const { cdnUrl } = useConfig();
+export const SuggestionsBar = ({
+  suggestionsTrigger,
+  filteredSuggestions,
+  selectedIndex,
+  applySuggestion,
+  setSelectedIndex,
+}: SuggestionsBarProps) => {
+  const { cdnUrl } = useConfig();
 
-    return (
-        <>
-            <div className='input-wrapper' key={'SuggestionsBar'}>
-                <div className='input-row'>
-                    {suggestionsTrigger != null && filteredSuggestions.length > 0 && (
-                        <>
-                            <div className='chat-suggestions-wrapper'>
-                                {filteredSuggestions.map((item: Suggestion, index: number) => {
-                                    const isUser = item.suggestionType === SuggestionsType.USER;
-                                    const isRole = item.suggestionType === SuggestionsType.ROLE;
-                                    const isEmoji = item.suggestionType === SuggestionsType.EMOJI;
-                                    const isCommand = item.suggestionType === SuggestionsType.COMMAND;
+  return (
+    <>
+      <div className='input-wrapper' key={'SuggestionsBar'}>
+        <div className='input-row'>
+          {suggestionsTrigger != null && filteredSuggestions.length > 0 && (
+            <>
+              <div className='chat-suggestions-wrapper'>
+                {filteredSuggestions.map((item: Suggestion, index: number) => {
+                  const isUser = item.suggestionType === SuggestionsType.USER;
+                  const isRole = item.suggestionType === SuggestionsType.ROLE;
+                  const isEmoji = item.suggestionType === SuggestionsType.EMOJI;
+                  const isCommand = item.suggestionType === SuggestionsType.COMMAND;
 
-                                    const prefix = (isUser || isRole) ? '@' : isEmoji ? ':' : isCommand ? '/' : '#';
-                                    let name = '';
-                                    let subtext = '';
+                  const prefix = isUser || isRole ? '@' : isEmoji ? ':' : isCommand ? '/' : '#';
+                  const { name, subtext } = (() => {
+                    if (isUser && item.user) {
+                      return {
+                        name: item.user.nick || item.user.user.username,
+                        subtext:
+                          item.user.user.discriminator !== '0'
+                            ? `${item.user.user.username}#${item.user.user.discriminator}`
+                            : item.user.user.username,
+                      };
+                    }
 
-                                    if (isUser && item.user) {
-                                        name = item.user.nick || item.user.user.username;
-                                        subtext =
-                                            item.user.user.discriminator !== '0'
-                                                ? `${item.user.user.username}#${item.user.user.discriminator}`
-                                                : item.user.user.username;
-                                    } else if (item.isSpecial) {
-                                        name = item.name;
-                                        subtext = item.description;
-                                    } else if (isEmoji) {
-                                        name = item.name;
-                                        subtext = `Emoji from ${item.sourceGuildName || 'Unknown Server'}`;
-                                    } else if (isRole) {
-                                        name = item.name;
-                                        subtext = 'Role';
-                                    } else if (isCommand) {
-                                        name = item.name;
-                                        subtext = item.description;
-                                    } else {
-                                        const topic = item.channel?.topic || 'Channel';
-                                        const maxTopicLength = 50;
+                    if (item.isSpecial) {
+                      return { name: item.name, subtext: item.description };
+                    }
 
-                                        name = item.name;
-                                        subtext =
-                                            topic.length > maxTopicLength
-                                                ? `${topic.substring(0, maxTopicLength)}...`
-                                                : topic;
-                                    }
+                    if (isEmoji) {
+                      return {
+                        name: item.name,
+                        subtext: `Emoji from ${item.sourceGuildName || 'Unknown Server'}`,
+                      };
+                    }
 
-                                    return (
-                                        <div
-                                            key={`suggestion-${index}`}
-                                            className={`chat-suggestion ${index === selectedIndex ? 'active' : ''}`}
-                                            style={{ '--prefix': `"${prefix}"` } as React.CSSProperties}
-                                            onClick={() => {
-                                                applySuggestion(item);
-                                            }}
-                                            onMouseEnter={() => {
-                                                setSelectedIndex(index);
-                                            }}
-                                        >
-                                            {isUser && item.user?.user.avatar && !item.isSpecial ? (
-                                                <img
-                                                    src={`${cdnUrl}/avatars/${item.user.id}/${item.user.user.avatar}.png`}
-                                                    className='avatar-img suggested-item-avi'
-                                                />
-                                            ) : isEmoji ? (
-                                                <img
-                                                    src={`${cdnUrl}/emojis/${item.emoji?.id}.${item.emoji?.animated ? 'gif' : 'png'}`}
-                                                    className='suggested-item-avi'
-                                                    style={{ objectFit: 'contain' }}
-                                                />
-                                            ) : (
-                                                <div className='suggested-item-avi' style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    {!isUser && prefix}
-                                                </div>
-                                            )}
-                                            <div className='chat-suggestion-item'>
-                                                <span>{name}</span>
-                                                <span>{subtext}</span>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        </>
-    )
+                    if (isRole) {
+                      return { name: item.name, subtext: 'Role' };
+                    }
+
+                    if (isCommand) {
+                      return { name: item.name, subtext: item.description };
+                    }
+
+                    const topic = item.channel?.topic || 'Channel';
+                    const maxTopicLength = 50;
+
+                    return {
+                      name: item.name,
+                      subtext:
+                        topic.length > maxTopicLength
+                          ? `${topic.substring(0, maxTopicLength)}...`
+                          : topic,
+                    };
+                  })();
+
+                  return (
+                    <div
+                      key={`suggestion-${String(index)}`}
+                      className={`chat-suggestion ${index === selectedIndex ? 'active' : ''}`}
+                      style={{ '--prefix': `"${prefix}"` } as React.CSSProperties}
+                      onClick={() => {
+                        applySuggestion(item);
+                      }}
+                      onMouseEnter={() => {
+                        setSelectedIndex(index);
+                      }}
+                    >
+                      {isUser && item.user?.user.avatar && !item.isSpecial ? (
+                        <img
+                          src={`${cdnUrl ?? ''}/avatars/${item.user.id}/${item.user.user.avatar ?? ''}.png`}
+                          alt={`${item.user.user.username} avatar`}
+                          className='avatar-img suggested-item-avi'
+                        />
+                      ) : isEmoji ? (
+                        <img
+                          src={`${cdnUrl ?? ''}/emojis/${item.emoji?.id ?? ''}.${item.emoji?.animated ? 'gif' : 'png'}`}
+                          alt={item.name}
+                          className='suggested-item-avi'
+                          style={{ objectFit: 'contain' }}
+                        />
+                      ) : (
+                        <div
+                          className='suggested-item-avi'
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {!isUser && prefix}
+                        </div>
+                      )}
+                      <div className='chat-suggestion-item'>
+                        <span>{name}</span>
+                        <span>{subtext}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
 };

@@ -124,16 +124,16 @@
   justify-content: space-between;
 }
 
-.msg-context-btn:hover {
-  opacity: 1;
-}
-
 .msg-context-btn {
   opacity: 0;
   transform: translateY(2px);
   transition:
     opacity 0.15s ease,
     transform 0.15s ease;
+}
+
+.msg-context-btn:hover {
+  opacity: 1;
 }
 
 .message-content:hover .msg-context-btn {
@@ -357,7 +357,7 @@
 }
 
 .message-pending {
-  opacity: 0.4 !important;
+  opacity: 0.4;
   filter: grayscale(100%) brightness(0.7);
   cursor: wait;
 }
@@ -372,12 +372,12 @@
   pointer-events: none;
   border: 1px dashed var(--accent-primary);
   border-radius: 8px;
-  animation: overlayPulse 8s cubic-bezier(0.68, -0.6, 0.32, 1.6) infinite;
+  animation: overlay-pulse 8s cubic-bezier(0.68, -0.6, 0.32, 1.6) infinite;
   backdrop-filter: blur(0);
   transition: backdrop-filter 0.3s ease;
 }
 
-@keyframes overlayPulse {
+@keyframes overlay-pulse {
   0%,
   60% {
     background: rgb(0 0 0 / 40%);
@@ -419,6 +419,7 @@
   0% {
     transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
   }
+
   60% {
     transform: perspective(1000px) rotateX(10deg) rotateY(180deg) scale(1.1);
   }
@@ -428,9 +429,11 @@
     filter: drop-shadow(-20px 10px 30px rgb(0 0 0 / 80%));
     color: var(--accent-primary);
   }
+
   80% {
     transform: perspective(1000px) rotateX(5deg) rotateY(170deg) scale(0.95);
   }
+
   100% {
     transform: perspective(1000px) rotateX(0deg) rotateY(360deg);
   }
@@ -578,6 +581,7 @@
   0% {
     background-color: rgb(88 101 242 / 30%);
   }
+
   100% {
     background-color: transparent;
   }
@@ -648,7 +652,7 @@
   border-radius: 8px;
   padding: 10px;
   resize: none;
-  font-family: inherit;
+  font-family: system-ui, sans-serif;
   outline: none;
 }
 
@@ -658,7 +662,7 @@
   color: var(--text-muted);
 }
 
-.edit-help-text span {
+.message-edit-container .edit-help-text span {
   color: var(--accent-secondary);
   cursor: pointer;
 }
@@ -764,7 +768,7 @@
   cursor: pointer;
 }
 
-.category-item img {
+.gif-category-grid .category-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -832,7 +836,6 @@
   font-size: 18px;
 }
 
-
 .reply-bar {
   position: absolute;
   bottom: 78px;
@@ -850,7 +853,9 @@
   font-weight: 600;
   gap: 8px;
   box-shadow: 0 2px 10px rgb(0 0 0 / 20%);
-  transition: background-color 0.2s, opacity 0.5s;
+  transition:
+    background-color 0.2s,
+    opacity 0.5s;
   justify-content: space-between;
 }
 

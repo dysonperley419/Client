@@ -1,13 +1,8 @@
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 
-import { useVoice } from '@/hooks/useVoice';
+import type { useVoice } from '@/hooks/useVoice';
 
-const VoiceContext = createContext<ReturnType<typeof useVoice> | null>(null);
-
-export const VoiceProvider = ({ children }: { children: React.ReactNode }) => {
-  const voice = useVoice();
-  return <VoiceContext.Provider value={voice}>{children}</VoiceContext.Provider>;
-};
+export const VoiceContext = createContext<ReturnType<typeof useVoice> | null>(null);
 
 export const useVoiceContext = () => {
   const context = useContext(VoiceContext);

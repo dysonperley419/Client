@@ -64,29 +64,32 @@ const PrivateChannelSchema = ChannelSchema.extend({
   }, z.number().default(0)),
 });
 
-const ReadStateSchema = z.preprocess((val) => {
-  if (Array.isArray(val)) {
-    return {
-      entries: val,
-      partial: false,
-      version: 0,
-    };
-  }
+const ReadStateSchema = z.preprocess(
+  (val) => {
+    if (Array.isArray(val)) {
+      return {
+        entries: val,
+        partial: false,
+        version: 0,
+      };
+    }
 
-  if (!val) {
-    return {
-      entries: [],
-      partial: false,
-      version: 0,
-    };
-  }
+    if (!val) {
+      return {
+        entries: [],
+        partial: false,
+        version: 0,
+      };
+    }
 
-  return val;
-}, z.object({
-  entries: z.array(ChannelReadStateSchema).default([]),
-  partial: z.boolean().default(false),
-  version: z.number().default(0),
-}));
+    return val;
+  },
+  z.object({
+    entries: z.array(ChannelReadStateSchema).default([]),
+    partial: z.boolean().default(false),
+    version: z.number().default(0),
+  }),
+);
 
 // TODO: Implement all ReadyEventSchema
 export const ReadyEventSchema = z.looseObject({
@@ -100,7 +103,7 @@ export const ReadyEventSchema = z.looseObject({
   private_channels: z.array(PrivateChannelSchema).default([]),
   presences: z.array(PresenceSchema).optional().default([]),
   voice_states: z.array(VoiceStateSchema).optional().default([]),
-  read_state: ReadStateSchema
+  read_state: ReadStateSchema,
 });
 
 export const MessageCreateSchema = MessageSchema.extend({

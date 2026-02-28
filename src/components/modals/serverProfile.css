@@ -29,6 +29,8 @@
   background-position: center;
   position: relative;
   box-shadow: var(--gray-outline-bottom);
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
 }
 
 .profile-modal-avatar-wrapper {
@@ -75,12 +77,12 @@
   background: rgb(255 255 255 / 5%);
   padding: 2px 8px;
   border-radius: 4px;
-   transition: 0.3s background;
+  transition: 0.3s background;
 }
 
 .modal-pronouns:hover {
-   background: rgba(0, 0, 0, 0.1);
-   user-select: none;
+  background: rgb(0 0 0 / 10%);
+  user-select: none;
 }
 
 .modal-about-content {
@@ -130,7 +132,6 @@
   border-radius: 2px 2px 0 0;
 }
 
-
 .profile-modal-identity {
   display: flex;
   flex-direction: column;
@@ -148,11 +149,11 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-left: 2px; 
+  margin-left: 2px;
 }
 
 .badge-item {
-width: 22px;
+  width: 22px;
   height: 20px;
   display: flex;
   align-items: center;
@@ -174,13 +175,7 @@ width: 22px;
 }
 
 .profile-badges:hover {
-   background: rgba(0, 0, 0, 0.1);
-}
-
-.profile-modal-header {
-  opacity: 0.5; /* Dimmer while loading */
-  transition: opacity 0.3s ease;
-  background-color: var(--bg-tertiary);
+  background: rgb(0 0 0 / 10%);
 }
 
 .profile-modal-header.loaded {

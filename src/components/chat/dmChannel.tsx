@@ -25,14 +25,14 @@ export const DmChannel = ({
     <div className='dm-card-icon'>
       {typeof icon === 'string' ? <img src={icon} alt='' /> : icon}
       {isTyping ? (
-          <div className={`fr-typing-indicator-dots ${status}`}>
-            <span className='dot'></span>
-            <span className='dot'></span>
-            <span className='dot'></span>
-          </div>
-        ) : (
-         <div className={`fr-status-dot ${status}`} title={status}></div>
-        )}
+        <div className={`fr-typing-indicator-dots ${status}`}>
+          <span className='dot'></span>
+          <span className='dot'></span>
+          <span className='dot'></span>
+        </div>
+      ) : (
+        <div className={`fr-status-dot ${status}`} title={status}></div>
+      )}
     </div>
     <div className='dm-card-info'>
       <div className='dm-card-title'>{title}</div>

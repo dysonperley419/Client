@@ -11,6 +11,9 @@ import RegisterForm from '../components/auth/registerForm';
 import Brand from '../components/common/brand';
 import Footer from '../components/common/footer';
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
 function Register(): JSX.Element {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -68,15 +71,17 @@ function Register(): JSX.Element {
       }
 
       window.location.href = '/channels/@me';
-    } catch (err: any) {
+    } catch (err: unknown) {
       try {
-        const fieldErrors = RegistrationFieldErrorsSchema.parse(err.responseBody);
+        const responseBody = isRecord(err) ? err.responseBody : undefined;
+        const fieldErrors = RegistrationFieldErrorsSchema.parse(responseBody);
 
         setUsernameStatus(fieldErrors.username ? 'error' : null);
         setPasswordStatus(fieldErrors.password ? 'error' : null);
         setEmailStatus(fieldErrors.email ? 'error' : null);
       } catch {
-        setMiscError(err.message || 'An error occurred while registering');
+        const message = isRecord(err) && typeof err.message === 'string' ? err.message : null;
+        setMiscError(message || 'An error occurred while registering');
       }
       console.error(err);
     }

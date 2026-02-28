@@ -55,7 +55,8 @@
   text-decoration: underline;
 }
 
-.error, .neterror {
+.error,
+.neterror {
   text-align: right;
   color: rgb(240 104 104); /* Var */
 }
