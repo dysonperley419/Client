@@ -35,7 +35,7 @@ function accumulate(
       continue;
     }
 
-    const terminatorsStartOnly = ['````', '```', '>>> ', '> ', '### ', '## ', '# ', '-# ', '~~~'];
+    const terminatorsStartOnly = ['````', '```', '>>> ', '> ', '### ', '## ', '# ', '-# '];
     const startOnly = ['', '\n'];
 
     for (const terminator of terminators) {
@@ -87,7 +87,6 @@ export default function renderDfm(
       '__',
       '_',
       '~~',
-      '~~~',
       '@everyone',
       '@here',
       '<@!',
@@ -206,7 +205,6 @@ export default function renderDfm(
         break;
       }
 
-      case '~~~':
       case '````':
       case '```':
         result.push(<code className='block'>{innerText}</code>);
