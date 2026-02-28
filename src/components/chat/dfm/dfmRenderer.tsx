@@ -265,10 +265,12 @@ export default function renderDfm(
         result.push(<MemberMention guild_id={guild_id} user_id={innerText} />);
         break;
 
-      case '<#':
+      case '<#': {
         //channel
-        result.push(<ChannelMention guild_id={guild_id} channel_id={innerText} />);
+        const channelId = innerText.replace(/^:/, '');
+        result.push(<ChannelMention guild_id={guild_id} channel_id={channelId} />);
         break;
+      }
 
       case '<@&':
         //role

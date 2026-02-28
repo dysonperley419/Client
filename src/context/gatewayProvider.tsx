@@ -13,6 +13,7 @@ import {
   PresenceUpdateSchema,
   ReadyEventSchema,
   TypingStartSchema,
+  UserUpdateSchema,
 } from '@/types/gateway';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
 import { type Guild, type Member, type VoiceState, VoiceStateSchema } from '@/types/guilds';
@@ -351,6 +352,18 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         case 'GUILD_DELETE':
           window.dispatchEvent(new CustomEvent('gateway_guild_delete', { detail: data }));
           break;
+        case 'USER_UPDATE': {
+          const parsed = UserUpdateSchema.parse(data);
+
+          if (parsed.id === user?.id) {
+            setUser((prevUser) => {
+              if (!prevUser) return null;
+              return { ...prevUser, ...parsed };
+            });
+          }
+          window.dispatchEvent(new CustomEvent('gateway_user_update', { detail: parsed }));
+          break;
+        }
 
         case 'GUILD_MEMBER_LIST_UPDATE': {
           const parsed = GuildMemberListUpdateSchema.parse(data);
@@ -539,7 +552,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           break;
       }
     },
-    [requestMembers],
+    [requestMembers, user],
   );
 
   const startHeartbeat = useCallback((interval: number, ws: WebSocket) => {

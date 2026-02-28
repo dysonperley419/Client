@@ -39,13 +39,14 @@
   user-select: none;
   cursor: pointer;
   padding: 3px;
+  margin-left: 5px;
 }
 
 .guild-icon-name:active {
   background: var(--outline-color-gray);
 }
 
-.popout-emoji-guild-icon {
-  width: 30px;
-  height: 30px;
+.avatar-img-large.popout-emoji-guild-icon {
+  width: 40px;
+  height: 40px;
 }

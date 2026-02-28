@@ -137,6 +137,15 @@ export const MessageDeleteSchema = z.object({
   guild_id: z.string().nullish(),
 });
 
+export const UserUpdateSchema = UserSchema.partial().extend({
+  phone: z.string().nullish().optional(),
+  nsfw_allowed: z.boolean().optional(),
+  premium: z.boolean().nullish(),
+  premium_since: z.string().nullish(),
+  premium_usage_flags: z.coerce.number().int().nullish().optional(),
+  purchased_flags: z.coerce.number().int().nullish().optional(),
+});
+
 export const TypingStartSchema = z.object({
   channel_id: z.string(),
   guild_id: z.string().nullish(),
@@ -167,3 +176,4 @@ export type GuildMemberListOperation = z.infer<typeof GuildMemberListOperationSc
 export type GuildMemberListOperationItem = z.infer<typeof GuildMemberListOperationItemSchema>;
 export type GuildMemberListGroup = z.infer<typeof GuildMemberListGroupSchema>;
 export type PresenceUpdate = z.infer<typeof PresenceUpdateSchema>;
+export type UserUpdate = z.infer<typeof UserUpdateSchema>;
