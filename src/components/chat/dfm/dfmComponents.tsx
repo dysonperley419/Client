@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import './dfm.css';
 
 import { type JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
 import { useUserStore } from '@/stores/userstore';
 import type { Channel } from '@/types/channel';
@@ -12,7 +12,32 @@ import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
 import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
-import { useConfig } from '@/context/configContext';
+
+export interface InviteData {
+  code: string;
+  guild?: {
+    id: string;
+    name: string;
+    icon?: string;
+    banner?: string;
+    description?: string;
+    verification_level?: number;
+    features?: string[];
+  };
+  channel?: {
+    id: string;
+    name: string;
+    type: number;
+  };
+  inviter?: {
+    id: string;
+    username: string;
+    avatar?: string;
+    discriminator: string;
+  };
+  approximate_presence_count?: number;
+  approximate_member_count?: number;
+}
 
 export const MemberMention = ({
   guild_id,
@@ -25,7 +50,7 @@ export const MemberMention = ({
   const getUser = useUserStore((state) => state.getUser);
   const contextGuild = guilds.find((x: Guild) => x.id === guild_id);
 
-  const { openUserProfile } = useUiUtilityActions(contextGuild!);
+  const { openUserProfile } = useUiUtilityActions(contextGuild ?? null);
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
 
   const member = getMember(guild_id, user_id);
@@ -81,7 +106,7 @@ export const MemberMention = ({
     <strong
       onClick={(e) => {
         if (fetchedUser) {
-          void openUserProfile(e, member! ?? fakeMemberObj);
+          void openUserProfile(e, member ?? fakeMemberObj);
         }
       }}
       className='inline-msg-mention'
@@ -127,10 +152,17 @@ export const ChannelMention = ({
 }): JSX.Element => {
   const navigate = useNavigate();
   const render = (channel: Channel | undefined) => {
-    return <strong className='inline-msg-mention' onClick={(e) => {
-      e.stopPropagation();
-      void navigate(`/channels/${channel?.guild_id}/${channel?.id}`);
-    }}>#{channel?.name ?? 'unknown'}</strong>;
+    return (
+      <strong
+        className='inline-msg-mention'
+        onClick={(e) => {
+          e.stopPropagation();
+          void navigate(`/channels/${channel?.guild_id ?? ''}/${channel?.id ?? ''}`);
+        }}
+      >
+        #{channel?.name ?? 'unknown'}
+      </strong>
+    );
   };
 
   const { guilds } = useGateway();
@@ -163,35 +195,37 @@ export const EmojiMention = ({
       className='emoji'
       alt={name}
       src={emojiUrl}
-      onClick={(e) => openEmojiPopout(e, { name, id: emoji_id })}
+      onClick={(e) => {
+        openEmojiPopout(e, { name, id: emoji_id });
+      }}
     />
   );
 };
 
-export const OffsiteMedia = ({ src } : {
-  src: string
-}) => {
+export const OffsiteMedia = ({ src }: { src: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const type = src.toLowerCase().endsWith('.gif') ? "gif" : "img";
+  const type = src.toLowerCase().endsWith('.gif') ? 'gif' : 'img';
 
   return (
-    <div className="gif-embed-container">
+    <div className='gif-embed-container'>
       <img
         src={`https://staging.oldcordapp.com/proxy/${encodeURIComponent(src)}`} //you're welcome. make this use the instance configured's proxy ASAP.
         alt={type.toUpperCase()}
         className={`chat-gif-render ${isExpanded ? 'is-big' : ''}`}
-        loading="lazy"
+        loading='lazy'
         onError={(e) => (e.currentTarget.style.display = 'none')}
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+        }}
       />
     </div>
-  )
+  );
 };
 
 export const InviteMention = ({ code }: { code: string }): JSX.Element => {
   const { guilds } = useGateway();
   const navigate = useNavigate();
-  const [inviteData, setInviteData] = useState<any>(null);
+  const [inviteData, setInviteData] = useState<InviteData | null>(null);
   const [loading, setLoading] = useState(true);
   const { cdnUrl } = useConfig();
 
@@ -200,7 +234,7 @@ export const InviteMention = ({ code }: { code: string }): JSX.Element => {
 
     const fetchInvite = async () => {
       try {
-        const response = await get(`/invites/${code}?with_counts=true`);
+        const response = await get<InviteData>(`/invites/${code}?with_counts=true`);
 
         if (isMounted) {
           setInviteData(response);
@@ -256,8 +290,11 @@ export const InviteMention = ({ code }: { code: string }): JSX.Element => {
 
   const joinAndGotoServer = async (code: string) => {
     try {
-      const response = await post(`/invites/${code}`, {});
-      const guild_id = response?.guild_id || response?.guild?.id;
+      const response = await post<{
+        guild_id?: string;
+        guild?: Guild;
+      }>(`/invites/${code}`, {});
+      const guild_id = response.guild_id || response.guild?.id;
 
       if (guild_id) {
         void navigate(`/channels/${guild_id}`);
@@ -270,16 +307,14 @@ export const InviteMention = ({ code }: { code: string }): JSX.Element => {
   };
 
   const guild = inviteData.guild;
-  const bannerUrl = guild.banner
+  const bannerUrl = guild?.banner
     ? `${cdnUrl ?? ''}/banners/${guild.id}/${guild.banner}.png`
     : null;
-  const iconUrl = guild.icon
-    ? `${cdnUrl ?? ''}/icons/${guild.id}/${guild.icon}.png`
-    : null;
+  const iconUrl = guild?.icon ? `${cdnUrl ?? ''}/icons/${guild.id}/${guild.icon}.png` : null;
   const inviterAvatar = inviteData.inviter?.avatar
     ? `${cdnUrl ?? ''}/avatars/${inviteData.inviter.id}/${inviteData.inviter.avatar}.png`
     : null;
-  const inServerAlready = guilds.some((g: Guild) => g.id === guild.id);
+  const inServerAlready = guilds.some((g: Guild) => g.id === guild?.id);
 
   return (
     <div className='invite-card'>
@@ -287,16 +322,16 @@ export const InviteMention = ({ code }: { code: string }): JSX.Element => {
         <div className='invite-banner' style={{ backgroundImage: `url(${bannerUrl})` }} />
       )}
       <div className='invite-card-inner'>
-        <div className='invite-header'>YOU'VE BEEN INVITED TO JOIN A SERVER</div>
+        <div className='invite-header'>{`YOU'VE BEEN INVITED TO JOIN A SERVER`}</div>
         <div className='invite-body'>
           <div className='invite-guild-info'>
             {iconUrl ? (
               <img src={iconUrl} className='invite-guild-icon' alt='' />
             ) : (
-              <div className='invite-guild-icon-placeholder'>{guild.name.charAt(0)}</div>
+              <div className='invite-guild-icon-placeholder'>{guild?.name.charAt(0) ?? ''}</div>
             )}
             <div className='invite-text'>
-              <div className='invite-guild-name'>{guild.name}</div>
+              <div className='invite-guild-name'>{guild?.name ?? ''}</div>
               <div className='invite-channel-row'>
                 <span className='invite-channel-name'>#{inviteData.channel?.name}</span>
               </div>
@@ -313,7 +348,7 @@ export const InviteMention = ({ code }: { code: string }): JSX.Element => {
             className='invite-join-button'
             onClick={() => {
               if (inServerAlready) {
-                void navigate(`/channels/${guild.id}`);
+                void navigate(`/channels/${guild?.id ?? ''}`);
               } else {
                 void joinAndGotoServer(code);
               }

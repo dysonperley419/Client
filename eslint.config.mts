@@ -45,14 +45,8 @@ export default defineConfig([
       },
     },
     rules: {
-      '@typescript-eslint/prefer-nullish-coalescing': [
-        'error',
-        {
-          ignorePrimitives: {
-            string: true,
-          },
-        },
-      ],
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
     },
   },
   {

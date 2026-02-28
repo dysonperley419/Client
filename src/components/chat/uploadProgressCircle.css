@@ -1,0 +1,38 @@
+.attachment-upload-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2f3136;
+  display: inline-flex;
+}
+
+.upload-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.upload-container-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 40px;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+  transition: stroke-dashoffset 0.1s linear;
+  stroke: var(--accent-primary); /* eh still looks white cuz of the low opacity */
+}
+
+.upload-text {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 12px;
+}

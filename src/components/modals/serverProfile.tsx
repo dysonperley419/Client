@@ -3,29 +3,37 @@ import './serverProfile.css';
 import { type JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
 import type { Guild, Member } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { get } from '@/utils/api';
 import { logger } from '@/utils/logger';
+import { intToHex } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useModal } from '../../context/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import { MutualItem } from '../chat/mutualItem';
-import { useConfig } from '@/context/configContext';
-import { intToHex } from "@/utils/uiUtils";
-
 
 //import hypesquad from "../../assets/hypesquad.svg";
 
-interface ServerProfileProps {
+export interface ConnectedAccount {
+  id: string;
+} //do this properly later
+
+export interface ServerProfileProps {
   member: Member;
   mutual_guilds?: Guild[] | [];
   mutual_friends?: User[] | [];
-  connected_accounts?: any[] | [];
+  connected_accounts?: ConnectedAccount[] | [];
   premium_since?: string | null;
   premium_type?: number;
+}
+
+export interface SharedGuild {
+  id: string;
+  nick?: string | null;
 }
 
 export const ServerProfileModal = ({
@@ -51,7 +59,7 @@ export const ServerProfileModal = ({
   const handleFriendClick = async (user: User) => {
     closeModal();
 
-    openModal('SERVER_PROFILE', { member: { user } as any });
+    openModal('SERVER_PROFILE', { member: { user } as Member });
 
     try {
       const query = new URLSearchParams({
@@ -59,7 +67,9 @@ export const ServerProfileModal = ({
         with_mutual_friends: 'true',
       }).toString();
 
-      const fullProfile = await get(`/users/${member.id ?? member.user.id}/profile?${query}`);
+      const fullProfile = await get<ServerProfileProps>(
+        `/users/${member.user.id}/profile?${query}`,
+      );
 
       updateModal<'SERVER_PROFILE'>({
         mutual_guilds: fullProfile.mutual_guilds,
@@ -80,7 +90,7 @@ export const ServerProfileModal = ({
 
     const avatarUrl =
       member.avatar || member.user.avatar
-        ? `${cdnUrl ?? ''}/avatars/${member.id ?? member.user.id}/${member.user.avatar ?? ''}.png`
+        ? `${cdnUrl ?? ''}/avatars/${member.user.id}/${member.user.avatar ?? ''}.png`
         : defaultAvatarUrl;
 
     return (
@@ -95,26 +105,31 @@ export const ServerProfileModal = ({
     );
   };
 
-  const bannerColor = intToHex(member?.user?.accent_color ?? 0);
-  const fullBannerUrl = `${cdnUrl}/banners/${member.user.id}/${member.user.banner}.png`;
+  const bannerColor = intToHex(member.user.accent_color ?? 0);
+  const fullBannerUrl = `${cdnUrl ?? ''}/banners/${member.user.id}/${member.user.banner ?? ''}.png`;
 
   return (
     <div className='profile-modal-root'>
       {member.user.banner && (
-        <img 
-          src={fullBannerUrl} 
-          style={{ display: 'none' }} 
-          onLoad={() => setBannerLoaded(true)} 
+        <img
+          src={fullBannerUrl}
+          alt={`${member.user.username}'s banner`}
+          style={{ display: 'none' }}
+          onLoad={() => {
+            setBannerLoaded(true);
+          }}
         />
       )}
 
-      <div className={`profile-modal-header ${bannerLoaded ? 'loaded' : ''}`}
-        style={{ 
+      <div
+        className={`profile-modal-header ${bannerLoaded ? 'loaded' : ''}`}
+        style={{
           backgroundImage: member.user.banner ? `url('${fullBannerUrl}')` : 'none',
           backgroundColor: bannerColor,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }} >
+          backgroundPosition: 'center',
+        }}
+      >
         <div className='profile-modal-avatar-wrapper'>
           <MemberAvatar member={member} />
           <div
@@ -142,12 +157,9 @@ export const ServerProfileModal = ({
               </span>
             )}
           </div>
-          <div className="identity-meta-row">
-            {member.user.pronouns && (
-              <span className='modal-pronouns'>{member.user.pronouns}</span>
-            )}
-            {
-              /*
+          <div className='identity-meta-row'>
+            {member.user.pronouns && <span className='modal-pronouns'>{member.user.pronouns}</span>}
+            {/*
                 {Number(member.user.public_flags) > 0 && (
                     <div className="profile-badges">
                       <div className="badge-item" title="HypeSquad">
@@ -155,12 +167,11 @@ export const ServerProfileModal = ({
                       </div>
                     </div>
                   )}
-              */
-            }
+              */}
           </div>
         </div>
 
-        {sharedGuilds !== undefined && member.user.id !== user?.id && (
+        {sharedGuilds && member.user.id !== user?.id && (
           <>
             <hr className='popout-separator' />
             <div className='popout-section'>
@@ -173,7 +184,7 @@ export const ServerProfileModal = ({
                 >
                   User Info
                 </div>
-                {sharedGuilds !== undefined && (
+                {sharedGuilds.length > 0 && (
                   <>
                     <div
                       className={`tab ${activeTab === 'GUILDS' ? 'selected' : ''}`}
@@ -226,12 +237,12 @@ export const ServerProfileModal = ({
             <div className='popout-section'>
               <div className='mutual-list'>
                 {sharedGuilds?.length ? (
-                  sharedGuilds.map((shared: any) => {
+                  sharedGuilds.map((shared: SharedGuild) => {
                     //to-do make a type of shared guild where its just id and nick
-                    const fullGuild = guilds.find((g: any) => g.id === shared.id);
+                    const fullGuild = guilds.find((g) => g.id === shared.id);
                     const guildName = fullGuild?.name || 'Unknown Server';
                     const guildIcon = fullGuild?.icon
-                      ? `${cdnUrl}/icons/${fullGuild.id}/${fullGuild.icon}.png`
+                      ? `${cdnUrl ?? ''}/icons/${fullGuild.id}/${fullGuild.icon ?? ''}.png`
                       : '';
 
                     return (
@@ -264,8 +275,8 @@ export const ServerProfileModal = ({
                       key={friend.id}
                       title={friend.global_name || friend.username}
                       subtitle={`@${friend.username}`}
-                      icon={`${cdnUrl}/avatars/${friend.id}/${friend.avatar}.png`}
-                      onClick={() => handleFriendClick(friend)}
+                      icon={`${cdnUrl ?? ''}/avatars/${friend.id}/${friend.avatar ?? ''}.png`}
+                      onClick={() => void handleFriendClick(friend)}
                     />
                   ))
                 ) : (

@@ -2,8 +2,8 @@ import { create } from 'zustand';
 
 import type { Presence } from '@/types/presences';
 import type { User } from '@/types/users';
-import { logger } from '@/utils/logger';
 import { get as apiGet } from '@/utils/api';
+import { logger } from '@/utils/logger';
 
 export type UserWithPresence = User & { presence?: Presence };
 
@@ -69,9 +69,11 @@ export const useUserStore = create<UserStore>((set, get) => ({
 
     const fetchPromise = (async () => {
       try {
-        const data = await apiGet(`/users/${userId}/profile`);
+        const data = await apiGet<{
+          user?: User;
+        }>(`/users/${userId}/profile`);
 
-        if (data?.user) {
+        if (data.user) {
           upsertUsers([data.user]);
 
           return data.user as UserWithPresence;
@@ -80,17 +82,16 @@ export const useUserStore = create<UserStore>((set, get) => ({
         logger.error(`USER_STORE`, `Failed to fetch user's profile from API!`);
 
         return null;
-      }
-      catch (error) {
+      } catch (error) {
         logger.error(`USER_STORE`, `Failed to fetch user's profile from API!`, error);
         return null;
       } finally {
-        delete pendingQueries[userId];
+        pendingQueries[userId] = undefined as unknown as Promise<UserWithPresence | null>;
       }
     })();
-    
+
     pendingQueries[userId] = fetchPromise;
 
     return fetchPromise;
-  }
+  },
 }));

@@ -1,5 +1,6 @@
 import type React from 'react';
 
+import { type ServerProfileProps } from '@/components/modals/serverProfile';
 import { useGateway } from '@/context/gatewayContext';
 import { useModal } from '@/context/modalContext';
 import { usePopup } from '@/context/popupContext';
@@ -10,9 +11,23 @@ import { get } from './api';
 import { logger } from './logger';
 
 export const intToHex = (colorInt?: number): string => {
-  if (!colorInt) return 'var(--bg-secondary)'; 
+  if (!colorInt) return 'var(--bg-secondary)';
   return `#${colorInt.toString(16).padStart(6, '0')}`;
 };
+
+interface LocalEmoji {
+  id: string;
+  name: string;
+  animated?: boolean;
+  guild_id?: string | null;
+  guild_name?: string;
+  managed?: boolean;
+  require_colons?: boolean;
+  roles?: (string | Role)[];
+  user_id?: string | null;
+  groups?: Record<string, never> | null;
+  is_private?: boolean;
+}
 
 export const useUiUtilityActions = (selectedGuild: Guild | null) => {
   const { openPopup } = usePopup();
@@ -29,16 +44,17 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
     const x = rect.left - 310;
     const y = rect.top;
 
-    const userId = member.user?.id || member.id;
+    const userId = member.user.id || member.id;
+
     if (!userId) return;
 
     const existingMember = selectedGuild ? getMember(selectedGuild.id, userId) : null;
 
-    let userData: UserWithPresence = existingMember?.user || member.user;
+    let userData: UserWithPresence | null = existingMember?.user || member.user || null;
 
     if (!userData || !userData.username) {
       try {
-        userData = (await getUser(userId))!;
+        userData = await getUser(userId);
       } catch (err) {
         logger.error('PROFILE', `Failed to hydrate user ${userId}`, err);
       }
@@ -47,7 +63,7 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
     const memberReal: Member = {
       ...(existingMember ?? member),
       id: userId,
-      user: userData || member.user || ({ id: userId } as any),
+      user: userData ?? member.user ?? ({ id: userId, username: 'Unknown' } as UserWithPresence),
       nick: existingMember?.nick || member.nick || null,
       roles: existingMember?.roles || member.roles || [],
       joined_at: existingMember?.joined_at || member.joined_at || new Date().toISOString(),
@@ -81,7 +97,7 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
         with_mutual_friends: 'true',
       }).toString();
 
-      const fullProfile = await get(`/users/${user.id}/profile?${query}`);
+      const fullProfile = await get<ServerProfileProps>(`/users/${user.id}/profile?${query}`);
 
       updateModal<'SERVER_PROFILE'>({
         mutual_guilds: fullProfile.mutual_guilds,
@@ -95,7 +111,7 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
     }
   };
 
-  const openEmojiPopout = async (e: React.MouseEvent, emojiBase: { name: string; id: string }) => {
+  const openEmojiPopout = (e: React.MouseEvent, emojiBase: { name: string; id: string }) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -103,33 +119,33 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
     const x = rect.left;
     const y = rect.top - 120;
 
-    let emojiDetails: any = null;
-
-    let localEmoji: any = null;
+    let emojiDetails: LocalEmoji | null = null;
     let localGuild: Guild | undefined = undefined;
 
     const cleanName = emojiBase.name.replace(/:/g, '');
 
     for (const g of guilds) {
       const found = g.emojis?.find((em) => em.id === emojiBase.id || em.name === cleanName);
-
       if (found) {
-        localEmoji = found;
+        emojiDetails = {
+          ...found,
+          roles: found.roles?.map((r: Role) => (typeof r === 'string' ? r : r.id)) || [],
+          groups: (found.groups as Record<string, never> | null) || null,
+          guild_id: g.id,
+          guild_name: g.name,
+          is_private: false,
+        };
         localGuild = g;
-        break; 
+        break;
       }
     }
 
-    if (localEmoji && localGuild) {
-      emojiDetails = {
-        ...localEmoji,
-        guild_id: localGuild.id,
-        guild_name: localGuild.name,
-        is_private: false,
-      };
-    } else {
-      logger.warn('EMOJI_POPOUT', `Emoji ${emojiBase.id} not found in local guilds. Using fallback.`);
-      
+    if (!emojiDetails) {
+      logger.warn(
+        'EMOJI_POPOUT',
+        `Emoji ${emojiBase.id} not found in local guilds. Using fallback.`,
+      );
+
       emojiDetails = {
         id: emojiBase.id,
         name: cleanName,
@@ -139,6 +155,10 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
         is_private: true,
       };
     }
+
+    const mappedRoles: Role[] = (emojiDetails.roles ?? [])
+      .map((roleId) => localGuild?.roles.find((r) => r.id === roleId))
+      .filter((role): role is Role => !!role);
 
     openPopup('EMOJI_DETAILS_POPOUT', {
       x,
@@ -150,13 +170,13 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
         guild_id: emojiDetails.guild_id,
         managed: emojiDetails.managed ?? false,
         require_colons: emojiDetails.require_colons ?? true,
-        roles: emojiDetails.roles ?? [],
+        roles: mappedRoles,
         user_id: emojiDetails.user_id ?? null,
-        groups: emojiDetails.groups ?? null,
+        groups: null,
       },
-      guildName: emojiDetails.guild_name,
-      guildIcon: localGuild?.icon! ?? null,
-      guildId: localGuild?.id!,
+      guildName: emojiDetails.guild_name ?? 'Unknown Guild',
+      guildIcon: localGuild?.icon ?? undefined,
+      guildId: localGuild?.id ?? '',
       isPrivate: emojiDetails.is_private ?? true,
     });
   };

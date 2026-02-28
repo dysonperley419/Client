@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import './mainContent.css';
 
 import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -15,7 +14,7 @@ import type { Guild, Member } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
 import type { User } from '@/types/users';
-import { get, patch, post } from '@/utils/api';
+import { get, patch, post, request } from '@/utils/api';
 import { localBlobCache } from '@/utils/attachmentCache';
 import { formatTimestamp } from '@/utils/dateUtils';
 import { logger } from '@/utils/logger';
@@ -34,6 +33,7 @@ import { MessageEditInput } from './messageeditinput';
 import { PinnedMessagesShelf } from './pinnedMessagesShelf';
 import { ReplyPreview } from './replyPreview';
 import { SuggestionsBar } from './suggestionsBar';
+import { UploadProgressCircle } from './uploadProgressCircle';
 
 interface MemberListItem {
   member?: Member | null;
@@ -102,6 +102,9 @@ const MainContent = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingMsgID, setEditingMsgID] = useState<string | null>(null);
   const [replyingMsgID, setReplyingMgID] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<
+    Record<string, { loaded: number; total: number }>
+  >({});
   const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[] | []>([]);
   const [gifs, setGifs] = useState<GifResult[] | []>([]);
   const [gifCategories, setGifCategories] = useState<{ name: string; src: string }[]>([]);
@@ -335,7 +338,7 @@ const MainContent = ({
     if (showGifSearcher9000 && gifSearchQuery === '') {
       const fetchTrending = async () => {
         try {
-          const data = (await get('/gifs/trending?locale=en')) as GifTrendingResponse;
+          const data = await get<GifTrendingResponse>('/gifs/trending?locale=en');
 
           setGifCategories(data.categories);
         } catch (err) {
@@ -368,7 +371,7 @@ const MainContent = ({
       const url = `/channels/${selectedChannel.id}/messages?limit=${String(limit)}${before ? `&before=${before}` : ''}`;
 
       try {
-        const response = (await get(url)) as Message[];
+        const response = await get(url);
 
         return MessageListSchema.parse(response);
       } catch (error) {
@@ -584,10 +587,20 @@ const MainContent = ({
     setAttachments([]);
 
     try {
-      const response = (await post(
-        `/channels/${selectedChannel.id}/messages`,
-        formData,
-      )) as Message;
+      const response = await request<Message>(`/channels/${selectedChannel.id}/messages`, 'POST', {
+        body: formData,
+        onProgress: (loaded, total) => {
+          setUploadProgress((prev) => ({
+            ...prev,
+            [nonce]: { loaded, total },
+          }));
+        },
+      });
+
+      setUploadProgress((prev) => {
+        const filteredEntries = Object.entries(prev).filter(([key]) => key !== nonce);
+        return Object.fromEntries(filteredEntries);
+      });
 
       if (onChannelSeen && response.id) {
         void onChannelSeen(selectedGuild?.id ?? null, selectedChannel.id, response.id);
@@ -754,9 +767,9 @@ const MainContent = ({
       try {
         isloadingMore.current = true;
 
-        const response = (await get(
+        const response = await get(
           `/channels/${selectedChannel.id}/messages?limit=50&around=${messageId}`,
-        )) as Message[];
+        );
         const data = MessageListSchema.parse(response);
 
         if (data.length > 0) {
@@ -875,6 +888,8 @@ const MainContent = ({
       const mentionClass = isMentioned ? 'message-mention' : '';
 
       const isEditing = editingMsgID === msg.id;
+      const progressKey = msg.nonce?.replace('flicker-', '');
+      const progress = progressKey ? uploadProgress[progressKey] : null;
 
       const handleEditSave = async (newContent: string) => {
         if (newContent.trim() !== msg.content) {
@@ -929,7 +944,12 @@ const MainContent = ({
                   {msg.attachments.map(
                     (attachment: NonNullable<Message['attachments']>[number]) => {
                       return (
-                        <ChatAttachment attachment={attachment} key={attachment.id} msg={msg} />
+                        <div key={attachment.id} className='attachment-upload-container'>
+                          <ChatAttachment attachment={attachment} msg={msg} />
+                          {msg.state === MESSAGE_STATE.PENDING && progress && (
+                            <UploadProgressCircle loaded={progress.loaded} total={progress.total} />
+                          )}
+                        </div>
                       );
                     },
                   )}
@@ -1074,9 +1094,9 @@ const MainContent = ({
     if (!term.trim()) return;
 
     try {
-      const data = (await get(
+      const data = await get<RawGifResponse[]>(
         `/gifs/search?locale=en&q=${encodeURIComponent(term)}&limit=50`,
-      )) as RawGifResponse[];
+      );
       const mappedGifs: GifResult[] = data.map((g) => ({
         id: g.id,
         title: g.title,

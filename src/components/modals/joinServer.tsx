@@ -8,7 +8,7 @@ import {
   type InviteResponse,
   InviteResponseSchema,
 } from '@/types/responses';
-import { get, post } from '@/utils/api';
+import { ApiError, get, post } from '@/utils/api';
 
 import { useModal } from '../../context/modalContext';
 
@@ -19,24 +19,25 @@ export const JoinServerModal = (): JSX.Element => {
 
   const fetchInvite = async (inviteCode: string): Promise<InviteResponse | ErrorResponse> => {
     try {
-      const response = await get(`/invites/${inviteCode}`);
-
+      const response = await get<InviteResponse>(`/invites/${inviteCode}`);
       const result = InviteResponseSchema.safeParse(response);
 
       if (result.success) return result.data;
 
       return response;
-    } catch (err: any) {
-      const errorBody = err.responseBody;
-      const errorResult = ErrorResponseSchema.safeParse(errorBody);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        const errorBody = err.responseBody;
+        const errorResult = ErrorResponseSchema.safeParse(errorBody);
 
-      if (errorResult.success) {
-        return errorResult.data;
+        if (errorResult.success) {
+          return errorResult.data;
+        }
       }
 
       return {
         code: 500,
-        message: err.message || 'Internal Server Error',
+        message: err instanceof Error ? err.message : 'Internal Server Error',
       };
     }
   };
@@ -65,12 +66,20 @@ export const JoinServerModal = (): JSX.Element => {
       await post(`/invites/${inviteCode}`, null);
 
       closeModal();
-    } catch (err: any) {
-      console.log(err);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        const errorBody = err.responseBody;
+        const errorResult = ErrorResponseSchema.safeParse(errorBody);
 
-      const errorBody = err.responseBody;
-      const errorResult = ErrorResponseSchema.safeParse(errorBody);
-      setError(errorResult.success ? errorResult.data : { code: 500, message: 'Failed to join' });
+        if (errorResult.success) {
+          setError(errorResult.data);
+        }
+      } else {
+        setError({
+          code: 500,
+          message: 'Failed to join',
+        });
+      }
     }
   };
 
