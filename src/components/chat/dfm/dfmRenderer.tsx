@@ -36,9 +36,10 @@ function accumulate(
     }
 
     const terminatorsStartOnly = ['````', '```', '>>> ', '> ', '### ', '## ', '# ', '-# ', '~~~'];
+    const startOnly = ['', '\n'];
 
     for (const terminator of terminators) {
-      if (terminatorsStartOnly.includes(terminator) && source.charAt(i - 1) === ' ') {
+      if (terminatorsStartOnly.includes(terminator) && !startOnly.includes(source.charAt(i - 1))) {
         continue;
       }
 
