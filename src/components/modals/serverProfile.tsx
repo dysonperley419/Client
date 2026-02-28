@@ -24,9 +24,9 @@ export interface ConnectedAccount {
 
 export interface ServerProfileProps {
   member: Member;
-  mutual_guilds?: Guild[] | [];
-  mutual_friends?: User[] | [];
-  connected_accounts?: ConnectedAccount[] | [];
+  mutual_guilds?: Guild[];
+  mutual_friends?: User[];
+  connected_accounts?: ConnectedAccount[];
   premium_since?: string | null;
   premium_type?: number;
 }

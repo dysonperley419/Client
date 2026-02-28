@@ -495,8 +495,8 @@ const MainContent = ({
     );
   };
 
-  const handleSendMessage = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSendMessage = async (e?: React.SyntheticEvent) => {
+    e?.preventDefault();
 
     let finalContent = chatMessage;
 

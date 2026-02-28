@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 
 import type { ImagePreviewProps } from '@/components/modals/imagePreview';
+import type { ConnectedAccount } from '@/components/modals/serverProfile';
 import type { Channel } from '@/types/channel';
 import type { Guild, Member } from '@/types/guilds';
 import type { User } from '@/types/users';
@@ -20,9 +21,9 @@ export interface ModalDataMap {
   };
   SERVER_PROFILE: {
     member: Member;
-    mutual_guilds?: Guild[] | [];
-    mutual_friends?: User[] | [];
-    connected_accounts?: unknown[] | [];
+    mutual_guilds?: Guild[];
+    mutual_friends?: User[];
+    connected_accounts?: ConnectedAccount[];
     premium_since?: string | null;
     premium_type?: number;
   };
