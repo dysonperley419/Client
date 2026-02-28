@@ -5,7 +5,7 @@ import { useLayoutEffect, useRef } from 'react';
 interface ChatInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   value: string;
   onChange: React.ChangeEventHandler<HTMLTextAreaElement>;
-  onSubmit?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onSubmit?: (e?: React.SyntheticEvent) => void;
 }
 
 const ChatInput = ({ value, onChange, onSubmit, disabled, ...props }: ChatInputProps) => {

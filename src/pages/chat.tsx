@@ -204,10 +204,10 @@ const ChatApp = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    if (isReady && guildId && channelId && requestMembers) {
+    if (isReady && guildId && channelId && requestMembers && selectedChannel?.id === channelId) {
       requestMembers(guildId, channelId);
     }
-  }, [guildId, channelId, isReady, requestMembers]);
+  }, [guildId, channelId, isReady, requestMembers, selectedChannel?.id]);
 
   useEffect(() => {
     if (guilds.length > 0) {
@@ -595,6 +595,7 @@ const ChatApp = (): JSX.Element => {
 
           {selectedChannel ? (
             <MainContent
+              key={selectedChannel.id}
               selectedChannel={selectedChannel}
               selectedGuild={selectedGuild}
               onChannelSeen={clearChannelReadState}
