@@ -84,7 +84,8 @@
   border-radius: 6px;
   text-align: left;
   display: flex;
-  align-items: center;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .context-menu-out .button:hover {
