@@ -53,6 +53,7 @@ const getDeveloperSettings = (): DeveloperSettings => {
 
 export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const socket = useRef<WebSocket | null>(null);
+  const userRef = useRef<User | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -82,6 +83,10 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   useEffect(() => {
     memberListsRef.current = memberLists;
   }, [memberLists]);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   const requestMembers = useCallback((guildId: string, channelId: string, ranges = [[0, 99]]) => {
     subscribedChannels.current[guildId] = channelId;
@@ -355,7 +360,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
         case 'USER_UPDATE': {
           const parsed = UserUpdateSchema.parse(data);
 
-          if (parsed.id === user?.id) {
+          if (parsed.id === userRef.current?.id) {
             setUser((prevUser) => {
               if (!prevUser) return null;
               return { ...prevUser, ...parsed };
@@ -552,7 +557,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           break;
       }
     },
-    [requestMembers, user],
+    [requestMembers],
   );
 
   const startHeartbeat = useCallback((interval: number, ws: WebSocket) => {
