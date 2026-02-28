@@ -16,7 +16,7 @@ export const VoiceStateSchema = z.looseObject({
   self_deaf: z.boolean(),
   self_mute: z.boolean(),
   self_stream: z.boolean().optional(),
-  self_video: z.boolean(),
+  self_video: z.boolean().optional(),
   suppress: z.boolean(),
 });
 
