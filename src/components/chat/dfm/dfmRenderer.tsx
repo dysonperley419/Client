@@ -1,6 +1,7 @@
 import './dfm.css';
 
 import type { JSX } from 'react';
+import ShikiHighlighter from 'react-shiki';
 
 import {
   ChannelMention,
@@ -17,9 +18,11 @@ function accumulate(
   source: string,
   terminators: string[],
 ): { accumulated: string; remaining: string; terminator: string } {
+  const terminatorsStartOnly = ['```', '>>> ', '> ', '### ', '## ', '# ', '-# '];
+  const startOnly = ['', '\n'];
   let accumulated = '';
   let i = 0;
-  for (;;) {
+  while (true) {
     if (i >= source.length) {
       return {
         accumulated: accumulated,
@@ -35,15 +38,16 @@ function accumulate(
       continue;
     }
 
-    const terminatorsStartOnly = ['````', '```', '>>> ', '> ', '### ', '## ', '# ', '-# '];
-    const startOnly = ['', '\n'];
-
-    for (const terminator of terminators) {
+    for (let terminator of terminators) {
       if (terminatorsStartOnly.includes(terminator) && !startOnly.includes(source.charAt(i - 1))) {
         continue;
       }
 
       if (source.startsWith(terminator, i)) {
+        if (terminator === '```' && source.charAt(i + terminator.length) === '`') {
+          terminator = /`+/.exec(source)?.[0] ?? terminator;
+        }
+
         return {
           accumulated: accumulated,
           remaining: source.substring(i + terminator.length),
@@ -71,7 +75,6 @@ export default function renderDfm(
     const startAcc = accumulate(text, [
       'https://',
       'http://',
-      '````',
       '```',
       '``',
       '`',
@@ -96,6 +99,7 @@ export default function renderDfm(
       '<a:',
       '<:',
     ]);
+
     if (startAcc.terminator == '\0') {
       //end
       result.push(startAcc.accumulated);
@@ -166,6 +170,7 @@ export default function renderDfm(
 
       //find closing delimiter
       const endAcc = accumulate(text, closingDelimiters);
+      console.log(endAcc);
       if (closingDelimiters.includes(endAcc.terminator)) {
         innerText = endAcc.accumulated;
         text = endAcc.remaining;
@@ -204,11 +209,6 @@ export default function renderDfm(
         }
         break;
       }
-
-      case '````':
-      case '```':
-        result.push(<code className='block'>{innerText}</code>);
-        break;
 
       case '``':
       case '`':
@@ -301,6 +301,25 @@ export default function renderDfm(
           else result.push(innerText);
         }
         break;
+    }
+
+    // special case for code blocks
+    if (openingDelimiter.includes('```')) {
+      let syntax = '';
+      // remove syntax + first new line
+      const newlineIndex = innerText.indexOf('\n');
+
+      if (newlineIndex !== -1) {
+        const syntaxPart = innerText.slice(0, newlineIndex + 1);
+        syntax = syntaxPart.slice(0, -1);
+        innerText = innerText.slice(newlineIndex + 1);
+      }
+
+      result.push(
+        <ShikiHighlighter language={syntax} theme={'andromeeda'}>
+          {innerText}
+        </ShikiHighlighter>,
+      );
     }
   }
 
