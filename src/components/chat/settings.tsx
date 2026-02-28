@@ -229,6 +229,41 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
               )}
             </div>
             <div className='account-card'>
+              {tempUser?.banner && editingProfile ? (
+                <>
+                  <div
+                    style={{
+                      position: 'relative',
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <button
+                      type='button'
+                      style={{
+                        color: 'var(--bg-dnd)',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        textDecoration: 'none',
+                        border: 'none',
+                        padding: 0,
+                        background: 'none',
+                      }}
+                      onClick={() => {
+                        setTempUser({
+                          ...tempUser,
+                          banner: null,
+                        });
+                      }}
+                    >
+                      Remove Banner
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <></>
+              )}
               <div className='account-info-grid'>
                 <div
                   style={{
@@ -293,41 +328,6 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
                 </div>
 
                 <div className='account-info-wrapper'>
-                  {tempUser?.banner && editingProfile ? (
-                    <>
-                      <div
-                        style={{
-                          position: 'relative',
-                          marginTop: '-20px',
-                          marginLeft: '195px',
-                        }}
-                      >
-                        <button
-                          type='button'
-                          style={{
-                            color: 'var(--bg-dnd)',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            fontWeight: '500',
-                            textDecoration: 'none',
-                            border: 'none',
-                            padding: 0,
-                            background: 'none',
-                          }}
-                          onClick={() => {
-                            setTempUser({
-                              ...tempUser,
-                              banner: null,
-                            });
-                          }}
-                        >
-                          Remove Banner
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <></>
-                  )}
                   {errorUpdatingMsg && <p className='failed-to-update'>{errorUpdatingMsg}</p>}
                   <div className='account-info-section'>
                     <div style={{ width: '100%' }}>
