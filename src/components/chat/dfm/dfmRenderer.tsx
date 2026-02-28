@@ -1,5 +1,3 @@
-//Discord-Flavored Markdown parser & renderer
-
 import './dfm.css';
 
 import type { JSX } from 'react';
@@ -37,7 +35,13 @@ function accumulate(
       continue;
     }
 
+    const terminatorsStartOnly = ['````', '```', '>>> ', '> ', '### ', '## ', '# ', '-# ', '~~~'];
+
     for (const terminator of terminators) {
+      if (terminatorsStartOnly.includes(terminator) && source.charAt(i - 1) === ' ') {
+        continue;
+      }
+
       if (source.startsWith(terminator, i)) {
         return {
           accumulated: accumulated,
@@ -66,6 +70,7 @@ export default function renderDfm(
     const startAcc = accumulate(text, [
       'https://',
       'http://',
+      '````',
       '```',
       '``',
       '`',
@@ -81,6 +86,7 @@ export default function renderDfm(
       '__',
       '_',
       '~~',
+      '~~~',
       '@everyone',
       '@here',
       '<@!',
@@ -199,6 +205,8 @@ export default function renderDfm(
         break;
       }
 
+      case '~~~':
+      case '````':
       case '```':
         result.push(<code className='block'>{innerText}</code>);
         break;
