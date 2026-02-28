@@ -1,3 +1,5 @@
+//Discord-Flavored Markdown parser & renderer
+
 import './dfm.css';
 
 import type { JSX } from 'react';
