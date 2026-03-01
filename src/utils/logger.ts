@@ -2,6 +2,18 @@ const getTimestamp = () => {
   return new Date().toLocaleTimeString([]);
 };
 
+const getEventTarget = (): EventTarget | null => {
+  if (typeof window !== 'undefined') return window;
+  if (typeof self !== 'undefined') return self;
+  return null;
+};
+
+const dispatchLoggerUpdate = (entry: LogEntry): void => {
+  const target = getEventTarget();
+  if (!target || typeof CustomEvent === 'undefined') return;
+  target.dispatchEvent(new CustomEvent('logger_update', { detail: entry }));
+};
+
 const styles = {
   timestamp: 'color: #888; font-style: italic;',
   logPrefix:
@@ -50,7 +62,7 @@ export const logger = {
       logger.entries.shift();
     }
 
-    window.dispatchEvent(new CustomEvent('logger_update', { detail: entry }));
+    dispatchLoggerUpdate(entry);
   },
   info: (source: string, message: string, data?: unknown) => {
     const timestamp = getTimestamp();

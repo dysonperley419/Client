@@ -3,7 +3,8 @@
 import './dfm.css';
 
 import type { JSX } from 'react';
-import ShikiHighlighter from 'react-shiki';
+
+import CodeBlock from '@/components/common/codeBlock';
 
 import {
   ChannelMention,
@@ -106,11 +107,7 @@ const DELIMITERS: {
         innerText = innerText.slice(newlineIndex + 1);
       }
 
-      return (
-        <ShikiHighlighter language={syntax} theme={'andromeeda'}>
-          {innerText}
-        </ShikiHighlighter>
-      );
+      return <CodeBlock language={syntax}>{innerText}</CodeBlock>;
     },
   },
   CODE1: {

@@ -1,0 +1,97 @@
+import type { LanguageInput, ThemeInput } from '@shikijs/types';
+import { createHighlighterCore } from 'shiki/core';
+import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
+import { bundledLanguages, bundledLanguagesAlias } from 'shiki/langs';
+import { bundledThemes } from 'shiki/themes';
+
+import { logger } from './logger';
+
+let highlighter: Awaited<ReturnType<typeof createHighlighterCore>> | null = null;
+const loaded = { langs: new Set<string>(), themes: new Set<string>() };
+
+async function getHighlighter() {
+  if (highlighter) return highlighter;
+
+  highlighter = await createHighlighterCore({
+    themes: [import('@shikijs/themes/github-dark')],
+    langs: [],
+    engine: createJavaScriptRegexEngine(),
+  });
+  loaded.themes.add('github-dark');
+  return highlighter;
+}
+
+function normalizeLang(language?: string): string {
+  const normalized = language?.trim().toLowerCase() ?? '';
+  if (!normalized) return 'text';
+  return normalized.split(/\s+/)[0] ?? 'text';
+}
+
+function escapeHtml(input: string): string {
+  return input
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+self.onmessage = async (e: MessageEvent) => {
+  const {
+    id,
+    text,
+    language,
+    theme: rawTheme = 'github-dark',
+  } = e.data as {
+    id: string;
+    text: string;
+    language?: string;
+    theme?: string;
+  };
+
+  try {
+    const hl = await getHighlighter();
+    const normalizedLanguage = normalizeLang(language);
+    const normalizedTheme = rawTheme.trim().toLowerCase();
+
+    if (normalizedLanguage !== 'text' && !loaded.langs.has(normalizedLanguage)) {
+      try {
+        const importer =
+          bundledLanguages[normalizedLanguage as keyof typeof bundledLanguages] ??
+          bundledLanguagesAlias[normalizedLanguage as keyof typeof bundledLanguagesAlias];
+        if (importer) {
+          const mod = await importer();
+          await hl.loadLanguage(((mod as { default?: unknown }).default ?? mod) as LanguageInput);
+          loaded.langs.add(normalizedLanguage);
+        } else {
+          logger.warn(`Shiki`, `Language "${normalizedLanguage}" not found, falling back to text`);
+        }
+      } catch {
+        logger.warn(`Shiki`, `Language "${normalizedLanguage}" not found, falling back to text`);
+      }
+    }
+
+    if (!loaded.themes.has(normalizedTheme)) {
+      try {
+        const importer = bundledThemes[normalizedTheme as keyof typeof bundledThemes];
+        if (importer) {
+          const mod = await importer();
+          await hl.loadTheme(((mod as { default?: unknown }).default ?? mod) as ThemeInput);
+          loaded.themes.add(normalizedTheme);
+        }
+      } catch {
+        // just ignore errors
+      }
+    }
+
+    const loadedLanguage = normalizedLanguage === 'text' || loaded.langs.has(normalizedLanguage);
+    const selectedTheme = loaded.themes.has(normalizedTheme) ? normalizedTheme : 'github-dark';
+    const html = hl.codeToHtml(text, {
+      lang: loadedLanguage ? normalizedLanguage : 'text',
+      theme: selectedTheme,
+    });
+    self.postMessage({ id, html });
+  } catch {
+    self.postMessage({ id, html: `<pre><code>${escapeHtml(text)}</code></pre>` });
+  }
+};
