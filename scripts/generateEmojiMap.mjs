@@ -20,41 +20,6 @@ const DISCORD_SHORTCODE_FILES = ['discord', 'joypixels'];
 const EMOJIBASE_SHORTCODE_FILES = ['emojibase', 'emojibase-native', 'emojibase-legacy'];
 const OTHER_SHORTCODE_FILES = ['cldr', 'cldr-native', 'github', 'slack', 'iamcal'];
 
-const DIRECT_SHORTCODE_ALIASES = {
-  '+1': '👍',
-  '-1': '👎',
-  clapping: '👏',
-  grin: '😁',
-  heart: '❤️',
-  laughing: '😆',
-  ok_hand: '👌',
-  pray: '🙏',
-  rofl: '🤣',
-  smile: '😄',
-  smiley: '😃',
-  sob: '😭',
-  tada: '🎉',
-  thumbsdown: '👎',
-  thumbsup: '👍',
-  wave: '👋',
-};
-
-const SHORTCODE_SYNONYMS = {
-  grinning: 'grinning_face',
-  heart_eyes: 'smiling_face_with_heart_shaped_eyes',
-  joy: 'face_with_tears_of_joy',
-  neutral_face: 'neutral_face',
-  open_mouth: 'face_with_open_mouth',
-  pensive: 'pensive_face',
-  perspiring_face: 'anxious_face_with_sweat',
-  scream: 'face_screaming_in_fear',
-  simple_smile: 'slightly_smiling_face',
-  thinking: 'thinking_face',
-  thumbs_down: 'thumbs_down_sign',
-  thumbs_up: 'thumbs_up_sign',
-  worried: 'worried_face',
-};
-
 function normalizeShortcode(value) {
   return value
     .trim()
@@ -169,17 +134,6 @@ for (const [codePoint, name] of unicodeNames.entries()) {
 
 loadEmojibaseShortcodes(OTHER_SHORTCODE_FILES, SHORTCODE_SOURCE_PRIORITY.other_datasets);
 loadEmojibaseAlternateNames(SHORTCODE_SOURCE_PRIORITY.other_datasets);
-
-for (const [alias, unicode] of Object.entries(DIRECT_SHORTCODE_ALIASES)) {
-  addShortcode(alias, unicode, SHORTCODE_SOURCE_PRIORITY.direct_aliases);
-}
-
-for (const [alias, canonical] of Object.entries(SHORTCODE_SYNONYMS)) {
-  const canonicalEntry = shortcodeMap.get(normalizeShortcode(canonical));
-  if (canonicalEntry?.unicode) {
-    addShortcode(alias, canonicalEntry.unicode, SHORTCODE_SOURCE_PRIORITY.synonyms);
-  }
-}
 
 const sortedEntries = [...shortcodeMap.entries()]
   .map(([shortcode, entry]) => [shortcode, entry.unicode])
