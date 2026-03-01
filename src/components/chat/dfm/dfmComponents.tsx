@@ -1,5 +1,6 @@
 import './dfm.css';
 
+import twemoji from '@twemoji/api';
 import { type JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -176,30 +177,37 @@ export const ChannelMention = ({
 export const EmojiMention = ({
   name,
   emoji_id,
+  unicode,
 }: {
   name: string;
-  emoji_id: string;
+  emoji_id?: string;
+  unicode?: string;
 }): JSX.Element => {
   const { guilds } = useGateway();
   const contextGuild = guilds.find((g) => g.emojis?.some((e) => e.id === emoji_id));
   const { openEmojiPopout } = useUiUtilityActions(contextGuild || null);
   const { cdnUrl } = useConfig();
 
-  const invalid = /\D/.test(emoji_id);
-  if (invalid) return <></>; //Invalid and probably dangerous. Do not render or just a fucking idiot made these.
+  // Get guild emojis
+  if (emoji_id) {
+    const invalid = /\D/.test(emoji_id);
+    if (invalid) return <></>; //Invalid and probably dangerous. Do not render or just a fucking idiot made these.
 
-  const emojiUrl = `${cdnUrl ?? ''}/emojis/${emoji_id}.png`;
+    const emojiUrl = `${cdnUrl ?? ''}/emojis/${emoji_id}.png`;
 
-  return (
-    <img
-      className='emoji'
-      alt={name}
-      src={emojiUrl}
-      onClick={(e) => {
-        openEmojiPopout(e, { name, id: emoji_id });
-      }}
-    />
-  );
+    return (
+      <img
+        className='emoji'
+        alt={name}
+        src={emojiUrl}
+        onClick={(e) => {
+          openEmojiPopout(e, { name, id: emoji_id });
+        }}
+      />
+    );
+  } else {
+    return <div dangerouslySetInnerHTML={{ __html: twemoji.parse(unicode ?? '') }} />;
+  }
 };
 
 export const OffsiteMedia = ({ src }: { src: string }) => {

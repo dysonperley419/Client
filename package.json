@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -b && vite build",
-    "dev": "vite",
+    "build": "npm run emoji:generate && tsc -b && vite build",
+    "dev": "npm run emoji:generate && vite",
+    "emoji:generate": "node scripts/generateEmojiMap.mjs",
     "eslint": "npx eslint .",
     "eslint:fix": "npx eslint --fix .",
     "lint": "run-s -c eslint stylelint prettier",
@@ -17,6 +18,7 @@
     "stylelint:fix": "npx stylelint -o \"stylelint.log\" --fix \"**/*.css\""
   },
   "dependencies": {
+    "@twemoji/api": "^17.0.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.1",
@@ -35,6 +37,7 @@
     "@types/node": "^25.3.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@unicode/unicode-17.0.0": "^1.6.16",
     "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^9.39.3",
     "eslint-config-prettier": "^10.1.8",

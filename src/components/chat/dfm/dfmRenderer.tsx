@@ -5,6 +5,7 @@ import './dfm.css';
 import type { JSX } from 'react';
 
 import CodeBlock from '@/components/common/codeBlock';
+import { resolveEmojiShortcode } from '@/utils/emoji';
 
 import {
   ChannelMention,
@@ -64,6 +65,7 @@ const DELIMITERS: {
   CHANNEL_MENTION: Delimiter;
   ROLE_MENTION: Delimiter;
   MEMBER_MENTION: Delimiter;
+  GUILD_EMOJI: Delimiter;
   EMOJI: Delimiter;
 } = {
   URL: {
@@ -245,13 +247,24 @@ const DELIMITERS: {
       return <MemberMention guild_id={guild_id} user_id={innerText} />;
     },
   },
-  EMOJI: {
+  GUILD_EMOJI: {
     start: ['<a:', '<:'],
     end: ['>'],
     render: (_renderInner, innerText) => {
       const [name, id] = innerText.split(':');
       if (name && id) return <EmojiMention name={name} emoji_id={id} />;
       else return undefined;
+    },
+  },
+  EMOJI: {
+    start: [':'],
+    end: [':'],
+    render: (_renderInner, innerText) => {
+      if (innerText) {
+        const unicode = resolveEmojiShortcode(innerText);
+        if (!unicode) return <>{`:${innerText}:`}</>;
+        return <EmojiMention name={innerText} unicode={unicode} />;
+      } else return undefined;
     },
   },
 };
@@ -296,6 +309,7 @@ const PARSING_ORDER: Terminal[] = [
   DELIMITERS.CHANNEL_MENTION,
   DELIMITERS.ROLE_MENTION,
   DELIMITERS.MEMBER_MENTION,
+  DELIMITERS.GUILD_EMOJI,
   DELIMITERS.EMOJI,
   KEYWORDS.NEWLINE,
 ];
