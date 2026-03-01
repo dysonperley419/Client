@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import openClientArrow from '@/assets/arrow.png';
 import flickerLogo from '@/assets/flickerLogo.png';
 import githubLogo from '@/assets/github.png';
+import { useModal } from '@/layering/modalContext';
 
 const modules = import.meta.glob('@/assets/client-preview*.{png,jpg,jpeg,webp}', {
   eager: true,
@@ -32,10 +33,10 @@ PREVIEW_IMAGES.sort((a, b) => {
 });
 
 const Landing = (): JSX.Element => {
+  const { openModal } = useModal();
   const containerRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [currentImg, setCurrentImg] = useState(0);
-  const [isZoomed, setIsZoomed] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -61,20 +62,6 @@ const Landing = (): JSX.Element => {
 
   return (
     <div className='landing-wrapper'>
-      {isZoomed && (
-        <div
-          className='image-modal-overlay'
-          onClick={() => {
-            setIsZoomed(false);
-          }}
-        >
-          <div className='modal-content'>
-            <img src={PREVIEW_IMAGES[currentImg] ?? ''} alt='Preview Full' />
-            <p className='modal-hint'>CLICK ANYWHERE TO CLOSE</p>
-          </div>
-        </div>
-      )}
-
       <nav className='landing-navbar'>
         <div
           className='brand'
@@ -115,7 +102,14 @@ const Landing = (): JSX.Element => {
             <div
               className='image-3d-container'
               onClick={() => {
-                setIsZoomed(true);
+                openModal('IMAGE_PREVIEW', {
+                  src: PREVIEW_IMAGES[currentImg] ?? '',
+                  alt: 'Flicker Client Preview',
+                  width: 0,
+                  height: 0,
+                  id: `landing-preview-${String(currentImg)}`,
+                  zoomOnly: true,
+                });
               }}
             >
               <img

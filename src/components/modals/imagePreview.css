@@ -31,6 +31,10 @@
   background: linear-gradient(to bottom, rgb(0 0 0 / 60%) 0%, transparent 100%);
 }
 
+.image-preview-header.zoom-only {
+  justify-content: flex-end;
+}
+
 .image-preview-footer {
   bottom: 0;
   justify-content: flex-end;

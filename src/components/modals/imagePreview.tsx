@@ -13,12 +13,19 @@ export interface ImagePreviewProps {
   alt: string;
   width: number;
   height: number;
-  author: Message['author'];
+  author?: Message['author'];
   id: string;
-  timestamp: string;
+  timestamp?: string;
+  zoomOnly?: boolean;
 }
 
-export const ImagePreview = ({ src, alt, author, timestamp }: ImagePreviewProps): JSX.Element => {
+export const ImagePreview = ({
+  src,
+  alt,
+  author,
+  timestamp,
+  zoomOnly = false,
+}: ImagePreviewProps): JSX.Element => {
   const { closeModal } = useModal();
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -28,9 +35,9 @@ export const ImagePreview = ({ src, alt, author, timestamp }: ImagePreviewProps)
   const { cdnUrl } = useConfig();
 
   const { url: defaultAvatarUrl, rollover } = useAssetsUrl(
-    `/assets/${getDefaultAvatar(author)}.png`,
+    `/assets/${getDefaultAvatar(author ?? {})}.png`,
   );
-  const customAvatarUrl = author.avatar
+  const customAvatarUrl = author?.avatar
     ? `${cdnUrl ?? ''}/avatars/${author.id ?? ''}/${author.avatar}.png`
     : defaultAvatarUrl;
 
@@ -118,7 +125,7 @@ export const ImagePreview = ({ src, alt, author, timestamp }: ImagePreviewProps)
       }}
     >
       <div
-        className='image-preview-header'
+        className={`image-preview-header ${zoomOnly ? 'zoom-only' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
         }}
@@ -127,31 +134,37 @@ export const ImagePreview = ({ src, alt, author, timestamp }: ImagePreviewProps)
         }}
         role='presentation'
       >
-        <div className='image-preview-attribution'>
-          <img
-            src={customAvatarUrl}
-            alt=''
-            className='attribution-avatar'
-            onError={() => {
-              rollover();
-            }}
-          />
-          <div className='attribution-info'>
-            <span className='attribution-name'>{author.username ?? ''}</span>
-            <span className='attribution-sub'>{timestamp}</span>
+        {!zoomOnly && author && (
+          <div className='image-preview-attribution'>
+            <img
+              src={customAvatarUrl}
+              alt=''
+              className='attribution-avatar'
+              onError={() => {
+                rollover();
+              }}
+            />
+            <div className='attribution-info'>
+              <span className='attribution-name'>{author.username ?? ''}</span>
+              <span className='attribution-sub'>{timestamp ?? ''}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className='image-preview-toolbar'>
-          <button
-            type='button'
-            className='preview-btn'
-            onClick={openOriginal}
-            title='Open in Browser'
-          >
-            <span className='material-symbols-rounded'>open_in_new</span>
-          </button>
-          <div className='preview-divider' />
+          {!zoomOnly && (
+            <>
+              <button
+                type='button'
+                className='preview-btn'
+                onClick={openOriginal}
+                title='Open in Browser'
+              >
+                <span className='material-symbols-rounded'>open_in_new</span>
+              </button>
+              <div className='preview-divider' />
+            </>
+          )}
           <button
             type='button'
             className='preview-btn'
@@ -213,29 +226,31 @@ export const ImagePreview = ({ src, alt, author, timestamp }: ImagePreviewProps)
         />
       </div>
 
-      <div
-        className='image-preview-footer'
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        onKeyDown={(e) => {
-          e.stopPropagation();
-        }}
-        role='presentation'
-      >
-        <div className='image-preview-toolbar'>
-          <button
-            type='button'
-            className='preview-btn'
-            onClick={() => {
-              void copyLink();
-            }}
-            title='Copy Link'
-          >
-            <span className='material-symbols-rounded'>link</span>
-          </button>
+      {!zoomOnly && (
+        <div
+          className='image-preview-footer'
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+          }}
+          role='presentation'
+        >
+          <div className='image-preview-toolbar'>
+            <button
+              type='button'
+              className='preview-btn'
+              onClick={() => {
+                void copyLink();
+              }}
+              title='Copy Link'
+            >
+              <span className='material-symbols-rounded'>link</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
