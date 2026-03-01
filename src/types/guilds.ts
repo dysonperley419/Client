@@ -1,7 +1,5 @@
 import * as z from 'zod';
 
-import { PresenceUpdateSchema } from '@/types/gateway';
-
 import { ChannelSchema } from './channel';
 import { PresenceSchema } from './presences';
 import { UserSchema } from './users';
@@ -59,7 +57,7 @@ export const GuildSchema = z.object({
   roles: z.array(RoleSchema),
   emojis: z.array(EmojiSchema).nullish().default([]),
   channels: z.array(z.lazy(() => ChannelSchema)),
-  presences: z.lazy(() => z.array(PresenceUpdateSchema)).optional(),
+  presences: z.lazy(() => z.array(PresenceSchema)).optional(),
   voice_states: z.array(VoiceStateSchema).default([]),
 });
 

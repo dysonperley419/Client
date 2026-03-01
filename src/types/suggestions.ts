@@ -21,7 +21,7 @@ export interface Suggestion {
   suggestionType: SuggestionsType;
   isSpecial?: boolean;
   user?: Member | null;
-  emoji?: Emoji | null;
+  emoji?: Emoji | string | null;
   role?: Role | null;
   channel?: Channel | null;
   command?: Command | null;

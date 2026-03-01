@@ -1,3 +1,6 @@
+import twemoji from '@twemoji/api';
+import parse from 'html-react-parser';
+
 import { useConfig } from '@/context/configContext';
 import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
 
@@ -17,6 +20,23 @@ export const SuggestionsBar = ({
   setSelectedIndex,
 }: SuggestionsBarProps) => {
   const { cdnUrl } = useConfig();
+
+  function renderEmoji(item: Suggestion) {
+    return (
+      <>
+        {typeof item.emoji !== 'string' ? (
+          <img
+            src={`${cdnUrl ?? ''}/emojis/${item.emoji?.id ?? ''}.${item.emoji?.animated ? 'gif' : 'png'}`}
+            alt={item.name}
+            className='suggested-item-avi'
+            style={{ objectFit: 'contain' }}
+          />
+        ) : (
+          <>{parse(twemoji.parse(item.emoji ?? '', { className: 'suggested-item-avi' }))}</>
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -93,12 +113,7 @@ export const SuggestionsBar = ({
                           className='avatar-img suggested-item-avi'
                         />
                       ) : isEmoji ? (
-                        <img
-                          src={`${cdnUrl ?? ''}/emojis/${item.emoji?.id ?? ''}.${item.emoji?.animated ? 'gif' : 'png'}`}
-                          alt={item.name}
-                          className='suggested-item-avi'
-                          style={{ objectFit: 'contain' }}
-                        />
+                        renderEmoji(item)
                       ) : (
                         <div
                           className='suggested-item-avi'

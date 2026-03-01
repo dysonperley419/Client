@@ -13,7 +13,7 @@ import { useUserStore } from '@/stores/userStore';
 import type { Channel } from '@/types/channel';
 import type { Command } from '@/types/command';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
-import type { Guild, Member } from '@/types/guilds';
+import { EmojiSchema, type Guild, type Member } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
 import type { User } from '@/types/users';
@@ -1257,9 +1257,13 @@ const MainContent = ({
       });
 
       const filteredEmojis = guildEmojis
-        .filter(
-          (e: Suggestion) => e.emoji?.name.toLowerCase().includes(q) && e.emoji.require_colons,
-        )
+        .filter((e: Suggestion) => {
+          const GuildEmoji = EmojiSchema.parse(e.emoji);
+          if (GuildEmoji) {
+            return GuildEmoji.name.toLowerCase().includes(q) && GuildEmoji.require_colons;
+          }
+          return;
+        })
         .concat(builtinEmojis)
         .sort((a: Suggestion, b: Suggestion) => {
           const startsA = a.name.toLowerCase().startsWith(q);

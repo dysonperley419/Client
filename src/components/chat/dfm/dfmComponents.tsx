@@ -1,6 +1,7 @@
 import './dfm.css';
 
 import twemoji from '@twemoji/api';
+import parse from 'html-react-parser';
 import { type JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -206,7 +207,7 @@ export const EmojiMention = ({
       />
     );
   } else {
-    return <div dangerouslySetInnerHTML={{ __html: twemoji.parse(unicode ?? '') }} />;
+    return <>{parse(twemoji.parse(unicode ?? ''))}</>;
   }
 };
 
