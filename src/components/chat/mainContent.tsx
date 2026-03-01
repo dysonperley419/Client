@@ -5,6 +5,7 @@ import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
+import { EMOJI_SHORTCODE_MAP } from '@/generated/emojiMap';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useMenuOverlay } from '@/layering/menuOverlayStore';
 import { useModal } from '@/layering/modalContext';
@@ -1233,7 +1234,7 @@ const MainContent = ({
 
       setFilteredSuggestions(combined);
     } else if (type === SuggestionsType.EMOJI) {
-      const allEmojis = guilds.flatMap((g) =>
+      const guildEmojis = guilds.flatMap((g) =>
         (g.emojis || []).map(
           (e) =>
             ({
@@ -1245,10 +1246,21 @@ const MainContent = ({
         ),
       );
 
-      const filteredEmojis = allEmojis
+      const builtinEmojis: Suggestion[] = [];
+
+      Object.keys(EMOJI_SHORTCODE_MAP).forEach((key) => {
+        builtinEmojis.push({
+          emoji: EMOJI_SHORTCODE_MAP[key],
+          suggestionType: SuggestionsType.EMOJI,
+          name: key,
+        } as Suggestion);
+      });
+
+      const filteredEmojis = guildEmojis
         .filter(
           (e: Suggestion) => e.emoji?.name.toLowerCase().includes(q) && e.emoji.require_colons,
         )
+        .concat(builtinEmojis)
         .sort((a: Suggestion, b: Suggestion) => {
           const startsA = a.name.toLowerCase().startsWith(q);
           const startsB = b.name.toLowerCase().startsWith(q);
