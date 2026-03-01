@@ -140,7 +140,7 @@ const Landing = (): JSX.Element => {
                 Discord to Spacebar/Oldcord instances.
               </p>
               <p>
-                It is based on the UX discord had during its best years in 2017-2018, designed &
+                It is based on the UX Discord had during its best years in 2017-2018, designed &
                 developed by the very same people who made{' '}
                 <Link to='https://oldcordapp.com' className='landing-link' target='__blank'>
                   Oldcord
@@ -221,7 +221,7 @@ const Landing = (): JSX.Element => {
             <Link to='https://github.com/FlickerTeam' target='_blank' rel='noreferrer'>
               Flicker Team
             </Link>
-            . All rights reserved.
+            . Licensed under GPLv3.
           </p>
         </div>
         <div className='footer-attribution'>
@@ -244,6 +244,10 @@ const Landing = (): JSX.Element => {
           <span className='dot'>•</span>
           <Link to='https://www.flaticon.com/' title='Flaticon' target='__blank'>
             Flaticon
+          </Link>
+          <span className='dot'>•</span>
+          <Link to='https://fonts.google.com/icons' title='Google' target='__blank'>
+            Google
           </Link>
         </div>
       </footer>
