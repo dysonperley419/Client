@@ -8,7 +8,6 @@ import unicodeNames from '@unicode/unicode-17.0.0/Names/index.js';
 const require = createRequire(import.meta.url);
 
 const SHORTCODE_SOURCE_PRIORITY = {
-  direct_aliases: 6,
   discord: 5,
   emojibase: 4,
   unicode_names: 3,
