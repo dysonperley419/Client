@@ -10,10 +10,18 @@ import { EMOJI_SHORTCODE_MAP } from '@/generated/emojiMap';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useMenuOverlay } from '@/layering/menuOverlayStore';
 import { useModal } from '@/layering/modalContext';
+import { usePopup } from '@/layering/popupContext';
 import { useUserStore } from '@/stores/userStore';
 import type { Channel } from '@/types/channel';
 import type { Command } from '@/types/command';
+import type { Emoji } from '@/types/emojiChooser';
 import type { MessageCreate, MessageDelete, MessageUpdate } from '@/types/gateway';
+import type {
+  GifCategory,
+  GifResult,
+  GifTrendingResponse,
+  RawGifResponse,
+} from '@/types/gifsSearcher';
 import { EmojiSchema, type Guild, type Member } from '@/types/guilds';
 import { type Message, MessageListSchema, MessageSchema } from '@/types/messages';
 import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
@@ -28,8 +36,6 @@ import { useUiUtilityActions } from '@/utils/uiUtils';
 import { ChatAttachment } from './chatAttachment';
 import ChatInput from './chatInput';
 import renderDfm from './dfm/dfmRenderer';
-import { EmojiChooser } from './emojiChooser';
-import { GifSearcher } from './gifSearcher';
 import MemberList from './memberList';
 import { MessageEditInput } from './messageeditinput';
 import { PinnedMessagesShelf } from './pinnedMessagesShelf';
@@ -66,26 +72,6 @@ const MESSAGE_STATE = Object.freeze({
   '-1': 'Failed',
 }); //Should I put this somewhere else?
 
-interface GifResult {
-  id: string;
-  title: string;
-  previewUrl: string;
-  fullUrl: string;
-  aspectRatio: number;
-}
-
-interface GifTrendingResponse {
-  categories: { name: string; src: string }[];
-}
-
-interface RawGifResponse {
-  id: string;
-  title: string;
-  gif_src: string;
-  width: number;
-  height: number;
-}
-
 type LocalMessage = Message & { state: number };
 
 const MainContent = ({
@@ -99,6 +85,7 @@ const MainContent = ({
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
   const { openContextMenu } = useMenuOverlay();
   const { openModal } = useModal();
+  const { popupType, openPopup, updatePopup, closePopup } = usePopup();
 
   const [suggestionsTrigger, setSuggestionTrigger] = useState<SuggestionsTrigger | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -109,14 +96,12 @@ const MainContent = ({
   >({});
   const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[] | []>([]);
   const [gifs, setGifs] = useState<GifResult[] | []>([]);
-  const [gifCategories, setGifCategories] = useState<{ name: string; src: string }[]>([]);
+  const [gifCategories, setGifCategories] = useState<GifCategory[] | []>([]);
   const [gifSearchQuery, setGifSearchQuery] = useState('');
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [stickernatorActive, setStickernatorActive] = useState(false);
   const [channelPinsVisible, setChannelPinsVisible] = useState(false);
-  const [showGifSearcher, setShowGifSearcher] = useState(false);
   const [memberListVisible, setMemberListVisible] = useState(true);
-  const [theESRF, setTheESRF] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { typingUsers, user, getMember, getMemberColor, getPresence, memberLists, guilds } =
     useGateway();
@@ -326,7 +311,13 @@ const MainContent = ({
   }, [filteredSuggestions]);
 
   useEffect(() => {
-    if (showGifSearcher && gifSearchQuery === '') {
+    if (popupType === 'GIF_PICKER') {
+      updatePopup<'GIF_PICKER'>({ gifs, gifCategories });
+    }
+  }, [gifs, gifCategories, popupType, updatePopup]);
+
+  useEffect(() => {
+    if (popupType === 'GIF_PICKER' && gifSearchQuery === '') {
       const fetchTrending = async () => {
         try {
           const data = await get<GifTrendingResponse>('/gifs/trending?locale=en');
@@ -339,7 +330,7 @@ const MainContent = ({
 
       void fetchTrending();
     }
-  }, [showGifSearcher, gifSearchQuery]);
+  }, [popupType, gifSearchQuery]);
 
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
@@ -1645,7 +1636,7 @@ const MainContent = ({
               void handleSendMessage(e);
             }}
           >
-            {suggestionsTrigger && filteredSuggestions.length > 0 && !showGifSearcher && (
+            {suggestionsTrigger && filteredSuggestions.length > 0 && popupType !== 'GIF_PICKER' && (
               <SuggestionsBar
                 suggestionsTrigger={suggestionsTrigger}
                 filteredSuggestions={filteredSuggestions}
@@ -1654,75 +1645,41 @@ const MainContent = ({
                 setSelectedIndex={setSelectedIndex}
               ></SuggestionsBar>
             )}
-            {theESRF && (
-              <EmojiChooser
-                guilds={guilds}
-                onSelectEmoji={(emoji) => {
-                  const builtInUnicode = emoji.unicode;
-                  if (emoji.isBuiltin && builtInUnicode) {
-                    setChatMessage((prev) => `${prev}${builtInUnicode} `);
-                    return;
-                  }
-
-                  const emojiId = emoji.id;
-                  if (!emojiId) {
-                    return;
-                  }
-
-                  const prefix = emoji.animated ? 'a:' : ':';
-                  setChatMessage((prev) => `${prev}<${prefix}${emoji.name}:${emojiId}> `);
-                }}
-                onClose={() => {
-                  setTheESRF(false);
-                }}
-              />
-            )}
-            {showGifSearcher && (
-              <GifSearcher
-                gifCategories={gifCategories}
-                gifs={gifs}
-                onSearch={handleSearchAndSetGif}
-                onSelectGif={(url) => {
-                  setChatMessage(url);
-                }}
-                onClose={() => {
-                  setShowGifSearcher(false);
-                }}
-              />
-            )}
             <div className='input-wrapper'>
               {attachments.length > 0 && (
                 <OverlayScrollbarsComponent
                   element='div'
                   options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
-                  className='attachment-shelf'
+                  className='attachment-shelf-scroll'
                 >
-                  {attachments.map((at) => {
-                    const isVideo = at.file.type.startsWith('video/');
+                  <div className='attachment-shelf'>
+                    {attachments.map((at) => {
+                      const isVideo = at.file.type.startsWith('video/');
 
-                    return (
-                      <div key={at.id} className='attachment-container'>
-                        {isVideo ? (
-                          <video src={at.preview} className='attachment-preview' muted />
-                        ) : (
-                          <img
-                            src={at.preview}
-                            className='attachment-preview'
-                            alt='Attachment preview'
-                          />
-                        )}
-                        <button
-                          type='button'
-                          className='attachment-remove'
-                          onClick={() => {
-                            removeAttachment(at.id);
-                          }}
-                        >
-                          X
-                        </button>
-                      </div>
-                    );
-                  })}
+                      return (
+                        <div key={at.id} className='attachment-container'>
+                          {isVideo ? (
+                            <video src={at.preview} className='attachment-preview' muted />
+                          ) : (
+                            <img
+                              src={at.preview}
+                              className='attachment-preview'
+                              alt='Attachment preview'
+                            />
+                          )}
+                          <button
+                            type='button'
+                            className='attachment-remove'
+                            onClick={() => {
+                              removeAttachment(at.id);
+                            }}
+                          >
+                            X
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </OverlayScrollbarsComponent>
               )}
               <div className='input-row'>
@@ -1764,10 +1721,25 @@ const MainContent = ({
                     <div className='input-icons'>
                       <button
                         type='button'
-                        className={`input-icon-btn ${showGifSearcher ? 'active-input-btn' : ''}`}
+                        className={`input-icon-btn ${popupType === 'GIF_PICKER' ? 'active-input-btn' : ''}`}
                         title={`Search gifs`}
-                        onClick={() => {
-                          setShowGifSearcher(!showGifSearcher);
+                        onClick={(e) => {
+                          if (popupType === 'GIF_PICKER') {
+                            closePopup();
+                          } else {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            openPopup<'GIF_PICKER'>('GIF_PICKER', {
+                              x: rect.left,
+                              y: rect.top,
+                              gifCategories,
+                              gifs,
+                              onSearch: handleSearchAndSetGif,
+                              onSelectGif: (url) => {
+                                setChatMessage(url);
+                                closePopup();
+                              },
+                            });
+                          }
                         }}
                       >
                         <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
@@ -1788,10 +1760,36 @@ const MainContent = ({
                       </button>
                       <button
                         type='button'
-                        className={`input-icon-btn ${theESRF ? 'active-input-btn' : ''}`}
+                        className={`input-icon-btn ${popupType === 'EMOJI_PICKER' ? 'active-input-btn' : ''}`}
                         title={`Search emojis`}
-                        onClick={() => {
-                          setTheESRF(!theESRF);
+                        onClick={(e) => {
+                          if (popupType === 'EMOJI_PICKER') {
+                            closePopup();
+                          } else {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            openPopup<'EMOJI_PICKER'>('EMOJI_PICKER', {
+                              x: rect.left,
+                              y: rect.top,
+                              guilds,
+                              onSelectEmoji: (emoji: Emoji) => {
+                                const builtInUnicode = emoji.unicode;
+                                if (emoji.isBuiltin && builtInUnicode) {
+                                  setChatMessage((prev) => `${prev}${builtInUnicode} `);
+                                  return;
+                                }
+
+                                const emojiId = emoji.id;
+                                if (!emojiId) {
+                                  return;
+                                }
+
+                                const prefix = emoji.animated ? 'a:' : ':';
+                                setChatMessage(
+                                  (prev) => `${prev}<${prefix}${emoji.name}:${emojiId}> `,
+                                );
+                              },
+                            });
+                          }
                         }}
                       >
                         <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>

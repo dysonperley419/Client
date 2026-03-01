@@ -10,6 +10,8 @@ import { ConfirmationDeleteModal } from '@/components/modals/confirmationDelete'
 import { ConfirmationLeaveModal } from '@/components/modals/confirmationLeave';
 import { CreateServerModal } from '@/components/modals/createServer';
 import { DangerConfirmationModal } from '@/components/modals/dangerConfirmationModal';
+import { EmojiChooser } from '@/components/modals/emojiChooser';
+import { GifSearcher } from '@/components/modals/gifSearcher';
 import { ImagePreview } from '@/components/modals/imagePreview';
 import { JoinOrCreateServerModal } from '@/components/modals/joinOrCreateServer';
 import { JoinServerModal } from '@/components/modals/joinServer';
@@ -18,6 +20,7 @@ import { PopoutProfile } from '@/components/modals/popoutProfile';
 import { ServerProfileModal } from '@/components/modals/serverProfile';
 import { UserProfileModal } from '@/components/modals/userProfile';
 import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
+import type { Emoji } from '@/types/guilds';
 
 import { type ModalDataMap, useModal } from './modalContext';
 import { type PopupDataMap, usePopup } from './popupContext';
@@ -164,7 +167,7 @@ export const LayerPortals = (): JSX.Element | null => {
             tabIndex={-1}
           >
             <PopoutEmoji
-              emoji={data.emoji}
+              emoji={data.emoji as Emoji}
               guildIcon={data.guildIcon}
               guildId={data.guildId}
               guildName={data.guildName}
@@ -172,6 +175,61 @@ export const LayerPortals = (): JSX.Element | null => {
               isBuiltin={data.isBuiltin}
               unicode={data.unicode}
               sourceSubtext={data.sourceSubtext}
+            />
+          </div>
+        );
+      }
+      case 'EMOJI_PICKER': {
+        const data = popupData as PopupDataMap['EMOJI_PICKER'];
+        const popoutHeight = 440;
+        const popoutWidth = 350;
+        const { x: fixedX, y: fixedY } = clampPosition(
+          data.x - popoutWidth,
+          data.y - popoutHeight,
+          popoutWidth,
+          popoutHeight,
+        );
+
+        return (
+          <div
+            className='popup-wrapper'
+            style={{ top: fixedY, left: fixedX, position: 'fixed', width: popoutWidth }}
+            role='dialog'
+            tabIndex={-1}
+          >
+            <EmojiChooser
+              guilds={data.guilds}
+              onSelectEmoji={data.onSelectEmoji}
+              onClose={closePopup}
+              currentGuildId={currentGuildId ?? undefined}
+            />
+          </div>
+        );
+      }
+      case 'GIF_PICKER': {
+        const data = popupData as PopupDataMap['GIF_PICKER'];
+        const popoutHeight = 440;
+        const popoutWidth = 350;
+        const { x: fixedX, y: fixedY } = clampPosition(
+          data.x - popoutWidth,
+          data.y - popoutHeight,
+          popoutWidth,
+          popoutHeight,
+        );
+
+        return (
+          <div
+            className='popup-wrapper'
+            style={{ top: fixedY, left: fixedX, position: 'fixed', width: popoutWidth }}
+            role='dialog'
+            tabIndex={-1}
+          >
+            <GifSearcher
+              gifCategories={data.gifCategories}
+              gifs={data.gifs}
+              onSearch={data.onSearch}
+              onSelectGif={data.onSelectGif}
+              onClose={closePopup}
             />
           </div>
         );

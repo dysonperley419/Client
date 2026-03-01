@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react';
 
-import type { Emoji, Member, Role } from '@/types/guilds';
+import type { Emoji as EmojiChooserEmoji } from '@/types/emojiChooser';
+import type { GifCategory, GifResult } from '@/types/gifsSearcher';
+import type { Emoji, Guild, Member, Role } from '@/types/guilds';
 
 export interface PopupDataMap {
   USER_PROFILE_POPOUT: { x: number; y: number; member: Member; roles: Role[] | null };
@@ -8,7 +10,7 @@ export interface PopupDataMap {
   EMOJI_DETAILS_POPOUT: {
     x: number;
     y: number;
-    emoji: Emoji;
+    emoji: Emoji | EmojiChooserEmoji;
     guildIcon?: string;
     guildId: string;
     guildName: string;
@@ -16,6 +18,20 @@ export interface PopupDataMap {
     isBuiltin?: boolean;
     unicode?: string;
     sourceSubtext?: string;
+  };
+  EMOJI_PICKER: {
+    x: number;
+    y: number;
+    guilds: Guild[];
+    onSelectEmoji: (emoji: Emoji | EmojiChooserEmoji) => void;
+  };
+  GIF_PICKER: {
+    x: number;
+    y: number;
+    gifCategories: GifCategory[];
+    gifs: GifResult[];
+    onSearch: (term: string) => Promise<void>;
+    onSelectGif: (url: string) => void;
   };
 }
 
@@ -27,6 +43,7 @@ interface PopupContextType {
   openPopup: <T extends PopupType>(
     ...args: PopupDataMap[T] extends undefined ? [type: T] : [type: T, data: PopupDataMap[T]]
   ) => void;
+  updatePopup: <T extends PopupType>(data: Partial<PopupDataMap[T]>) => void;
   closePopup: () => void;
 }
 
@@ -65,6 +82,21 @@ const openPopup: PopupContextType['openPopup'] = (...args) => {
   emit();
 };
 
+const updatePopup: PopupContextType['updatePopup'] = (data) => {
+  if (!state.popupData || typeof state.popupData !== 'object') {
+    return;
+  }
+
+  state = {
+    ...state,
+    popupData: {
+      ...state.popupData,
+      ...(data as object),
+    } as PopupDataMap[PopupType],
+  };
+  emit();
+};
+
 const closePopup = () => {
   state = {
     popupType: null,
@@ -80,6 +112,7 @@ export const usePopup = (): PopupContextType => {
     popupType: snapshot.popupType,
     popupData: snapshot.popupData,
     openPopup,
+    updatePopup,
     closePopup,
   };
 };

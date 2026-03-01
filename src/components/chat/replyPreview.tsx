@@ -44,7 +44,7 @@ export const ReplyPreview = ({
   }
 
   if (referencedMessage.content?.endsWith('.gif')) {
-    displayContent = `(Gif)`;
+    displayContent = `(GifResult)`;
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
