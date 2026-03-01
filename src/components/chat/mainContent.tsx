@@ -3,9 +3,9 @@ import './mainContent.css';
 import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfig } from '@/context/configContext';
-import { useContextMenu } from '@/context/contextMenuContext';
-import { useModal } from '@/context/modalContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useMenuOverlay } from '@/layering/menuOverlayStore';
+import { useModal } from '@/layering/modalContext';
 import { useUserStore } from '@/stores/userStore';
 import type { Channel } from '@/types/channel';
 import type { Command } from '@/types/command';
@@ -95,7 +95,7 @@ const MainContent = ({
 }: MainContentProps): JSX.Element => {
   const contextPerms = usePermissions(selectedGuild?.id, selectedChannel.id);
   const { openUserProfile, openFullProfile } = useUiUtilityActions(selectedGuild);
-  const { openContextMenu } = useContextMenu();
+  const { openContextMenu } = useMenuOverlay();
   const { openModal } = useModal();
 
   const [suggestionsTrigger, setSuggestionTrigger] = useState<SuggestionsTrigger | null>(null);

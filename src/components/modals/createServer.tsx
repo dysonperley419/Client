@@ -4,7 +4,7 @@ import { type JSX, useRef, useState } from 'react';
 
 import { post } from '@/utils/api';
 
-import { useModal } from '../../context/modalContext';
+import { useModal } from '../../layering/modalContext';
 
 export const CreateServerModal = (): JSX.Element => {
   const { openModal, closeModal } = useModal();

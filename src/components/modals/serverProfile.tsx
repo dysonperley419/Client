@@ -12,7 +12,7 @@ import { logger } from '@/utils/logger';
 import { intToHex } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
-import { useModal } from '../../context/modalContext';
+import { useModal } from '../../layering/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 import { MutualItem } from '../chat/mutualItem';
 

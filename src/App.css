@@ -32,6 +32,11 @@
   --gray-outline-bottom: inset 0 -1px 0 0 var(--outline-color-gray);
   --modifier-accent-outline-top: inset 0 1px 0 0 var(--bg-modifier-accent);
   --modifier-accent-outline-bottom: inset 0 -1px 0 0 var(--bg-modifier-accent);
+  --layer-base: 1;
+  --layer-base-floating: 10;
+  --layer-screen: 20;
+  --layer-modal: 30;
+  --layer-context-menu: 40;
 }
 
 body {
@@ -140,15 +145,49 @@ h6 {
   overflow: hidden;
 }
 
-#modal-portal {
+.layer-base {
+  position: relative;
+  z-index: var(--layer-base);
+}
+
+.layer-screen {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-screen);
+}
+
+.layer-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-modal);
+}
+
+#secondary-layer-portal,
+#modal-portal,
+#context-menu-portal {
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
+  isolation: isolate;
+}
+
+#secondary-layer-portal {
+  z-index: var(--layer-screen);
+  pointer-events: auto;
+}
+
+#secondary-layer-portal:empty {
+  pointer-events: none;
+}
+
+#modal-portal {
+  z-index: var(--layer-modal);
+  pointer-events: none;
+}
+
+#context-menu-portal {
+  z-index: var(--layer-context-menu);
   pointer-events: none;
 }
 
@@ -233,7 +272,7 @@ body,
   box-shadow:
     var(--shadow-main),
     0 10px 30px rgb(0 0 0 / 50%);
-  z-index: 9999;
+  z-index: var(--layer-base-floating);
   border-radius: 8px;
   display: flex;
   flex-direction: column;

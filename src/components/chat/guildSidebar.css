@@ -154,11 +154,6 @@
   outline: 1px solid rgb(187 154 247 / 20%);
 }
 
-.guild-context-menu {
-  position: fixed;
-  z-index: 9999;
-}
-
 .user-section {
   width: 100%;
   display: flex;

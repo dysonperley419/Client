@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { useModal } from '@/context/modalContext';
+import { useModal } from '@/layering/modalContext';
 import type { Attachment, Message } from '@/types/messages';
 import { localBlobCache } from '@/utils/attachmentCache';
 import { formatTimestamp } from '@/utils/dateUtils';

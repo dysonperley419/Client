@@ -10,7 +10,7 @@ import {
 } from '@/types/responses';
 import { ApiError, get, post } from '@/utils/api';
 
-import { useModal } from '../../context/modalContext';
+import { useModal } from '../../layering/modalContext';
 
 export const JoinServerModal = (): JSX.Element => {
   const { openModal, closeModal } = useModal();

@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useModal } from '../../context/modalContext';
+import { useModal } from '../../layering/modalContext';
 
 export const DangerConfirmationModal = ({
   title,

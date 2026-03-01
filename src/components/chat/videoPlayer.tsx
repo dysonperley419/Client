@@ -2,7 +2,7 @@ import './videoPlayer.css';
 
 import { useEffect, useRef, useState } from 'react';
 
-import { useContextMenu } from '@/context/contextMenuContext';
+import { useMenuOverlay } from '@/layering/menuOverlayStore';
 
 export const VideoPlayer = ({
   src,
@@ -14,7 +14,7 @@ export const VideoPlayer = ({
   height: number;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { openContextMenu, closeContextMenu } = useContextMenu();
+  const { openContextMenu, closeContextMenu } = useMenuOverlay();
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);

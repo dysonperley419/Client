@@ -5,8 +5,8 @@ import { type NavigateFunction, useNavigate } from 'react-router-dom';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
-import { useContextMenu } from '@/context/contextMenuContext';
 import { useGateway } from '@/context/gatewayContext';
+import { useMenuOverlay } from '@/layering/menuOverlayStore';
 import { useUserStore } from '@/stores/userStore';
 import type { Channel } from '@/types/channel';
 import type { Guild, VoiceState } from '@/types/guilds';
@@ -145,7 +145,7 @@ const ChannelSidebar = ({
 }: ChannelSidebarProps): JSX.Element => {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const { privateChannels: globalPrivateChannels, voiceStates } = useGateway();
-  const { openContextMenu, closeContextMenu } = useContextMenu();
+  const { openContextMenu, closeContextMenu } = useMenuOverlay();
   const [closedChannelIds, setClosedChannelIds] = useState<string[]>([]);
   const navigate = useNavigate();
   const { cdnUrl } = useConfig();

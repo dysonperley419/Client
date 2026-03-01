@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { useSyncExternalStore } from 'react';
 
 import type { ImagePreviewProps } from '@/components/modals/imagePreview';
 import type { ConnectedAccount } from '@/components/modals/serverProfile';
@@ -42,12 +42,72 @@ interface ModalContextType {
   closeModal: () => void;
 }
 
-export const ModalContext = createContext<ModalContextType | undefined>(undefined);
+interface ModalState {
+  modalType: ModalType | null;
+  modalData: ModalDataMap[ModalType] | null;
+}
 
-export const useModal = () => {
-  const context = useContext(ModalContext);
-  if (!context) {
-    throw new Error('useModal must be used within ModalProvider');
+const listeners = new Set<() => void>();
+let state: ModalState = {
+  modalType: null,
+  modalData: null,
+};
+
+const getSnapshot = (): ModalState => state;
+
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
+const emit = () => {
+  listeners.forEach((listener) => {
+    listener();
+  });
+};
+
+const openModal: ModalContextType['openModal'] = (...args) => {
+  const [type, data] = args as [ModalType, ModalDataMap[ModalType] | undefined];
+  state = {
+    modalType: type,
+    modalData: (data ?? null) as ModalDataMap[ModalType] | null,
+  };
+  emit();
+};
+
+const updateModal: ModalContextType['updateModal'] = (data) => {
+  if (!state.modalData || typeof state.modalData !== 'object') {
+    return;
   }
-  return context;
+
+  state = {
+    ...state,
+    modalData: {
+      ...state.modalData,
+      ...(data as object),
+    } as ModalDataMap[ModalType],
+  };
+  emit();
+};
+
+const closeModal = () => {
+  state = {
+    modalType: null,
+    modalData: null,
+  };
+  emit();
+};
+
+export const useModal = (): ModalContextType => {
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+  return {
+    modalType: snapshot.modalType,
+    modalData: snapshot.modalData,
+    openModal,
+    updateModal,
+    closeModal,
+  };
 };

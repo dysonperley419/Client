@@ -3,13 +3,13 @@ import './memberList.css';
 import { type JSX, useCallback, useEffect, useState } from 'react';
 
 import { useConfig } from '@/context/configContext';
+import { useMenuOverlay } from '@/layering/menuOverlayStore';
 import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
-import { useContextMenu } from '../../context/contextMenuContext';
 import { useGateway } from '../../context/gatewayContext';
-import { usePopup } from '../../context/popupContext';
+import { usePopup } from '../../layering/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 
 const MemberListItem = ({
@@ -23,7 +23,7 @@ const MemberListItem = ({
   roles?: Role[];
   color?: string;
 }): JSX.Element => {
-  const { openContextMenu } = useContextMenu();
+  const { openContextMenu } = useMenuOverlay();
   const { openPopup } = usePopup();
   const { getPresence } = useGateway();
   const { cdnUrl } = useConfig();

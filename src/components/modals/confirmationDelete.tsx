@@ -4,7 +4,7 @@ import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
 import { del, post } from '@/utils/api';
 import { logger } from '@/utils/logger';
 
-import { useModal } from '../../context/modalContext';
+import { useModal } from '../../layering/modalContext';
 
 export const ConfirmationDeleteModal = ({
   id,

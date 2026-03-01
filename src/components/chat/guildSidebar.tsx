@@ -5,14 +5,14 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
 import { useConfig } from '@/context/configContext';
+import { useMenuOverlay } from '@/layering/menuOverlayStore';
 import type { Channel } from '@/types/channel';
 import type { Guild } from '@/types/guilds';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
-import { useContextMenu } from '../../context/contextMenuContext';
 import { useGateway } from '../../context/gatewayContext';
-import { useModal } from '../../context/modalContext';
-import { usePopup } from '../../context/popupContext';
+import { useModal } from '../../layering/modalContext';
+import { usePopup } from '../../layering/popupContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 
 const GuildSidebar = ({
@@ -37,7 +37,7 @@ const GuildSidebar = ({
   const { user, sessions, relationships, getPresence } = useGateway();
   const navigate = useNavigate();
   const { openModal } = useModal();
-  const { openContextMenu } = useContextMenu();
+  const { openContextMenu } = useMenuOverlay();
   const { openPopup, popupType } = usePopup();
 
   const handleLeaveServer = (guild_name: string, guild_id: string) => {

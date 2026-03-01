@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import { useVoice } from '@/hooks/useVoice';
 import type { Channel } from '@/types/channel';
 
-import { useModal } from '../../context/modalContext';
+import { useModal } from '../../layering/modalContext';
 
 export const ConfirmationConnectP2PModal = ({
   channel,

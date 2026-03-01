@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 
-import { useModal } from '../../context/modalContext';
+import { useModal } from '../../layering/modalContext';
 
 export const JoinOrCreateServerModal = (): JSX.Element => {
   const { openModal } = useModal();

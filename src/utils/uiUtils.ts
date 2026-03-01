@@ -2,8 +2,8 @@ import type React from 'react';
 
 import { type ServerProfileProps } from '@/components/modals/serverProfile';
 import { useGateway } from '@/context/gatewayContext';
-import { useModal } from '@/context/modalContext';
-import { usePopup } from '@/context/popupContext';
+import { useModal } from '@/layering/modalContext';
+import { usePopup } from '@/layering/popupContext';
 import { type UserWithPresence, useUserStore } from '@/stores/userStore';
 import type { Guild, Member, Role } from '@/types/guilds';
 

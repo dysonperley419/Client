@@ -4,12 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
 import { ConfigProvider } from './context/configProvider';
-import { ContextMenuProvider } from './context/contextMenuProvider';
 import { GatewayProvider } from './context/gatewayProvider';
-import { ModalProvider } from './context/modalProvider';
-import { PopupProvider } from './context/popupProvider';
 import { ThemeProvider } from './context/themeProvider';
 import { VoiceProvider } from './context/voiceProvider';
+import { LayerPortals } from './layering/layerPortals';
+import { MenuOverlayLayer } from './layering/menuOverlayLayer';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
@@ -20,15 +19,11 @@ if (rootElement) {
         <ConfigProvider>
           <GatewayProvider>
             <VoiceProvider>
-              <ModalProvider>
-                <PopupProvider>
-                  <ContextMenuProvider>
-                    <ThemeProvider>
-                      <App />
-                    </ThemeProvider>
-                  </ContextMenuProvider>
-                </PopupProvider>
-              </ModalProvider>
+              <ThemeProvider>
+                <App />
+                <LayerPortals />
+                <MenuOverlayLayer />
+              </ThemeProvider>
             </VoiceProvider>
           </GatewayProvider>
         </ConfigProvider>

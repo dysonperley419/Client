@@ -3,7 +3,7 @@ import './popoutEmoji.css';
 import { type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { usePopup } from '@/context/popupContext';
+import { usePopup } from '@/layering/popupContext';
 import type { Emoji } from '@/types/guilds';
 
 interface PopoutEmojiProps {

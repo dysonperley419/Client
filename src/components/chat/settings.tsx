@@ -4,8 +4,8 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
-import { useModal } from '@/context/modalContext';
 import { useTheme } from '@/context/themeContext';
+import { useModal } from '@/layering/modalContext';
 import type { User } from '@/types/users';
 import { patch } from '@/utils/api';
 import { getDefaultAvatar } from '@/utils/avatar';
@@ -757,7 +757,7 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
   }, [onClose]);
 
   return (
-    <div className='settings-overlay'>
+    <div className='settings-overlay layer-screen'>
       <div className='settings-sidebar-wrapper'>
         <nav className='settings-sidebar'>
           <div className='search-bar-container'>

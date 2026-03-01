@@ -6,7 +6,7 @@ import { useConfig } from '@/context/configContext';
 import type { Message } from '@/types/messages';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
-import { useModal } from '../../context/modalContext';
+import { useModal } from '../../layering/modalContext';
 import { getDefaultAvatar } from '../../utils/avatar';
 
 export interface ImagePreviewProps {

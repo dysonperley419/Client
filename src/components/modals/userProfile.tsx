@@ -10,7 +10,7 @@ import { useUiUtilityActions } from '@/utils/uiUtils';
 
 import { useAssetsUrl } from '../../context/assetsUrl';
 import { useGateway } from '../../context/gatewayContext';
-import { usePopup } from '../../context/popupContext';
+import { usePopup } from '../../layering/popupContext';
 
 export const UserProfileModal = (): JSX.Element => {
   const { user, sessions, getPresence } = useGateway();

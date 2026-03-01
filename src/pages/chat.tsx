@@ -1,8 +1,9 @@
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { useModal } from '@/context/modalContext';
 import { useVoice } from '@/hooks/useVoice';
+import { useModal } from '@/layering/modalContext';
 import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
 import type { Channel } from '@/types/channel';
 import type { GatewayContextSchema } from '@/types/gatewayContext';
@@ -535,18 +536,12 @@ const ChatApp = (): JSX.Element => {
     return <LoadingScreen />;
   }
 
+  const settingsPortal =
+    typeof document !== 'undefined' ? document.getElementById('secondary-layer-portal') : null;
+
   return (
     <div className='page-wrapper'>
-      {showSettings && (
-        <Settings
-          user={user}
-          onClose={() => {
-            setShowSettings(false);
-          }}
-        ></Settings>
-      )}
-
-      {!showSettings && isUsingPopoutConsole && (
+      {isUsingPopoutConsole && !showSettings && (
         <div
           className='popout-console'
           onMouseDown={handleMouseDown}
@@ -573,44 +568,61 @@ const ChatApp = (): JSX.Element => {
           <div className='resizer' />
         </div>
       )}
-      {!showSettings && (
-        <div className='chat-layout'>
-          <GuildSidebar
-            guilds={passedGuilds}
-            selectedGuildId={guildId}
-            onSelectGuild={handleSelectGuild}
-            privateChannels={newPrivateChannels}
-            privateChannelMentions={privateChannelMentions}
-            unreads={unreads}
-            mentions={mentions}
-            markAsRead={handleMarkGuildAsRead}
-          />
-          <ChannelSidebar
-            selectedGuild={selectedGuild}
-            selectedChannel={selectedChannel}
-            onSelectChannel={handleSelectChannel}
-            unreads={unreads}
-            mentions={mentions}
-          />
+      <div className='chat-layout layer-base' aria-hidden={showSettings}>
+        <GuildSidebar
+          guilds={passedGuilds}
+          selectedGuildId={guildId}
+          onSelectGuild={handleSelectGuild}
+          privateChannels={newPrivateChannels}
+          privateChannelMentions={privateChannelMentions}
+          unreads={unreads}
+          mentions={mentions}
+          markAsRead={handleMarkGuildAsRead}
+        />
+        <ChannelSidebar
+          selectedGuild={selectedGuild}
+          selectedChannel={selectedChannel}
+          onSelectChannel={handleSelectChannel}
+          unreads={unreads}
+          mentions={mentions}
+        />
 
-          {selectedChannel ? (
-            <MainContent
-              key={selectedChannel.id}
-              selectedChannel={selectedChannel}
-              selectedGuild={selectedGuild}
-              onChannelSeen={clearChannelReadState}
-            />
-          ) : !selectedGuild ? (
-            <FriendsList
-              friends={localFriends}
-              onRequestUpdate={handleManualUpdateFriend}
-              onRequestDelete={handleManualRemoveFriend}
-            />
-          ) : (
-            <NoTextChannels />
-          )}
-        </div>
-      )}
+        {selectedChannel ? (
+          <MainContent
+            key={selectedChannel.id}
+            selectedChannel={selectedChannel}
+            selectedGuild={selectedGuild}
+            onChannelSeen={clearChannelReadState}
+          />
+        ) : !selectedGuild ? (
+          <FriendsList
+            friends={localFriends}
+            onRequestUpdate={handleManualUpdateFriend}
+            onRequestDelete={handleManualRemoveFriend}
+          />
+        ) : (
+          <NoTextChannels />
+        )}
+      </div>
+      {showSettings &&
+        (settingsPortal ? (
+          createPortal(
+            <Settings
+              user={user}
+              onClose={() => {
+                setShowSettings(false);
+              }}
+            ></Settings>,
+            settingsPortal,
+          )
+        ) : (
+          <Settings
+            user={user}
+            onClose={() => {
+              setShowSettings(false);
+            }}
+          ></Settings>
+        ))}
     </div>
   );
 };
