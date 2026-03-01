@@ -13,6 +13,16 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-shiki': ['shiki'],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['overlayscrollbars', 'overlayscrollbars-react', 'html-react-parser'],
+          'vendor-emoji': ['@/generated/emojiMap', '@/generated/emojiCategories'],
+        },
+      },
+    },
   },
   resolve: {
     alias: {

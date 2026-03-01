@@ -1,17 +1,18 @@
 import './App.css';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, lazy, Suspense, useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import { useModal } from './layering/modalContext';
-import ChatApp from './pages/chat';
-import Landing from './pages/landing';
 import LoadingScreen from './pages/loading';
-import Login from './pages/login';
-import Register from './pages/register';
 import type { Instance } from './types/instance';
 import { type DomainsResponse, DomainsResponseSchema } from './types/responses';
 import { get } from './utils/api';
+
+const ChatApp = lazy(() => import('./pages/chat'));
+const Landing = lazy(() => import('./pages/landing'));
+const Login = lazy(() => import('./pages/login'));
+const Register = lazy(() => import('./pages/register'));
 
 function App(): JSX.Element {
   const { openModal } = useModal();
@@ -117,17 +118,19 @@ function App(): JSX.Element {
   }
 
   return (
-    <Routes>
-      <Route path='/' element={<Landing />} />
-      <Route path='/register' element={<Register />} />
-      <Route path='/login' element={<Login />} />
-      <Route path='/channels' element={<ChatApp />}>
-        <Route path='@me' element={<ChatApp />} />
-        <Route path='@me/:channelId' element={<ChatApp />} />
-        <Route path=':guildId' element={<ChatApp />} />
-        <Route path=':guildId/:channelId' element={<ChatApp />} />
-      </Route>
-    </Routes>
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
+        <Route path='/' element={<Landing />} />
+        <Route path='/register' element={<Register />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/channels' element={<ChatApp />}>
+          <Route path='@me' element={<ChatApp />} />
+          <Route path='@me/:channelId' element={<ChatApp />} />
+          <Route path=':guildId' element={<ChatApp />} />
+          <Route path=':guildId/:channelId' element={<ChatApp />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 
