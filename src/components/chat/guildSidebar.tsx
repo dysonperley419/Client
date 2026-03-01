@@ -4,16 +4,15 @@ import { type JSX } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import imgFlickerLogo from '@/assets/flickerLogo.png';
+import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
+import { useGateway } from '@/context/gatewayContext';
 import { useMenuOverlay } from '@/layering/menuOverlayStore';
+import { useModal } from '@/layering/modalContext';
+import { usePopup } from '@/layering/popupContext';
 import type { Channel } from '@/types/channel';
 import type { Guild } from '@/types/guilds';
-
-import { useAssetsUrl } from '../../context/assetsUrl';
-import { useGateway } from '../../context/gatewayContext';
-import { useModal } from '../../layering/modalContext';
-import { usePopup } from '../../layering/popupContext';
-import { getDefaultAvatar } from '../../utils/avatar';
+import { getDefaultAvatar } from '@/utils/avatar';
 
 const GuildSidebar = ({
   privateChannels,

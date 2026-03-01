@@ -1,15 +1,14 @@
 import { type JSX, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import LoginForm from '@/components/auth/loginForm';
+import Brand from '@/components/common/brand';
+import Footer from '@/components/common/footer';
 import { useAuthLogic } from '@/hooks/useAuthLogic';
 import type { Instance } from '@/types/instance';
 import type { LoginRequest } from '@/types/requests';
 import { LoginResponseSchema } from '@/types/responses';
 import { post } from '@/utils/api';
-
-import LoginForm from '../components/auth/loginForm';
-import Brand from '../components/common/brand';
-import Footer from '../components/common/footer';
 
 function Login(): JSX.Element {
   const [email, setEmail] = useState('');

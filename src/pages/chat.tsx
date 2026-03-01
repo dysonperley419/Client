@@ -2,6 +2,13 @@ import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import ChannelSidebar from '@/components/chat/channelSidebar';
+import { FriendsList } from '@/components/chat/friendsList';
+import GuildSidebar from '@/components/chat/guildSidebar';
+import MainContent from '@/components/chat/mainContent';
+import NoTextChannels from '@/components/chat/noTextChannels';
+import Settings from '@/components/chat/settings';
+import { useGateway } from '@/context/gatewayContext';
 import { useVoice } from '@/hooks/useVoice';
 import { useModal } from '@/layering/modalContext';
 import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
@@ -13,13 +20,6 @@ import type { User } from '@/types/users';
 import { post } from '@/utils/api';
 import { type LogEntry, logger } from '@/utils/logger';
 
-import ChannelSidebar from '../components/chat/channelSidebar';
-import { FriendsList } from '../components/chat/friendsList';
-import GuildSidebar from '../components/chat/guildSidebar';
-import MainContent from '../components/chat/mainContent';
-import NoTextChannels from '../components/chat/noTextChannels';
-import Settings from '../components/chat/settings';
-import { useGateway } from '../context/gatewayContext';
 import LoadingScreen from './loading';
 
 interface DeveloperSettings {

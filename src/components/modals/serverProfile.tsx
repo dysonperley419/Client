@@ -3,20 +3,19 @@ import './serverProfile.css';
 import { type JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { MutualItem } from '@/components/chat/mutualItem';
+import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
+import { useModal } from '@/layering/modalContext';
 import type { Guild, Member } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { get } from '@/utils/api';
+import { getDefaultAvatar } from '@/utils/avatar';
 import { logger } from '@/utils/logger';
 import { intToHex } from '@/utils/uiUtils';
 
-import { useAssetsUrl } from '../../context/assetsUrl';
-import { useModal } from '../../layering/modalContext';
-import { getDefaultAvatar } from '../../utils/avatar';
-import { MutualItem } from '../chat/mutualItem';
-
-//import hypesquad from "../../assets/hypesquad.svg";
+//import hypesquad from "@/assets/hypesquad.svg";
 
 export interface ConnectedAccount {
   id: string;

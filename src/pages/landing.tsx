@@ -3,11 +3,11 @@ import './landing.css';
 import { type JSX, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import openClientArrow from '../assets/arrow.png';
-import flickerLogo from '../assets/flickerLogo.png';
-import githubLogo from '../assets/github.png';
+import openClientArrow from '@/assets/arrow.png';
+import flickerLogo from '@/assets/flickerLogo.png';
+import githubLogo from '@/assets/github.png';
 
-const modules = import.meta.glob('../assets/client-preview*.{png,jpg,jpeg,webp}', {
+const modules = import.meta.glob('@/assets/client-preview*.{png,jpg,jpeg,webp}', {
   eager: true,
 });
 

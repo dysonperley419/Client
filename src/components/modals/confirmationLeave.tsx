@@ -1,8 +1,7 @@
 import type { JSX } from 'react';
 
+import { useModal } from '@/layering/modalContext';
 import { del } from '@/utils/api';
-
-import { useModal } from '../../layering/modalContext';
 
 export const ConfirmationLeaveModal = ({
   name,

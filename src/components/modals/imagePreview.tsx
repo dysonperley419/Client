@@ -2,12 +2,11 @@ import './imagePreview.css';
 
 import { type JSX, useEffect, useRef, useState } from 'react';
 
+import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
+import { useModal } from '@/layering/modalContext';
 import type { Message } from '@/types/messages';
-
-import { useAssetsUrl } from '../../context/assetsUrl';
-import { useModal } from '../../layering/modalContext';
-import { getDefaultAvatar } from '../../utils/avatar';
+import { getDefaultAvatar } from '@/utils/avatar';
 
 export interface ImagePreviewProps {
   src: string;

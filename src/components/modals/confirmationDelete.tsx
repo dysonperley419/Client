@@ -1,10 +1,9 @@
 import type { JSX } from 'react';
 
+import { useModal } from '@/layering/modalContext';
 import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
 import { del, post } from '@/utils/api';
 import { logger } from '@/utils/logger';
-
-import { useModal } from '../../layering/modalContext';
 
 export const ConfirmationDeleteModal = ({
   id,

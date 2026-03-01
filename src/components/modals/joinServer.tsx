@@ -2,6 +2,7 @@ import './joinServer.css';
 
 import { type JSX, useState } from 'react';
 
+import { useModal } from '@/layering/modalContext';
 import {
   type ErrorResponse,
   ErrorResponseSchema,
@@ -9,8 +10,6 @@ import {
   InviteResponseSchema,
 } from '@/types/responses';
 import { ApiError, get, post } from '@/utils/api';
-
-import { useModal } from '../../layering/modalContext';
 
 export const JoinServerModal = (): JSX.Element => {
   const { openModal, closeModal } = useModal();

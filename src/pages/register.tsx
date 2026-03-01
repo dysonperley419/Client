@@ -1,15 +1,14 @@
 import { type JSX, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import RegisterForm from '@/components/auth/registerForm';
+import Brand from '@/components/common/brand';
+import Footer from '@/components/common/footer';
 import { useAuthLogic } from '@/hooks/useAuthLogic';
 import type { Instance } from '@/types/instance';
 import type { RegisterRequest } from '@/types/requests';
 import { RegisterResponseSchema, RegistrationFieldErrorsSchema } from '@/types/responses';
 import { post } from '@/utils/api';
-
-import RegisterForm from '../components/auth/registerForm';
-import Brand from '../components/common/brand';
-import Footer from '../components/common/footer';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;

@@ -3,14 +3,13 @@ import './userProfile.css';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { type JSX, useMemo, useState } from 'react';
 
+import { useAssetsUrl } from '@/context/assetsUrl';
+import { useGateway } from '@/context/gatewayContext';
+import { usePopup } from '@/layering/popupContext';
 import type { Member } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { getDefaultAvatar } from '@/utils/avatar';
 import { useUiUtilityActions } from '@/utils/uiUtils';
-
-import { useAssetsUrl } from '../../context/assetsUrl';
-import { useGateway } from '../../context/gatewayContext';
-import { usePopup } from '../../layering/popupContext';
 
 export const UserProfileModal = (): JSX.Element => {
   const { user, sessions, getPresence } = useGateway();

@@ -1,9 +1,8 @@
 import type { JSX } from 'react';
 
 import { useVoice } from '@/hooks/useVoice';
+import { useModal } from '@/layering/modalContext';
 import type { Channel } from '@/types/channel';
-
-import { useModal } from '../../layering/modalContext';
 
 export const ConfirmationConnectP2PModal = ({
   channel,

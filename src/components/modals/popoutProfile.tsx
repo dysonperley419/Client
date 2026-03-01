@@ -3,6 +3,7 @@ import './popoutProfile.css';
 import { type JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -10,11 +11,9 @@ import { usePopup } from '@/layering/popupContext';
 import type { Channel } from '@/types/channel';
 import type { Member, Role } from '@/types/guilds';
 import { post } from '@/utils/api';
+import { getDefaultAvatar } from '@/utils/avatar';
 import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
-
-import { useAssetsUrl } from '../../context/assetsUrl';
-import { getDefaultAvatar } from '../../utils/avatar';
 
 interface PopoutProfileProps {
   member: Member;

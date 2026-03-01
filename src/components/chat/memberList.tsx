@@ -2,15 +2,14 @@ import './memberList.css';
 
 import { type JSX, useCallback, useEffect, useState } from 'react';
 
+import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
+import { useGateway } from '@/context/gatewayContext';
 import { useMenuOverlay } from '@/layering/menuOverlayStore';
+import { usePopup } from '@/layering/popupContext';
 import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
-
-import { useAssetsUrl } from '../../context/assetsUrl';
-import { useGateway } from '../../context/gatewayContext';
-import { usePopup } from '../../layering/popupContext';
-import { getDefaultAvatar } from '../../utils/avatar';
+import { getDefaultAvatar } from '@/utils/avatar';
 
 const MemberListItem = ({
   member,

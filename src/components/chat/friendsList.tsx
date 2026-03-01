@@ -3,15 +3,14 @@ import './friendsList.css';
 import { type JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
 import { useGateway } from '@/context/gatewayContext';
 import type { Channel } from '@/types/channel';
 import type { Relationship } from '@/types/relationship';
 import { del, post, put } from '@/utils/api';
+import { getDefaultAvatar } from '@/utils/avatar';
 import { logger } from '@/utils/logger';
-
-import { useAssetsUrl } from '../../context/assetsUrl';
-import { getDefaultAvatar } from '../../utils/avatar';
 
 interface FriendsListProps {
   friends: Relationship[];

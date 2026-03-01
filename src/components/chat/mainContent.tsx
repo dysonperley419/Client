@@ -2,7 +2,9 @@ import './mainContent.css';
 
 import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
+import { useGateway } from '@/context/gatewayContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useMenuOverlay } from '@/layering/menuOverlayStore';
 import { useModal } from '@/layering/modalContext';
@@ -16,13 +18,11 @@ import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/typ
 import type { User } from '@/types/users';
 import { get, patch, post, request } from '@/utils/api';
 import { localBlobCache } from '@/utils/attachmentCache';
+import { getDefaultAvatar } from '@/utils/avatar';
 import { formatTimestamp } from '@/utils/dateUtils';
 import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
-import { useAssetsUrl } from '../../context/assetsUrl';
-import { useGateway } from '../../context/gatewayContext';
-import { getDefaultAvatar } from '../../utils/avatar';
 import { ChatAttachment } from './chatAttachment';
 import ChatInput from './chatInput';
 import renderDfm from './dfm/dfmRenderer';
@@ -277,20 +277,9 @@ const MainContent = ({
     e.preventDefault();
     e.stopPropagation();
 
-    const MENU_WIDTH = 180;
-    const MENU_HEIGHT = 150;
-    const OFFSET = 100;
-
-    let x = e.clientX;
-    let y = e.clientY + OFFSET;
-
-    if (x + MENU_WIDTH > window.innerWidth) {
-      x = x - MENU_WIDTH + 50;
-    }
-
-    if (y + MENU_HEIGHT > window.innerHeight) {
-      y = e.clientY - MENU_HEIGHT + OFFSET;
-    }
+    const OFFSET = 4;
+    const x = e.clientX + OFFSET;
+    const y = e.clientY + OFFSET;
 
     openContextMenu(
       x,

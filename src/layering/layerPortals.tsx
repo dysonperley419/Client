@@ -1,24 +1,24 @@
 import './modal.css';
 import './popup.css';
 
-import { type JSX } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { ClearSelectedInstanceModal } from '@/components/modals/clearSelectedInstance';
 import { ConfirmationConnectP2PModal } from '@/components/modals/confirmationConnectP2P';
+import { ConfirmationDeleteModal } from '@/components/modals/confirmationDelete';
+import { ConfirmationLeaveModal } from '@/components/modals/confirmationLeave';
+import { CreateServerModal } from '@/components/modals/createServer';
 import { DangerConfirmationModal } from '@/components/modals/dangerConfirmationModal';
+import { ImagePreview } from '@/components/modals/imagePreview';
+import { JoinOrCreateServerModal } from '@/components/modals/joinOrCreateServer';
+import { JoinServerModal } from '@/components/modals/joinServer';
+import { PopoutEmoji } from '@/components/modals/popoutEmoji';
+import { PopoutProfile } from '@/components/modals/popoutProfile';
+import { ServerProfileModal } from '@/components/modals/serverProfile';
+import { UserProfileModal } from '@/components/modals/userProfile';
 import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
 
-import { ClearSelectedInstanceModal } from '../components/modals/clearSelectedInstance';
-import { ConfirmationDeleteModal } from '../components/modals/confirmationDelete';
-import { ConfirmationLeaveModal } from '../components/modals/confirmationLeave';
-import { CreateServerModal } from '../components/modals/createServer';
-import { ImagePreview } from '../components/modals/imagePreview';
-import { JoinOrCreateServerModal } from '../components/modals/joinOrCreateServer';
-import { JoinServerModal } from '../components/modals/joinServer';
-import { PopoutEmoji } from '../components/modals/popoutEmoji';
-import { PopoutProfile } from '../components/modals/popoutProfile';
-import { ServerProfileModal } from '../components/modals/serverProfile';
-import { UserProfileModal } from '../components/modals/userProfile';
 import { type ModalDataMap, useModal } from './modalContext';
 import { type PopupDataMap, usePopup } from './popupContext';
 
@@ -28,6 +28,24 @@ export const LayerPortals = (): JSX.Element | null => {
   const currentGuildId = useGuildChannelMemoryStore((s) => s.currentGuildId);
 
   const modalPortal = document.getElementById('modal-portal');
+  const [viewport, setViewport] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setViewport({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   if (!modalPortal) {
     console.error('Failed to find the modal portal element');
@@ -65,6 +83,16 @@ export const LayerPortals = (): JSX.Element | null => {
     }
   };
 
+  const clampPosition = (x: number, y: number, width: number, height: number, padding = 10) => {
+    const maxX = Math.max(padding, viewport.width - width - padding);
+    const maxY = Math.max(padding, viewport.height - height - padding);
+
+    return {
+      x: Math.min(Math.max(x, padding), maxX),
+      y: Math.min(Math.max(y, padding), maxY),
+    };
+  };
+
   const renderPopup = () => {
     switch (popupType) {
       case 'USER_PROFILE_POPOUT': {
@@ -72,22 +100,18 @@ export const LayerPortals = (): JSX.Element | null => {
 
         const popoutHeight = 450;
         const popoutWidth = 300;
-
-        let fixedX = data.x;
-        let fixedY = data.y;
-
-        if (data.y + popoutHeight > window.innerHeight) {
-          fixedY = window.innerHeight - popoutHeight;
-        }
-
-        if (data.x + popoutWidth > window.innerWidth) {
-          fixedX = data.x - popoutWidth;
-        }
+        const preferredX = data.x + popoutWidth > viewport.width ? data.x - popoutWidth : data.x;
+        const { x: fixedX, y: fixedY } = clampPosition(
+          preferredX,
+          data.y,
+          popoutWidth,
+          popoutHeight,
+        );
 
         return (
           <div
             className='popup-wrapper'
-            style={{ top: Math.max(10, fixedY), left: fixedX, position: 'fixed' }}
+            style={{ top: fixedY, left: fixedX, position: 'fixed' }}
             role='dialog'
             tabIndex={-1}
           >
@@ -101,11 +125,14 @@ export const LayerPortals = (): JSX.Element | null => {
       }
       case 'CURRENT_USER_PROFILE': {
         const data = popupData as PopupDataMap['CURRENT_USER_PROFILE'];
+        const popoutHeight = 470;
+        const popoutWidth = 340;
+        const { x: fixedX, y: fixedY } = clampPosition(data.x, data.y, popoutWidth, popoutHeight);
 
         return (
           <div
             className='popup-wrapper'
-            style={{ top: data.y, left: data.x, position: 'fixed' }}
+            style={{ top: fixedY, left: fixedX, position: 'fixed' }}
             role='dialog'
             tabIndex={-1}
           >
@@ -118,22 +145,16 @@ export const LayerPortals = (): JSX.Element | null => {
 
         const popoutHeight = 320;
         const popoutWidth = 280;
-        const padding = 20;
-
-        let fixedX = data.x + 50;
-        let fixedY = data.y + 100;
-
-        if (fixedY + popoutHeight > window.innerHeight - padding) {
-          fixedY = window.innerHeight - popoutHeight - padding;
-        }
-
-        if (fixedY < padding) {
-          fixedY = padding;
-        }
-
-        if (fixedX + popoutWidth > window.innerWidth - padding) {
-          fixedX = data.x - popoutWidth - 10;
-        }
+        const preferredX =
+          data.x + 50 + popoutWidth > viewport.width ? data.x - popoutWidth - 10 : data.x + 50;
+        const preferredY = data.y + 100;
+        const { x: fixedX, y: fixedY } = clampPosition(
+          preferredX,
+          preferredY,
+          popoutWidth,
+          popoutHeight,
+          20,
+        );
 
         return (
           <div
