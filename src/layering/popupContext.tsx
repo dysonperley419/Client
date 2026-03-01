@@ -53,7 +53,8 @@ const emit = () => {
   });
 };
 
-const openPopup: PopupContextType['openPopup'] = (type, data) => {
+const openPopup: PopupContextType['openPopup'] = (...args) => {
+  const [type, data] = args;
   state = {
     popupType: type,
     popupData: (data ?? null) as PopupDataMap[PopupType] | null,
