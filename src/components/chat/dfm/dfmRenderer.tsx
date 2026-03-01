@@ -16,296 +16,86 @@ import {
   RoleMention,
 } from './dfmComponents';
 
-function accumulate(
-  source: string,
-  terminators: string[],
-): { accumulated: string; remaining: string; terminator: string } {
-  const terminatorsStartOnly = ['```', '>>> ', '> ', '### ', '## ', '# ', '-# '];
-  const startOnly = ['', '\n'];
-  let accumulated = '';
-  let i = 0;
-  while (true) {
-    if (i >= source.length) {
-      return {
-        accumulated: accumulated,
-        remaining: '',
-        terminator: '\0',
-      };
-    }
+type DelimiterRenderer = (
+  renderInner: () => JSX.Element,
+  innerText: string,
+  openingDelimiter: string,
+  guild_id: string | undefined,
+) => JSX.Element | undefined;
 
-    if (source[i] == '\\') {
-      //escape char
-      accumulated += source[i + 1] ?? '';
-      i += 2;
-      continue;
-    }
+type KeywordRenderer = () => JSX.Element | undefined;
 
-    for (let terminator of terminators) {
-      if (terminatorsStartOnly.includes(terminator) && !startOnly.includes(source.charAt(i - 1))) {
-        continue;
-      }
-
-      if (source.startsWith(terminator, i)) {
-        if (terminator === '```' && source.charAt(i + terminator.length) === '`') {
-          terminator = /`+/.exec(source)?.[0] ?? terminator;
-        }
-
-        return {
-          accumulated: accumulated,
-          remaining: source.substring(i + terminator.length),
-          terminator: terminator,
-        };
-      }
-    }
-
-    const c = source[i];
-    if (c) accumulated += c;
-    i++;
-  }
+interface Delimiter {
+  start: string[];
+  end: string[];
+  startOfLine?: boolean;
+  ignoreEscape?: boolean;
+  render: DelimiterRenderer;
 }
 
-export default function renderDfm(
-  text: string | null | undefined,
-  guild_id: string | undefined,
-): JSX.Element {
-  if (!text) return <></>;
+interface Keyword {
+  pre?: string[];
+  start: string[];
+  startOfLine?: boolean;
+  render: KeywordRenderer;
+}
 
-  const renderDfmInner = (text: string) => renderDfm(text, guild_id);
+type Terminal = Delimiter | Keyword;
 
-  const result: (JSX.Element | string)[] = [];
-  while (text.length > 0) {
-    const startAcc = accumulate(text, [
-      'https://',
-      'http://',
-      '```',
-      '``',
-      '`',
-      '>>> ',
-      '> ',
-      '### ',
-      '## ',
-      '# ',
-      '-# ',
-      '***',
-      '**',
-      '*',
-      '__',
-      '_',
-      '~~',
-      '@everyone',
-      '@here',
-      '<@!',
-      '<@&',
-      '<@',
-      '<#',
-      '<a:',
-      '<:',
-    ]);
+const BOUNDARY = '\0';
 
-    if (startAcc.terminator == '\0') {
-      //end
-      result.push(startAcc.accumulated);
-      break;
-    }
+const DELIMITERS: {
+  URL: Delimiter;
+  CODEBLOCK: Delimiter;
+  CODE1: Delimiter;
+  CODE2: Delimiter;
+  QUOTE_BLOCK: Delimiter;
+  QUOTE_INLINE: Delimiter;
+  SUBTEXT: Delimiter;
+  HEADER1: Delimiter;
+  HEADER2: Delimiter;
+  HEADER3: Delimiter;
+  BOLDITALICS: Delimiter;
+  BOLD: Delimiter;
+  ITALICS1: Delimiter;
+  ITALICS2: Delimiter;
+  STRIKETHROUGH: Delimiter;
+  CHANNEL_MENTION: Delimiter;
+  ROLE_MENTION: Delimiter;
+  MEMBER_MENTION: Delimiter;
+  EMOJI: Delimiter;
+} = {
+  URL: {
+    start: ['https://', 'http://'],
+    end: [BOUNDARY, '\n', '"', "'", '`', ')', '(', ']', '[', '}', '{', '<', '>', ',', ';', ' '],
+    render: (_render, innerText, openingDelimiter) => {
+      innerText = openingDelimiter + innerText;
 
-    text = startAcc.remaining;
-    const openingDelimiter = startAcc.terminator;
+      const isDirectGif = innerText.toLowerCase().endsWith('.gif');
+      const isTenor =
+        innerText.includes('tenor.com/view/') ?? innerText.includes('media.tenor.com/');
+      const isKlipy = innerText.includes('klipy.com');
 
-    //take text up to the first delimiter
-    if (startAcc.accumulated != '\n')
-      //ignore bogus newlines between elements
-      result.push(startAcc.accumulated);
-
-    let innerText;
-    if (openingDelimiter == '@everyone' || openingDelimiter == '@here') {
-      innerText = openingDelimiter;
-    } else {
-      let closingDelimiters: string[];
-      switch (openingDelimiter) {
-        case 'https://':
-        case 'http://':
-          closingDelimiters = [
-            '\0',
-            '\n',
-            '"',
-            "'",
-            '`',
-            ')',
-            '(',
-            ']',
-            '[',
-            '}',
-            '{',
-            '<',
-            '>',
-            ',',
-            ';',
-            ' ',
-          ];
-          break;
-
-        case '> ':
-        case '### ':
-        case '## ':
-        case '# ':
-        case '-# ':
-          closingDelimiters = ['\0', '\n'];
-          break;
-
-        case '>>> ':
-          closingDelimiters = ['\0'];
-          break;
-
-        case '<@!':
-        case '<@&':
-        case '<@':
-        case '<#':
-        case '<a:':
-        case '<:':
-          closingDelimiters = ['>'];
-          break;
-
-        default:
-          closingDelimiters = [openingDelimiter];
-          break;
+      if (isDirectGif || isTenor || isKlipy) {
+        return <OffsiteMedia src={innerText} />;
       }
 
-      //find closing delimiter
-      const endAcc = accumulate(text, closingDelimiters);
-      if (closingDelimiters.includes(endAcc.terminator)) {
-        innerText = endAcc.accumulated;
-        text = endAcc.remaining;
-      } else {
-        //not closed. skip the orphan delimiter
-        result.push(openingDelimiter);
-        continue;
-      }
-    }
-
-    switch (openingDelimiter) {
-      case 'https://':
-      case 'http://': {
-        innerText = openingDelimiter + innerText;
-
-        const inviteRegex = /\/invite\/([a-zA-Z0-9]+)/.exec(innerText);
-
-        const isDirectGif = innerText.toLowerCase().endsWith('.gif');
-        const isTenor =
-          innerText.includes('tenor.com/view/') ?? innerText.includes('media.tenor.com/');
-        const isKlipy = innerText.includes('klipy.com');
-
-        if (isDirectGif || isTenor || isKlipy) {
-          result.push(<OffsiteMedia src={innerText} />);
-        } else {
-          result.push(
-            <a title={innerText} href={innerText} target='_blank' rel='noreferrer'>
-              {innerText}
-            </a>,
-          );
-        }
-
-        if (inviteRegex?.[1]) {
-          const inviteCode = inviteRegex[1];
-          result.push(<InviteMention code={inviteCode} />);
-        }
-        break;
-      }
-
-      case '``':
-      case '`':
-        result.push(<code className='inline'>{innerText}</code>);
-        break;
-
-      case '> ':
-      case '>>> ':
-        result.push(
-          <div className='blockquote-container'>
-            <div className='blockquote-divider' />
-            <blockquote>{renderDfmInner(innerText)}</blockquote>
-          </div>,
-        );
-        break;
-
-      case '###':
-        result.push(<h1>{renderDfmInner(innerText)}</h1>);
-        break;
-
-      case '##':
-        result.push(<h2>{renderDfmInner(innerText)}</h2>);
-        break;
-
-      case '#':
-        result.push(<h3>{renderDfmInner(innerText)}</h3>);
-        break;
-
-      case '-# ':
-        result.push(<small>{renderDfmInner(innerText)}</small>);
-        break;
-
-      case '***':
-        result.push(
-          <em>
-            <strong>{renderDfmInner(innerText)}</strong>
-          </em>,
-        );
-        break;
-
-      case '**':
-        result.push(<strong>{renderDfmInner(innerText)}</strong>);
-        break;
-
-      case '_':
-      case '*':
-        result.push(<em>{renderDfmInner(innerText)}</em>);
-        break;
-
-      case '__':
-        result.push(<u>{renderDfmInner(innerText)}</u>);
-        break;
-
-      case '~~':
-        result.push(<s>{renderDfmInner(innerText)}</s>);
-        break;
-
-      case '<@!':
-      case '<@':
-        //member
-        result.push(<MemberMention guild_id={guild_id} user_id={innerText} />);
-        break;
-
-      case '<#': {
-        //channel
-        const channelId = innerText.replace(/^:/, '');
-        result.push(<ChannelMention guild_id={guild_id} channel_id={channelId} />);
-        break;
-      }
-
-      case '<@&':
-        //role
-        result.push(<RoleMention guild_id={guild_id} channel_id={innerText} />);
-        break;
-
-      case '@everyone':
-        result.push(<EveryoneMention />);
-        break;
-
-      case '@here':
-        result.push(<HereMention />);
-        break;
-
-      case '<:':
-      case '<a:':
-        {
-          //emoji
-          const [name, id] = innerText.split(':');
-          if (name && id) result.push(<EmojiMention name={name} emoji_id={id} />);
-          else result.push(innerText);
-        }
-        break;
-    }
-
-    // special case for code blocks
-    if (openingDelimiter.includes('```')) {
+      const inviteRegex = /\/invite\/([a-zA-Z0-9]+)/.exec(innerText);
+      const group = inviteRegex?.[1];
+      return (
+        <>
+          <a title={innerText} href={innerText} target='_blank' rel='noreferrer'>
+            {innerText}
+          </a>
+          {group && <InviteMention code={group} />}
+        </>
+      );
+    },
+  },
+  CODEBLOCK: {
+    start: ['```'],
+    end: ['```'],
+    render: (_render, innerText) => {
       let syntax = '';
       // remove syntax + first new line
       const newlineIndex = innerText.indexOf('\n');
@@ -316,11 +106,321 @@ export default function renderDfm(
         innerText = innerText.slice(newlineIndex + 1);
       }
 
-      result.push(
+      return (
         <ShikiHighlighter language={syntax} theme={'andromeeda'}>
           {innerText}
-        </ShikiHighlighter>,
+        </ShikiHighlighter>
       );
+    },
+  },
+  CODE1: {
+    start: ['``'],
+    end: ['``'],
+    ignoreEscape: true,
+    render: (_render, innerText) => {
+      return <code className='inline'>{innerText}</code>;
+    },
+  },
+  CODE2: {
+    start: ['`'],
+    end: ['`'],
+    ignoreEscape: true,
+    render: (_render, innerText) => {
+      return <code className='inline'>{innerText}</code>;
+    },
+  },
+  QUOTE_BLOCK: {
+    start: ['>>> '],
+    end: [BOUNDARY],
+    startOfLine: true,
+    render: (renderInner) => {
+      return (
+        <div className='blockquote-container'>
+          <div className='blockquote-divider' />
+          <blockquote>{renderInner()}</blockquote>
+        </div>
+      );
+    },
+  },
+  QUOTE_INLINE: {
+    start: ['> '],
+    end: ['\n', BOUNDARY],
+    startOfLine: true,
+    render: (renderInner) => {
+      return (
+        <div className='blockquote-container'>
+          <div className='blockquote-divider' />
+          <blockquote>{renderInner()}</blockquote>
+        </div>
+      );
+    },
+  },
+  SUBTEXT: {
+    start: ['-# '],
+    end: ['\n', BOUNDARY],
+    startOfLine: true,
+    render: (renderInner) => {
+      return <small>{renderInner()}</small>;
+    },
+  },
+  HEADER1: {
+    start: ['# '],
+    end: ['\n', BOUNDARY],
+    startOfLine: true,
+    render: (renderInner) => {
+      return <h1>{renderInner()}</h1>;
+    },
+  },
+  HEADER2: {
+    start: ['## '],
+    end: ['\n', BOUNDARY],
+    startOfLine: true,
+    render: (renderInner) => {
+      return <h2>{renderInner()}</h2>;
+    },
+  },
+  HEADER3: {
+    start: ['### '],
+    end: ['\n', BOUNDARY],
+    startOfLine: true,
+    render: (renderInner) => {
+      return <h3>{renderInner()}</h3>;
+    },
+  },
+  BOLDITALICS: {
+    start: ['***'],
+    end: ['***'],
+    render: (renderInner) => {
+      return (
+        <em>
+          <strong>{renderInner()}</strong>
+        </em>
+      );
+    },
+  },
+  BOLD: {
+    start: ['**'],
+    end: ['**'],
+    render: (renderInner) => {
+      return <strong>{renderInner()}</strong>;
+    },
+  },
+  ITALICS1: {
+    start: ['*'],
+    end: ['*'],
+    render: (renderInner) => {
+      return <em>{renderInner()}</em>;
+    },
+  },
+  ITALICS2: {
+    start: ['_'],
+    end: ['_'],
+    render: (renderInner) => {
+      return <em>{renderInner()}</em>;
+    },
+  },
+  STRIKETHROUGH: {
+    start: ['~~'],
+    end: ['~~'],
+    render: (renderInner) => {
+      return <s>{renderInner()}</s>;
+    },
+  },
+  CHANNEL_MENTION: {
+    start: ['<#'],
+    end: ['>'],
+    render: (_renderInner, innerText, _openingDelimiter, guild_id) => {
+      const channelId = innerText.replace(/^:/, '');
+      return <ChannelMention guild_id={guild_id} channel_id={channelId} />;
+    },
+  },
+  ROLE_MENTION: {
+    start: ['<@&'],
+    end: ['>'],
+    render: (_renderInner, innerText, _openingDelimiter, guild_id) => {
+      return <RoleMention guild_id={guild_id} role_id={innerText} />;
+    },
+  },
+  MEMBER_MENTION: {
+    start: ['<@!', '<@'],
+    end: ['>'],
+    render: (_renderInner, innerText, _openingDelimiter, guild_id) => {
+      return <MemberMention guild_id={guild_id} user_id={innerText} />;
+    },
+  },
+  EMOJI: {
+    start: ['<a:', '<:'],
+    end: ['>'],
+    render: (_renderInner, innerText) => {
+      const [name, id] = innerText.split(':');
+      if (name && id) return <EmojiMention name={name} emoji_id={id} />;
+      else return undefined;
+    },
+  },
+};
+
+const KEYWORDS: {
+  EVERYONE: Keyword;
+  HERE: Keyword;
+  NEWLINE: Keyword;
+} = {
+  EVERYONE: {
+    start: ['@everyone'],
+    render: () => <EveryoneMention />,
+  },
+  HERE: {
+    start: ['@here'],
+    render: () => <HereMention />,
+  },
+  NEWLINE: {
+    start: ['\n'],
+    render: () => <br></br>,
+  },
+};
+
+const PARSING_ORDER: Terminal[] = [
+  DELIMITERS.URL,
+  DELIMITERS.CODEBLOCK,
+  DELIMITERS.CODE1,
+  DELIMITERS.CODE2,
+  DELIMITERS.QUOTE_BLOCK,
+  DELIMITERS.QUOTE_INLINE,
+  DELIMITERS.SUBTEXT,
+  DELIMITERS.HEADER3,
+  DELIMITERS.HEADER2,
+  DELIMITERS.HEADER1,
+  DELIMITERS.BOLDITALICS,
+  DELIMITERS.BOLD,
+  DELIMITERS.ITALICS1,
+  DELIMITERS.ITALICS2,
+  DELIMITERS.STRIKETHROUGH,
+  KEYWORDS.EVERYONE,
+  KEYWORDS.HERE,
+  DELIMITERS.CHANNEL_MENTION,
+  DELIMITERS.ROLE_MENTION,
+  DELIMITERS.MEMBER_MENTION,
+  DELIMITERS.EMOJI,
+  KEYWORDS.NEWLINE,
+];
+
+function find<T>(
+  source: string,
+  start: number,
+  end: number,
+  ignoreEscape: boolean,
+  test: (index: number) => T,
+): { index: number; value: T | null } {
+  let i = start;
+  while (true) {
+    if (i >= end) {
+      return {
+        index: i,
+        value: null,
+      };
+    }
+
+    if (!ignoreEscape && source[i] == '\\') {
+      //escape char
+      i += 2;
+      continue;
+    }
+
+    const stopValue = test(i);
+    if (stopValue)
+      return {
+        index: i,
+        value: stopValue,
+      };
+
+    i++;
+  }
+}
+
+export default function renderDfm(
+  source: string | null | undefined,
+  guild_id: string | undefined,
+): JSX.Element {
+  if (!source) {
+    return <></>;
+  } else {
+    source = source.replace(/\r\n?/g, '\n').replaceAll(BOUNDARY, '');
+    return renderDfmInner(source + BOUNDARY, 0, source.length, guild_id);
+  }
+}
+
+function renderDfmInner(
+  source: string,
+  start: number,
+  end: number,
+  guild_id: string | undefined,
+): JSX.Element {
+  if (!source) return <></>;
+
+  const result: (JSX.Element | string)[] = [];
+  let index = start;
+  while (index < end) {
+    const startAcc = find(source, index, end, false, (index2: number) => {
+      for (const terminal of PARSING_ORDER) {
+        if (
+          terminal.startOfLine &&
+          !(index2 == 0 || source.endsWith('\n', index2) || source.endsWith('\0', index2))
+        )
+          continue;
+
+        for (const terminator of terminal.start) {
+          if (source.startsWith(terminator, index2)) {
+            return { terminal, terminator };
+          }
+        }
+      }
+      return null;
+    });
+
+    //push plain text
+    if (startAcc.index > index)
+      result.push(source.substring(index, startAcc.index).replace(BOUNDARY, ''));
+
+    if (startAcc.value == null) break; //end
+
+    const openingTerminal = startAcc.value.terminal;
+    const openingDelimiter = startAcc.value.terminator;
+
+    //take text up to the first delimiter, and skip it
+    index = startAcc.index + openingDelimiter.length;
+
+    if ('end' in openingTerminal) {
+      //find closing delimiter
+      const closingDelimiters = openingTerminal.end;
+      const endAcc = find(source, index, end, openingTerminal.ignoreEscape ?? false, (index2) => {
+        for (const terminator of closingDelimiters)
+          if (terminator && source.startsWith(terminator, index2)) return terminator;
+        return null;
+      });
+
+      const closingDelimiter = endAcc.value ?? BOUNDARY;
+      if (!closingDelimiters.includes(closingDelimiter)) {
+        //not closed. skip the orphan delimiter
+        result.push(openingDelimiter);
+        continue;
+      }
+
+      //take text up to the corresponding end delimiter
+      const innerText = source.substring(index, endAcc.index);
+
+      //render
+      const rendered = openingTerminal.render(
+        () => renderDfmInner(source, index, endAcc.index, guild_id),
+        innerText,
+        openingDelimiter,
+        guild_id,
+      );
+      if (rendered) result.push(rendered);
+
+      index = endAcc.index + closingDelimiter.length;
+    } else {
+      //render
+      const rendered = openingTerminal.render();
+      if (rendered) result.push(rendered);
     }
   }
 

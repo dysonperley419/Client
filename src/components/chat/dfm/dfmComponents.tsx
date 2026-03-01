@@ -118,10 +118,10 @@ export const MemberMention = ({
 
 export const RoleMention = ({
   guild_id,
-  channel_id,
+  role_id,
 }: {
   guild_id: string | undefined;
-  channel_id: string;
+  role_id: string;
 }): JSX.Element => {
   const render = (role: Role | undefined) => {
     return <strong>@{role?.name ?? 'unknown'}</strong>;
@@ -131,7 +131,7 @@ export const RoleMention = ({
   const guild: Guild | undefined = guilds.find((guild) => guild.id == guild_id);
   if (!guild) return render(undefined);
 
-  const role: Role | undefined = guild.roles.find((role) => role.id === channel_id);
+  const role: Role | undefined = guild.roles.find((role) => role.id === role_id);
   return render(role);
 };
 
