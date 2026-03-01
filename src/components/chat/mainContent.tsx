@@ -136,7 +136,7 @@ const MainContent = ({
       description: 'Appends ¯\\_(ツ)_/¯ to your message.',
       onUse: (parameters: string[]) => {
         const text = parameters.join(' ');
-        const shrug = '¯\\\\\\_(ツ)_/¯';
+        const shrug = '¯\\_(ツ)_/¯';
         return text ? `${text} ${shrug}` : shrug; //¯\\\_(ツ)_/¯
       },
     },
