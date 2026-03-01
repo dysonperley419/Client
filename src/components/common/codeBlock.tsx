@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import './codeBlock.css';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useShiki } from '@/hooks/useShiki';
 
@@ -8,11 +10,13 @@ interface Props {
   theme?: string;
 }
 
-export default function CodeBlock({ children, language, theme = 'github-dark' }: Props) {
+export default function CodeBlock({ children, language, theme = 'flicker-discord' }: Props) {
   const [rendered, setRendered] = useState<{ signature: string; html: string } | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { highlight } = useShiki();
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const copyTimeoutRef = useRef<number | null>(null);
   const normalizedLanguage = language ? language.trim().toLowerCase().split(/\s+/)[0] : undefined;
   const signature = `${theme}\0${normalizedLanguage ?? ''}\0${children}`;
   const html = rendered?.signature === signature ? rendered.html : null;
@@ -36,5 +40,46 @@ export default function CodeBlock({ children, language, theme = 'github-dark' }:
     return () => observerRef.current?.disconnect();
   }, [children, normalizedLanguage, theme, html, highlight, signature]);
 
-  return <div ref={ref} dangerouslySetInnerHTML={{ __html: html ?? '' }} />;
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current !== null) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleCopy = useCallback(async () => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(children);
+      setIsCopied(true);
+      if (copyTimeoutRef.current !== null) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = window.setTimeout(() => {
+        setIsCopied(false);
+      }, 1600);
+    } catch {
+      setIsCopied(false);
+    }
+  }, [children]);
+
+  return (
+    <div ref={ref} className='message-codeblock'>
+      <button
+        type='button'
+        className='message-codeblock-copy'
+        onClick={() => {
+          void handleCopy();
+        }}
+        aria-label='Copy code block'
+      >
+        {isCopied ? 'Copied' : 'Copy'}
+      </button>
+      <div className='message-codeblock-html' dangerouslySetInnerHTML={{ __html: html ?? '' }} />
+    </div>
+  );
 }

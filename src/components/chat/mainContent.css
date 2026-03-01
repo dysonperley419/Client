@@ -122,6 +122,17 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
+  min-width: 0;
+  gap: 8px;
+}
+
+.msg-text-contents {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#msg-context-tools {
+  flex: 0 0 auto;
 }
 
 .msg-context-btn {
