@@ -1,5 +1,6 @@
 import './serverProfile.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -234,7 +235,11 @@ export const ServerProfileModal = ({
         {activeTab === 'GUILDS' && (
           <>
             <div className='popout-section'>
-              <div className='mutual-list'>
+              <OverlayScrollbarsComponent
+                element='div'
+                options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+                className='mutual-list'
+              >
                 {sharedGuilds?.length ? (
                   sharedGuilds.map((shared: SharedGuild) => {
                     //to-do make a type of shared guild where its just id and nick
@@ -259,7 +264,7 @@ export const ServerProfileModal = ({
                 ) : (
                   <div className='empty-state'>No Mutual Servers</div>
                 )}
-              </div>
+              </OverlayScrollbarsComponent>
             </div>
           </>
         )}
@@ -267,7 +272,11 @@ export const ServerProfileModal = ({
         {activeTab === 'FRIENDS' && (
           <>
             <div className='popout-section'>
-              <div className='mutual-list'>
+              <OverlayScrollbarsComponent
+                element='div'
+                options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+                className='mutual-list'
+              >
                 {sharedFriends?.length ? (
                   sharedFriends.map((friend) => (
                     <MutualItem
@@ -281,7 +290,7 @@ export const ServerProfileModal = ({
                 ) : (
                   <div className='empty-state'>No Mutual Friends</div>
                 )}
-              </div>
+              </OverlayScrollbarsComponent>
             </div>
           </>
         )}

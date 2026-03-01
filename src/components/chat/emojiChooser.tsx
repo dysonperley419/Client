@@ -1,6 +1,7 @@
 import './emojiChooser.css';
 
 import parse from 'html-react-parser';
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfig } from '@/context/configContext';
@@ -106,7 +107,21 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
           </div>
         </div>
 
-        <div className='emoji-picker-content scroller' ref={scrollContainerRef}>
+        <OverlayScrollbarsComponent
+          element='div'
+          options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+          className='emoji-picker-content scroller'
+          ref={(os) => {
+            if (os) {
+              const instance = os.osInstance();
+              if (instance) {
+                const { scrollOffsetElement } = instance.elements();
+                (scrollContainerRef as { current: HTMLElement | null }).current =
+                  scrollOffsetElement;
+              }
+            }
+          }}
+        >
           {guildsWithEmojis.map((guild) => (
             <div
               key={guild.id}
@@ -174,9 +189,13 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
               </div>
             </div>
           ))}
-        </div>
+        </OverlayScrollbarsComponent>
         <div className='emoji-picker-footer'>
-          <div className='footer-nav-scroll scroller-horizontal'>
+          <OverlayScrollbarsComponent
+            element='div'
+            options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+            className='footer-nav-scroll scroller-horizontal'
+          >
             {guildsWithEmojis.map((guild) => (
               <div
                 key={guild.id}
@@ -209,7 +228,7 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
                 {section.icon}
               </span>
             ))}
-          </div>
+          </OverlayScrollbarsComponent>
         </div>
       </div>
     </div>

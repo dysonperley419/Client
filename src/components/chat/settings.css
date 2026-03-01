@@ -13,11 +13,15 @@
 .settings-content-wrapper {
   flex: 1;
   background-color: #1f2335;
-  display: flex;
-  flex-direction: row;
   height: 100%;
   box-shadow: var(--gray-outline-left);
   min-width: 0;
+}
+
+.settings-content-layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 100%;
 }
 
 .settings-sidebar-wrapper {
@@ -27,7 +31,6 @@
   display: flex;
   justify-content: flex-end;
   height: 100%;
-  overflow-y: auto;
 }
 
 .account-card {
@@ -195,7 +198,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  overflow-y: auto;
 }
 
 .settings-header {

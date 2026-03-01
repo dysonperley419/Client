@@ -1,5 +1,6 @@
 import './channelSidebar.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX, useEffect, useMemo, useState } from 'react';
 import { type NavigateFunction, useNavigate } from 'react-router-dom';
 
@@ -190,7 +191,11 @@ const ChannelSidebar = ({
           </div>
         </div>
 
-        <div className='scroller-hide'>
+        <OverlayScrollbarsComponent
+          element='div'
+          options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+          style={{ flex: 1, minHeight: 0 }}
+        >
           <div className='no-channels-sidebar-wrapper'>
             <button
               className={`sidebar-btn ${!selectedChannel ? 'active' : ''}`}
@@ -236,7 +241,7 @@ const ChannelSidebar = ({
                 ))}
             </div>
           </div>
-        </div>
+        </OverlayScrollbarsComponent>
         <VoiceActivityControls />
       </div>
     );
@@ -359,7 +364,11 @@ const ChannelSidebar = ({
         </div>
       </div>
 
-      <div className='scroller-hide'>
+      <OverlayScrollbarsComponent
+        element='div'
+        options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+        style={{ flex: 1, minHeight: 0 }}
+      >
         {nonCategorizedChannels.map((channel: Channel) => (
           <div
             key={`wrapper-${channel.id}`}
@@ -402,7 +411,7 @@ const ChannelSidebar = ({
               </div>
             );
           })}
-      </div>
+      </OverlayScrollbarsComponent>
 
       <VoiceActivityControls />
     </div>

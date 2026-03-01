@@ -1,5 +1,6 @@
 import './mainContent.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
@@ -1619,15 +1620,25 @@ const MainContent = ({
             </div>
           )}
 
-          <div
+          <OverlayScrollbarsComponent
+            element='div'
+            options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
             className='messages-scroller scroller'
-            ref={scrollerRef}
+            ref={(os) => {
+              if (os) {
+                const instance = os.osInstance();
+                if (instance) {
+                  const { scrollOffsetElement } = instance.elements();
+                  (scrollerRef as { current: HTMLElement | null }).current = scrollOffsetElement;
+                }
+              }
+            }}
             onScroll={() => {
               void handleScroll();
             }}
           >
             {renderMessages()}
-          </div>
+          </OverlayScrollbarsComponent>
           <form
             className='chat-input-area'
             onSubmit={(e) => {
@@ -1681,7 +1692,11 @@ const MainContent = ({
             )}
             <div className='input-wrapper'>
               {attachments.length > 0 && (
-                <div className='attachment-shelf'>
+                <OverlayScrollbarsComponent
+                  element='div'
+                  options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+                  className='attachment-shelf'
+                >
                   {attachments.map((at) => {
                     const isVideo = at.file.type.startsWith('video/');
 
@@ -1708,7 +1723,7 @@ const MainContent = ({
                       </div>
                     );
                   })}
-                </div>
+                </OverlayScrollbarsComponent>
               )}
               <div className='input-row'>
                 {canMessage && canSendAttachments && (

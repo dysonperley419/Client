@@ -2,12 +2,11 @@
 
 .landing-wrapper {
   width: 100vw;
-  min-height: 100vh;
+  height: 100vh;
   background-color: var(--bg-dark-alt);
   background-image: radial-gradient(var(--bg-panel) 2px, transparent 3px);
   background-size: 30px 30px;
   color: var(--text-bright);
-  overflow: hidden auto;
 }
 
 [data-theme='light'] {

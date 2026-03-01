@@ -1,5 +1,6 @@
 import './guildSidebar.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -229,72 +230,79 @@ const GuildSidebar = ({
           <div className='stat-line' />
         </div>
       </div>
-      <div className='server-section'>
-        {guilds.map((guild: Guild) => {
-          const guildMentionsMap = mentions.get(guild.id);
+      <OverlayScrollbarsComponent
+        element='div'
+        options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+        className='server-section-scroller'
+        style={{ width: '100%', flex: 1, minHeight: 0 }}
+      >
+        <div className='server-section'>
+          {guilds.map((guild: Guild) => {
+            const guildMentionsMap = mentions.get(guild.id);
 
-          let totalMentions = 0;
+            let totalMentions = 0;
 
-          guildMentionsMap?.forEach((count: number) => {
-            totalMentions += count;
-          });
+            guildMentionsMap?.forEach((count: number) => {
+              totalMentions += count;
+            });
 
-          const hasUnreads = (unreads.get(guild.id)?.size ?? 0) > 0;
+            const hasUnreads = (unreads.get(guild.id)?.size ?? 0) > 0;
 
-          return (
-            <button
-              className={`guild-icon-wrapper ${selectedGuildId === guild.id && !isUserPopupOpen ? 'selected' : ''}`}
-              key={guild.id}
-              onClick={() => {
-                onSelectGuild(guild);
-              }}
-              onContextMenu={(e) => {
-                handleRightClick(e, guild);
-              }}
-            >
-              {selectedGuildId === guild.id && !isUserPopupOpen && (
-                <div className='selected-indicator-bg'>
-                  <div className='selected-gradient' />
-                </div>
-              )}
-              <div
-                style={
-                  { '--mention-count': `"${totalMentions.toString()}"` } as React.CSSProperties
-                }
-                className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads ? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`}
-                title={guild.name}
+            return (
+              <button
+                className={`guild-icon-wrapper ${selectedGuildId === guild.id && !isUserPopupOpen ? 'selected' : ''}`}
+                key={guild.id}
+                onClick={() => {
+                  onSelectGuild(guild);
+                }}
+                onContextMenu={(e) => {
+                  handleRightClick(e, guild);
+                }}
               >
-                {guild.icon ? (
-                  <img
-                    className='guild-icon'
-                    src={`${cdnUrl ?? ''}/icons/${guild.id}/${guild.icon}.png`}
-                    alt={guild.name}
-                    onError={handleImgError}
-                  />
-                ) : (
-                  <div className={`guild-icon no-icon`}>{guild.name?.charAt(0) ?? '?'}</div>
+                {selectedGuildId === guild.id && !isUserPopupOpen && (
+                  <div className='selected-indicator-bg'>
+                    <div className='selected-gradient' />
+                  </div>
                 )}
-              </div>
-            </button>
-          );
-        })}
+                <div
+                  style={
+                    { '--mention-count': `"${totalMentions.toString()}"` } as React.CSSProperties
+                  }
+                  className={`icon-container shadow-container ${selectedGuildId === guild.id && !isUserPopupOpen ? 'active' : ''} ${hasUnreads ? 'unread-notification' : ''} ${totalMentions > 0 ? 'mention-badge' : ''}`}
+                  title={guild.name}
+                >
+                  {guild.icon ? (
+                    <img
+                      className='guild-icon'
+                      src={`${cdnUrl ?? ''}/icons/${guild.id}/${guild.icon}.png`}
+                      alt={guild.name}
+                      onError={handleImgError}
+                    />
+                  ) : (
+                    <div className={`guild-icon no-icon`}>{guild.name?.charAt(0) ?? '?'}</div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
 
-        <button
-          className={`guild-icon-wrapper`}
-          key={`add-guild`}
-          onClick={() => {
-            openModal('WHATS_IT_GONNA_BE');
-          }}
-        >
-          <div className='icon-container'>
-            <div className={`guild-icon no-icon add-icon`}>
-              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-                add
-              </span>
+          <button
+            className={`guild-icon-wrapper`}
+            key={`add-guild`}
+            onClick={() => {
+              openModal('WHATS_IT_GONNA_BE');
+            }}
+          >
+            <div className='icon-container'>
+              <div className={`guild-icon no-icon add-icon`}>
+                <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                  add
+                </span>
+              </div>
             </div>
-          </div>
-        </button>
-      </div>
+          </button>
+        </div>
+      </OverlayScrollbarsComponent>
 
       <div className='user-section'>
         <button

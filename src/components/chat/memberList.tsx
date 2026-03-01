@@ -1,5 +1,6 @@
 import './memberList.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX, useCallback, useEffect, useState } from 'react';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
@@ -224,10 +225,19 @@ const MemberList = ({
     <>
       <aside className='members-column'>
         <header className='members-column-header-base'>Members ({listData.member_count})</header>
-        <div
+        <OverlayScrollbarsComponent
+          element='div'
+          options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+          events={{
+            scroll: (instance) => {
+              const { scrollOffsetElement } = instance.elements();
+              handleScroll({
+                currentTarget: scrollOffsetElement,
+              } as unknown as React.UIEvent<HTMLDivElement>);
+            },
+          }}
           className='scroller-hide members-column-scroller'
-          onScroll={handleScroll}
-          style={{ height: `${String(viewportHeight)}px`, overflowY: 'auto' }}
+          style={{ height: `${String(viewportHeight)}px` }}
         >
           <div style={{ height: `${String(totalHeight)}px`, position: 'relative' }}>
             <div style={{ transform: `translateY(${String(offsetY)}px)`, width: '100%' }}>
@@ -264,7 +274,7 @@ const MemberList = ({
               Loading...
             </div>
           )}
-        </div>
+        </OverlayScrollbarsComponent>
       </aside>
     </>
   );

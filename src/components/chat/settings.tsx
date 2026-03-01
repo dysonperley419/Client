@@ -1,5 +1,6 @@
 import './settings.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX, useEffect, useRef, useState } from 'react';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
@@ -759,7 +760,11 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
   return (
     <div className='settings-overlay layer-screen'>
       <div className='settings-sidebar-wrapper'>
-        <nav className='settings-sidebar'>
+        <OverlayScrollbarsComponent
+          element='nav'
+          options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+          className='settings-sidebar scroller-hide'
+        >
           <div className='search-bar-container'>
             <div className='search-bar'>
               <span className='material-symbols-rounded search-icon' style={{ fontSize: '20px' }}>
@@ -831,22 +836,28 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
               </span>
             </button>
           </div>
-        </nav>
+        </OverlayScrollbarsComponent>
       </div>
 
-      <div className='settings-content-wrapper'>
-        <div className='settings-main-content'>{renderTab()}</div>
-        <div className='close-btn-container'>
-          <button className='close-btn' onClick={onClose}>
-            <div className='close-circle'>
-              <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
-                close
-              </span>
-            </div>
-            <span className='esc-text'>ESC</span>
-          </button>
+      <OverlayScrollbarsComponent
+        element='div'
+        options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+        className='settings-content-wrapper scroller'
+      >
+        <div className='settings-content-layout'>
+          <div className='settings-main-content'>{renderTab()}</div>
+          <div className='close-btn-container'>
+            <button className='close-btn' onClick={onClose}>
+              <div className='close-circle'>
+                <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>
+                  close
+                </span>
+              </div>
+              <span className='esc-text'>ESC</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </OverlayScrollbarsComponent>
     </div>
   );
 };

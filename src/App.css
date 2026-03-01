@@ -1,3 +1,5 @@
+@import url('overlayscrollbars/overlayscrollbars.css');
+
 :root {
   --bg-main: #1a1b26;
   --bg-sidebar: #16161e;
@@ -37,6 +39,17 @@
   --layer-screen: 20;
   --layer-modal: 30;
   --layer-context-menu: 40;
+  --os-size: 10px;
+  --os-padding-perpendicular: 2px;
+  --os-padding-axis: 2px;
+  --os-track-bg: transparent;
+  --os-track-bg-hover: transparent;
+  --os-track-bg-active: transparent;
+  --os-handle-bg: var(--accent-primary);
+  --os-handle-bg-hover: var(--accent-secondary);
+  --os-handle-bg-active: var(--accent-secondary);
+  --os-handle-border-radius: 10px;
+  --os-handle-interactive-area-offset: 4px;
 }
 
 body {
@@ -257,8 +270,27 @@ body,
 .page-wrapper {
   height: 100vh;
   margin: 0;
+  overflow: hidden;
+}
 
-  /* overflow: hidden; */
+.os-viewport {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.os-viewport::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.scroller,
+.scroller-hide,
+.messages-scroller,
+.members-column-scroller,
+.settings-content-wrapper,
+.settings-sidebar {
+  overflow: hidden !important;
 }
 
 .chat-layout {
@@ -306,12 +338,10 @@ body,
 .popout-console-entries {
   flex: 1;
   padding: 12px;
-  overflow-y: auto;
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-main);
   background: var(--bg-input);
-  scrollbar-color: var(--accent-primary) transparent;
 }
 
 .timestamp {
@@ -336,44 +366,16 @@ body,
   background-image: linear-gradient(135deg, transparent 70%, var(--accent-primary) 70%);
 }
 
-.popout-console-entries::-webkit-scrollbar {
-  width: 6px;
-}
-
-.popout-console-entries::-webkit-scrollbar-thumb {
-  background: var(--bg-sidebar-secondary);
-  border-radius: 10px;
-}
-
 #guilds-column {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-top: 12px;
   flex-shrink: 0;
-  overflow-y: auto;
+  overflow: hidden;
   background-color: var(--bg-sidebar);
   width: 100px;
   box-shadow: var(--gray-outline-right);
-}
-
-::-webkit-scrollbar {
-  width: 13px;
-  height: 13px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-dark-alt);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--accent-primary);
-  border-radius: 10px;
-  outline: 2px solid var(--bg-dark-alt);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-secondary);
 }
 
 .guild-icon-wrapper {
@@ -390,49 +392,10 @@ body,
 .scroller,
 .scroller-hide {
   padding: 20px 0;
-  overflow-y: auto;
   height: 100%;
   display: flex;
   flex-direction: column;
   width: 100%;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(0 0 0 / 40%) transparent;
-}
-
-/* webkit scrollbars */
-.scroller::-webkit-scrollbar,
-.scroller-hide::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scroller::-webkit-scrollbar-thumb,
-.scroller-hide::-webkit-scrollbar-thumb {
-  border-radius: 4px;
-}
-
-.scroller-hide::-webkit-scrollbar {
-  background: transparent;
-}
-
-.scroller-hide:hover::-webkit-scrollbar-thumb {
-  transition: background 0.1s;
-  background: rgb(0 0 0 / 40%);
-}
-
-.scroller-hide:hover::-webkit-scrollbar-track {
-  transition: background 0.1s;
-  background: rgb(0 0 0 / 10%);
-}
-
-/* firefox scrollbars */
-
-.scroller-hide {
-  transition: scrollbar-color 0.1s;
-  scrollbar-color: rgb(0 0 0 / 0%) transparent;
-}
-
-.scroller-hide:hover {
-  scrollbar-color: rgb(0 0 0 / 40%) transparent;
 }
 
 .user-info {

@@ -33,7 +33,6 @@
 
 .emoji-picker-content {
   flex: 1;
-  overflow-y: auto;
   padding: 8px 12px;
   scroll-behavior: smooth;
 }
@@ -167,19 +166,6 @@
 
 .nav-guild-icon:hover {
   transform: scale(1.1);
-}
-
-.scroller::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scroller::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scroller::-webkit-scrollbar-thumb {
-  background: var(--bg-offline);
-  border-radius: 4px;
 }
 
 .nav-guild-icon.active,

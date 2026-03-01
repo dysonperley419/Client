@@ -1,3 +1,4 @@
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { useState } from 'react';
 
 export interface GifCategory {
@@ -50,7 +51,11 @@ export const GifSearcher = ({
             <span className='material-symbols-rounded search-icon'>search</span>
           </div>
         </div>
-        <div className='gif-picker-content scroller'>
+        <OverlayScrollbarsComponent
+          element='div'
+          options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+          className='gif-picker-content scroller'
+        >
           {/* Categories View */}
           {!gifSearchQuery && gifCategories.length > 0 && (
             <div className='gif-category-grid'>
@@ -85,7 +90,7 @@ export const GifSearcher = ({
               </div>
             ))}
           </div>
-        </div>
+        </OverlayScrollbarsComponent>
       </div>
     </div>
   );

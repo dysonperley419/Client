@@ -1,3 +1,4 @@
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -555,7 +556,11 @@ const ChatApp = (): JSX.Element => {
           <div className='popout-console-titlebar'>
             <span>Console</span>
           </div>
-          <div className='popout-console-entries'>
+          <OverlayScrollbarsComponent
+            element='div'
+            options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+            className='popout-console-entries'
+          >
             {logs.map((log, i) => (
               <div key={i} className={`log-line ${log.level.toLowerCase()}`}>
                 <span className='timestamp'>[{log.timestamp}]</span>
@@ -564,7 +569,7 @@ const ChatApp = (): JSX.Element => {
                 {log.formattedData && <pre className='log-data'>{log.formattedData}</pre>}
               </div>
             ))}
-          </div>
+          </OverlayScrollbarsComponent>
           <div className='resizer' />
         </div>
       )}

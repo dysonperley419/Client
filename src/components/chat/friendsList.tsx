@@ -1,5 +1,6 @@
 import './friendsList.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -202,7 +203,12 @@ export const FriendsList = ({
           <div className='friends-count'>
             {filter} — {displayFriends.length}
           </div>
-          <div className='friends-scroller'>
+          <OverlayScrollbarsComponent
+            element='div'
+            options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+            className='friends-scroller scroller'
+            style={{ flex: 1, minHeight: 0 }}
+          >
             {displayFriends.map((friend) => {
               const liveStatus = getPresence(friend.id)?.status ?? 'offline';
 
@@ -324,10 +330,15 @@ export const FriendsList = ({
                 </div>
               );
             })}
-          </div>
+          </OverlayScrollbarsComponent>
         </div>
+
         <div className='active-now-column'>
-          <div className='scroller-hide'>
+          <OverlayScrollbarsComponent
+            element='div'
+            options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+            style={{ height: '100%' }}
+          >
             <h3 className='active-now-header'>Active now</h3>
             <div className='active-now-empty'>
               <h4>Hello? Is anybody on?</h4>
@@ -336,7 +347,7 @@ export const FriendsList = ({
                 shown here!
               </p>
             </div>
-          </div>
+          </OverlayScrollbarsComponent>
         </div>
       </div>
     </main>

@@ -1,5 +1,6 @@
 import './landing.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { type JSX, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -61,7 +62,12 @@ const Landing = (): JSX.Element => {
   };
 
   return (
-    <div className='landing-wrapper'>
+    <OverlayScrollbarsComponent
+      element='div'
+      className='landing-wrapper'
+      options={{ scrollbars: { autoHide: 'scroll' } }}
+      defer
+    >
       <nav className='landing-navbar'>
         <div
           className='brand'
@@ -251,7 +257,7 @@ const Landing = (): JSX.Element => {
           </Link>
         </div>
       </footer>
-    </div>
+    </OverlayScrollbarsComponent>
   );
 };
 

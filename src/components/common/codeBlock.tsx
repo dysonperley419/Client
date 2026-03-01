@@ -1,5 +1,6 @@
 import './codeBlock.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useShiki } from '@/hooks/useShiki';
@@ -53,8 +54,10 @@ export default function CodeBlock({ children, language, theme = 'flicker-discord
       return;
     }
 
+    const textToCopy = children.trim();
+
     try {
-      await navigator.clipboard.writeText(children);
+      await navigator.clipboard.writeText(textToCopy);
       setIsCopied(true);
       if (copyTimeoutRef.current !== null) {
         window.clearTimeout(copyTimeoutRef.current);
@@ -79,7 +82,21 @@ export default function CodeBlock({ children, language, theme = 'flicker-discord
       >
         {isCopied ? 'Copied' : 'Copy'}
       </button>
-      <div className='message-codeblock-html' dangerouslySetInnerHTML={{ __html: html ?? '' }} />
+      <OverlayScrollbarsComponent
+        element='div'
+        options={{
+          scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' },
+          overflow: { y: 'hidden' },
+        }}
+        className='message-codeblock-scroller'
+      >
+        <div
+          className='message-codeblock-html'
+          dangerouslySetInnerHTML={{
+            __html: html ?? `<pre class="shiki"><code>${children}</code></pre>`,
+          }}
+        />
+      </OverlayScrollbarsComponent>
     </div>
   );
 }

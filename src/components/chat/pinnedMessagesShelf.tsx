@@ -1,5 +1,6 @@
 import './pinnedMessagesShelf.css';
 
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { useEffect, useState } from 'react';
 
 import { useAssetsUrl } from '@/context/assetsUrl';
@@ -44,7 +45,11 @@ export const PinnedMessagesShelf = ({
           <span className='material-symbols-rounded'>close</span>
         </button>
       </div>
-      <div className='pins-content scroller'>
+      <OverlayScrollbarsComponent
+        element='div'
+        options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
+        className='pins-content scroller'
+      >
         {loading ? (
           <p className='status-text'>Loading pins...</p>
         ) : pins.length === 0 ? (
@@ -52,7 +57,7 @@ export const PinnedMessagesShelf = ({
         ) : (
           pins.map((pin) => <PinItem key={pin.id} pin={pin} scrollToMessage={scrollToMessage} />)
         )}
-      </div>
+      </OverlayScrollbarsComponent>
     </div>
   );
 };

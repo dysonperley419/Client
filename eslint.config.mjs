@@ -100,6 +100,7 @@ export default defineConfig([
     rules: {
       'css/no-invalid-properties': 'off',
       'css/use-baseline': 'off',
+      'css/no-important': 'off',
     },
   },
   configPrettier,

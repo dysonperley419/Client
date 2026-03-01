@@ -12,7 +12,7 @@
 
 #channels-column .scroller {
   flex: 1;
-  overflow: hidden auto;
+  overflow: hidden;
   min-height: 0;
   padding: 20px 0;
 }
