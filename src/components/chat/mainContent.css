@@ -39,6 +39,26 @@
   box-shadow: var(--gray-outline-left), var(--gray-outline-right);
 }
 
+.input-wrapper {
+  position: relative;
+  background-color: #1e1f22;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  outline: 1px solid rgb(187 154 247 / 20%);
+}
+
+[data-theme='light'] {
+  .chat-view {
+    background: #fff;
+  }
+
+  .input-wrapper {
+    background: #e3e5e8;
+  }
+}
+
 .messages-scroller {
   flex: 1;
   overflow-y: auto;
@@ -154,16 +174,6 @@
 .chat-input-area {
   padding: 0 20px;
   flex-shrink: 0;
-}
-
-.input-wrapper {
-  position: relative;
-  background-color: #1e1f22;
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  outline: 1px solid rgb(187 154 247 / 20%);
 }
 
 .attachment-item {

@@ -8,6 +8,7 @@ import { ContextMenuProvider } from './context/contextMenuProvider';
 import { GatewayProvider } from './context/gatewayProvider';
 import { ModalProvider } from './context/modalProvider';
 import { PopupProvider } from './context/popupProvider';
+import { ThemeProvider } from './context/themeProvider';
 import { VoiceProvider } from './context/voiceProvider';
 
 const rootElement = document.getElementById('root');
@@ -22,7 +23,9 @@ if (rootElement) {
               <ModalProvider>
                 <PopupProvider>
                   <ContextMenuProvider>
-                    <App />
+                    <ThemeProvider>
+                      <App />
+                    </ThemeProvider>
                   </ContextMenuProvider>
                 </PopupProvider>
               </ModalProvider>

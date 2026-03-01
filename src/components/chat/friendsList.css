@@ -42,11 +42,26 @@
   margin-bottom: 20px;
 }
 
+[data-theme='light'] {
+  .friends-search-bar {
+    background: #fff;
+  }
+}
+
 .friends-search-bar input {
   flex: 1;
   background: transparent;
   color: var(--text-bright);
   font-size: 14px;
+}
+
+.friends-search-bar input:focus {
+  outline: none;
+}
+
+.friends-search-bar:focus-within {
+  outline: 1px solid var(--accent-primary);
+  box-shadow: 0 0 4px 1px rgb(187 154 247 / 30%); /* move to its own color */
 }
 
 .search-icon {

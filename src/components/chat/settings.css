@@ -10,6 +10,15 @@
   z-index: 1000;
 }
 
+.settings-content-wrapper {
+  flex: 1;
+  background-color: #1f2335;
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  box-shadow: var(--gray-outline-left);
+}
+
 .settings-sidebar-wrapper {
   background-color: #16161e;
   width: 35%;
@@ -18,6 +27,29 @@
   display: flex;
   justify-content: flex-end;
   height: 100%;
+}
+
+.account-card {
+  width: 100%;
+  background-color: #1a1b26;
+  padding: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+[data-theme='light'] {
+  .settings-sidebar-wrapper {
+    background: #fff;
+  }
+
+  .settings-content-wrapper {
+    background-color: #fff;
+  }
+
+  .account-card {
+    background: #e3e5e8;
+  }
 }
 
 .settings-sidebar {
@@ -154,15 +186,6 @@
   font-size: 14px;
 }
 
-.settings-content-wrapper {
-  flex: 1;
-  background-color: #1f2335;
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  box-shadow: var(--gray-outline-left);
-}
-
 .settings-main-content {
   flex: 1;
   max-width: 915px;
@@ -183,15 +206,6 @@
   font-weight: 700;
   font-size: 32px;
   margin: 0;
-}
-
-.account-card {
-  width: 100%;
-  background-color: #1a1b26;
-  padding: 20px;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
 }
 
 .banner-display {
@@ -421,4 +435,21 @@ input[type='checkbox']:checked {
   border-radius: 8px;
   padding: 10px;
   text-align: center;
+}
+
+.sidebar-item.theme-toggle {
+  color: var(--text-muted);
+}
+
+.sidebar-item.theme-toggle:hover {
+  color: var(--text-bright);
+  background-color: var(--bg-modifier-accent);
+}
+
+.sidebar-item.theme-toggle span {
+  transition: transform 0.3s ease;
+}
+
+.sidebar-item.theme-toggle:active span {
+  transform: rotate(20deg);
 }

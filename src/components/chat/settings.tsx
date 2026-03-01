@@ -5,6 +5,7 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import { useAssetsUrl } from '@/context/assetsUrl';
 import { useConfig } from '@/context/configContext';
 import { useModal } from '@/context/modalContext';
+import { useTheme } from '@/context/themeContext';
 import type { User } from '@/types/users';
 import { patch } from '@/utils/api';
 import { getDefaultAvatar } from '@/utils/avatar';
@@ -32,6 +33,7 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
   const [tempUser, setTempUser] = useState<
     (User & { current_password?: string; new_password?: string | null }) | null
   >(user);
+  const { isDarkMode, toggleTheme } = useTheme();
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [errorUpdatingMsg, setErrorUpdatingMsg] = useState('');
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -817,6 +819,17 @@ const Settings = ({ user, onClose }: SettingsProps): JSX.Element => {
 
           <div className='version-info'>
             <span className='version-text'>Development 0.1.0</span>
+          </div>
+          <div className='sidebar-group'>
+            <button
+              className='sidebar-item theme-toggle'
+              onClick={toggleTheme}
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              <span className='material-symbols-rounded'>
+                {isDarkMode ? 'light_mode' : 'dark_mode'}
+              </span>
+            </button>
           </div>
         </nav>
       </div>

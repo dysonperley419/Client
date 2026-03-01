@@ -10,6 +10,12 @@
   overflow: hidden auto;
 }
 
+[data-theme='light'] {
+  .landing-wrapper {
+    background-image: radial-gradient(#1f2335 2px, transparent 3px);
+  }
+} /* again */
+
 .landing-navbar {
   display: flex;
   justify-content: space-between;
