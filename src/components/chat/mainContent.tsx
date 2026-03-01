@@ -1512,7 +1512,10 @@ const MainContent = ({
             {selectedChannel.name || selectedChannel.recipients?.[0]?.username || 'Direct Message'}
           </span>
           {selectedChannel.topic && (
-            <span className='header-topic'> | {selectedChannel.topic}</span>
+            <>
+              <div className='vertical-divider' />
+              <span className='header-topic'>{selectedChannel.topic}</span>
+            </>
           )}
         </div>
         <div className='header-right'>
