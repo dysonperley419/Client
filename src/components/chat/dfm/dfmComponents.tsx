@@ -1,7 +1,5 @@
 import './dfm.css';
 
-import twemoji from '@twemoji/api';
-import parse from 'html-react-parser';
 import { type JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +10,7 @@ import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
+import { parseTwemojiWithLegacyOverrides, resolveShortcodeFromUnicode } from '@/utils/emoji';
 import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
@@ -180,7 +179,7 @@ export const EmojiMention = ({
   emoji_id,
   unicode,
 }: {
-  name: string;
+  name?: string;
   emoji_id?: string;
   unicode?: string;
 }): JSX.Element => {
@@ -199,16 +198,38 @@ export const EmojiMention = ({
     return (
       <img
         className='emoji'
-        alt={name}
+        alt={name ?? ''}
         src={emojiUrl}
         onClick={(e) => {
-          openEmojiPopout(e, { name, id: emoji_id });
+          openEmojiPopout(e, { name: name ?? '', id: emoji_id });
         }}
       />
     );
-  } else {
-    return <>{parse(twemoji.parse(unicode ?? ''))}</>;
   }
+
+  // Get built-in Unicode Emojis
+  const twemojiHtml = parseTwemojiWithLegacyOverrides(unicode ?? '', { className: 'emoji' });
+  const srcMatch = /<img[^>]*\ssrc="([^"]+)"[^>]*>/i.exec(twemojiHtml);
+  const src = srcMatch?.[1];
+
+  if (!unicode || !src) {
+    return <>{unicode ?? ''}</>;
+  }
+
+  return (
+    <img
+      className='emoji'
+      alt={unicode}
+      src={src}
+      onClick={(e) => {
+        openEmojiPopout(e, {
+          name: name ?? resolveShortcodeFromUnicode(unicode) ?? unicode,
+          unicode,
+          isBuiltin: true,
+        });
+      }}
+    />
+  );
 };
 
 export const OffsiteMedia = ({ src }: { src: string }) => {

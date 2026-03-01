@@ -111,7 +111,10 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
     }
   };
 
-  const openEmojiPopout = (e: React.MouseEvent, emojiBase: { name: string; id: string }) => {
+  const openEmojiPopout = (
+    e: React.MouseEvent,
+    emojiBase: { name: string; id?: string; unicode?: string; isBuiltin?: boolean },
+  ) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -119,10 +122,40 @@ export const useUiUtilityActions = (selectedGuild: Guild | null) => {
     const x = rect.left;
     const y = rect.top - 120;
 
+    const cleanName = emojiBase.name.replace(/:/g, '');
+
+    if (emojiBase.isBuiltin) {
+      openPopup('EMOJI_DETAILS_POPOUT', {
+        x,
+        y,
+        emoji: {
+          id: '',
+          name: cleanName,
+          animated: false,
+          guild_id: null,
+          managed: false,
+          require_colons: true,
+          roles: [],
+          user_id: null,
+          groups: null,
+        },
+        guildName: 'Flicker Default Emojis',
+        guildIcon: undefined,
+        guildId: '',
+        isPrivate: false,
+        isBuiltin: true,
+        unicode: emojiBase.unicode,
+        sourceSubtext: 'A default emoji. You can use this emoji everywhere on Flicker.',
+      });
+      return;
+    }
+
+    if (!emojiBase.id) {
+      return;
+    }
+
     let emojiDetails: LocalEmoji | null = null;
     let localGuild: Guild | undefined = undefined;
-
-    const cleanName = emojiBase.name.replace(/:/g, '');
 
     for (const g of guilds) {
       const found = g.emojis?.find((em) => em.id === emojiBase.id || em.name === cleanName);

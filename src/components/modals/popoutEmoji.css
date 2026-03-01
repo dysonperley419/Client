@@ -12,13 +12,6 @@
   font-weight: 600;
 }
 
-.private-guild-tag {
-  color: var(--text-muted);
-  font-size: 12px;
-  display: block;
-  margin-top: 2px;
-}
-
 .emoji-details-popout .avatar-img-large {
   border-radius: 4px;
   border: 1px solid var(--outline-color-gray);
@@ -46,7 +39,33 @@
   background: var(--outline-color-gray);
 }
 
+.guild-icon-name.non-interactive {
+  cursor: default;
+}
+
+.guild-icon-name.non-interactive:active {
+  background: transparent;
+}
+
 .avatar-img-large.popout-emoji-guild-icon {
   width: 40px;
   height: 40px;
+}
+
+.built-in-emoji-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.built-in-emoji-preview .emoji {
+  width: 48px;
+  height: 48px;
+}
+
+.emoji-origin-subtext {
+  color: var(--text-muted);
+  font-size: 12px;
+  display: block;
+  margin-top: 2px;
 }

@@ -28,7 +28,7 @@ import { ChatAttachment } from './chatAttachment';
 import ChatInput from './chatInput';
 import renderDfm from './dfm/dfmRenderer';
 import { EmojiChooser } from './emojiChooser';
-import { GifSearcher9000 } from './gifSearcher';
+import { GifSearcher } from './gifSearcher';
 import MemberList from './memberList';
 import { MessageEditInput } from './messageeditinput';
 import { PinnedMessagesShelf } from './pinnedMessagesShelf';
@@ -113,7 +113,7 @@ const MainContent = ({
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [stickernatorActive, setStickernatorActive] = useState(false);
   const [channelPinsVisible, setChannelPinsVisible] = useState(false);
-  const [showGifSearcher9000, setShowGifSearcher9000] = useState(false);
+  const [showGifSearcher, setShowGifSearcher] = useState(false);
   const [memberListVisible, setMemberListVisible] = useState(true);
   const [theESRF, setTheESRF] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -325,7 +325,7 @@ const MainContent = ({
   }, [filteredSuggestions]);
 
   useEffect(() => {
-    if (showGifSearcher9000 && gifSearchQuery === '') {
+    if (showGifSearcher && gifSearchQuery === '') {
       const fetchTrending = async () => {
         try {
           const data = await get<GifTrendingResponse>('/gifs/trending?locale=en');
@@ -338,7 +338,7 @@ const MainContent = ({
 
       void fetchTrending();
     }
-  }, [showGifSearcher9000, gifSearchQuery]);
+  }, [showGifSearcher, gifSearchQuery]);
 
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
@@ -1631,7 +1631,7 @@ const MainContent = ({
               void handleSendMessage(e);
             }}
           >
-            {suggestionsTrigger && filteredSuggestions.length > 0 && !showGifSearcher9000 && (
+            {suggestionsTrigger && filteredSuggestions.length > 0 && !showGifSearcher && (
               <SuggestionsBar
                 suggestionsTrigger={suggestionsTrigger}
                 filteredSuggestions={filteredSuggestions}
@@ -1644,16 +1644,27 @@ const MainContent = ({
               <EmojiChooser
                 guilds={guilds}
                 onSelectEmoji={(emoji) => {
+                  const builtInUnicode = emoji.unicode;
+                  if (emoji.isBuiltin && builtInUnicode) {
+                    setChatMessage((prev) => `${prev}${builtInUnicode} `);
+                    return;
+                  }
+
+                  const emojiId = emoji.id;
+                  if (!emojiId) {
+                    return;
+                  }
+
                   const prefix = emoji.animated ? 'a:' : ':';
-                  setChatMessage((prev) => `${prev}<${prefix}${emoji.name}:${emoji.id}> `);
+                  setChatMessage((prev) => `${prev}<${prefix}${emoji.name}:${emojiId}> `);
                 }}
                 onClose={() => {
                   setTheESRF(false);
                 }}
               />
             )}
-            {showGifSearcher9000 && (
-              <GifSearcher9000
+            {showGifSearcher && (
+              <GifSearcher
                 gifCategories={gifCategories}
                 gifs={gifs}
                 onSearch={handleSearchAndSetGif}
@@ -1661,7 +1672,7 @@ const MainContent = ({
                   setChatMessage(url);
                 }}
                 onClose={() => {
-                  setShowGifSearcher9000(false);
+                  setShowGifSearcher(false);
                 }}
               />
             )}
@@ -1735,10 +1746,10 @@ const MainContent = ({
                     <div className='input-icons'>
                       <button
                         type='button'
-                        className={`input-icon-btn ${showGifSearcher9000 ? 'active-input-btn' : ''}`}
+                        className={`input-icon-btn ${showGifSearcher ? 'active-input-btn' : ''}`}
                         title={`Search gifs`}
                         onClick={() => {
-                          setShowGifSearcher9000(!showGifSearcher9000);
+                          setShowGifSearcher(!showGifSearcher);
                         }}
                       >
                         <span className='material-symbols-rounded' style={{ fontSize: '24px' }}>

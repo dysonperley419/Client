@@ -169,6 +169,9 @@ export const LayerPortals = (): JSX.Element | null => {
               guildId={data.guildId}
               guildName={data.guildName}
               isPrivate={data.isPrivate}
+              isBuiltin={data.isBuiltin}
+              unicode={data.unicode}
+              sourceSubtext={data.sourceSubtext}
             />
           </div>
         );

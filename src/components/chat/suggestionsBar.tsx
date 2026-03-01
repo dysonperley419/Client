@@ -1,8 +1,8 @@
-import twemoji from '@twemoji/api';
 import parse from 'html-react-parser';
 
 import { useConfig } from '@/context/configContext';
 import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
+import { parseTwemojiWithLegacyOverrides } from '@/utils/emoji';
 
 interface SuggestionsBarProps {
   suggestionsTrigger: SuggestionsTrigger;
@@ -32,7 +32,13 @@ export const SuggestionsBar = ({
             style={{ objectFit: 'contain' }}
           />
         ) : (
-          <>{parse(twemoji.parse(item.emoji ?? '', { className: 'suggested-item-avi' }))}</>
+          <>
+            {parse(
+              parseTwemojiWithLegacyOverrides(item.emoji ?? '', {
+                className: 'suggested-item-avi',
+              }),
+            )}
+          </>
         )}
       </>
     );
@@ -68,10 +74,17 @@ export const SuggestionsBar = ({
                     }
 
                     if (isEmoji) {
-                      return {
-                        name: item.name,
-                        subtext: `Emoji from ${item.sourceGuildName || 'Unknown Server'}`,
-                      };
+                      if (typeof item.emoji !== 'string') {
+                        return {
+                          name: item.name,
+                          subtext: `Emoji from ${item.sourceGuildName || 'Unknown Server'}`,
+                        };
+                      } else {
+                        return {
+                          name: item.name,
+                          subtext: 'Flicker Default Emojis',
+                        };
+                      }
                     }
 
                     if (isRole) {

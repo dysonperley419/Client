@@ -20,7 +20,7 @@ interface GifSearcherProps {
   onClose: () => void;
 }
 
-export const GifSearcher9000 = ({
+export const GifSearcher = ({
   gifCategories,
   gifs,
   onSearch,
@@ -35,7 +35,7 @@ export const GifSearcher9000 = ({
   };
 
   return (
-    <div className='input-wrapper' key={'GifSearcher9000'}>
+    <div className='input-wrapper' key={'GifSearcher'}>
       <div className='gif-picker-container'>
         <div className='gif-picker-header'>
           <div className='search-bar'>

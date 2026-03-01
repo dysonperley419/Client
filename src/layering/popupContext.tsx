@@ -13,6 +13,9 @@ export interface PopupDataMap {
     guildId: string;
     guildName: string;
     isPrivate: boolean;
+    isBuiltin?: boolean;
+    unicode?: string;
+    sourceSubtext?: string;
   };
 }
 

@@ -46,6 +46,17 @@
   text-transform: uppercase;
 }
 
+.emoji-section .section-header.section-header-builtin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.emoji-section .section-header.section-header-builtin .material-symbols-rounded {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
 .emoji-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
@@ -70,6 +81,24 @@
   width: 24px;
   height: 24px;
   object-fit: contain;
+}
+
+.emoji-item-builtin {
+  font-size: 0;
+}
+
+.emoji-builtin-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.emoji-builtin-preview .emoji-builtin-img {
+  width: 22px;
+  height: 22px;
 }
 
 .emoji-picker-footer {

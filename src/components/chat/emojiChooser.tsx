@@ -1,15 +1,20 @@
 import './emojiChooser.css';
 
+import parse from 'html-react-parser';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfig } from '@/context/configContext';
+import { BUILTIN_EMOJI_CATEGORIES } from '@/generated/emojiCategories';
 import type { Guild } from '@/types/guilds';
+import { parseTwemojiWithLegacyOverrides } from '@/utils/emoji';
 
 export interface Emoji {
-  id: string;
+  id?: string;
   name: string;
   animated?: boolean;
   require_colons?: boolean;
+  isBuiltin?: boolean;
+  unicode?: string;
 }
 
 interface EmojiChooserProps {
@@ -36,6 +41,17 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
       }))
       .filter((g) => g.emojis && g.emojis.length > 0);
   }, [guilds, searchQuery]);
+
+  const builtinSections = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    return BUILTIN_EMOJI_CATEGORIES.map((category) => ({
+      ...category,
+      sectionId: `__builtin_${category.id}__`,
+      emojis: category.emojis
+        .filter((emoji) => !searchQuery || emoji.name.toLowerCase().includes(lowerQuery))
+        .map((emoji) => ({ ...emoji, isBuiltin: true as const })),
+    })).filter((section) => section.emojis.length > 0);
+  }, [searchQuery]);
 
   const scrollToGuild = (guildId: string) => {
     const target = sectionRefs.current[guildId];
@@ -71,7 +87,7 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
     return () => {
       observer.disconnect();
     };
-  }, [guildsWithEmojis]);
+  }, [builtinSections, guildsWithEmojis]);
 
   return (
     <div className='input-wrapper' key={'EmojiChooser9000'}>
@@ -122,14 +138,45 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
               </div>
             </div>
           ))}
+          {builtinSections.map((section) => (
+            <div
+              key={section.sectionId}
+              className='emoji-section'
+              data-guild-id={section.sectionId}
+              ref={(el) => {
+                sectionRefs.current[section.sectionId] = el;
+              }}
+            >
+              <div className='section-header section-header-builtin'>
+                <span className='material-symbols-rounded'>{section.icon}</span>
+                <span>{section.label.toUpperCase()}</span>
+              </div>
+              <div className='emoji-grid'>
+                {section.emojis.map((emoji) => (
+                  <div
+                    key={`${emoji.name}-${emoji.unicode}`}
+                    className='emoji-item emoji-item-builtin'
+                    title={`:${emoji.name}:`}
+                    onClick={() => {
+                      onSelectEmoji(emoji);
+                      onClose();
+                    }}
+                  >
+                    <span className='emoji-builtin-preview'>
+                      {parse(
+                        parseTwemojiWithLegacyOverrides(emoji.unicode, {
+                          className: 'emoji-builtin-img',
+                        }),
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
         <div className='emoji-picker-footer'>
           <div className='footer-nav-scroll scroller-horizontal'>
-            {/* 
-                        <span className={`material-symbols-rounded nav-icon ${!activeGuildId ? 'active' : ''}`}>
-                            schedule
-                        </span>
-                         // uuhh still gotta figure recent emoji history out */}
             {guildsWithEmojis.map((guild) => (
               <div
                 key={guild.id}
@@ -150,12 +197,18 @@ export const EmojiChooser = ({ guilds, onSelectEmoji, onClose }: EmojiChooserPro
                 )}
               </div>
             ))}
-
-            {/*
-                            <span className='material-symbols-rounded nav-icon'>mood</span>
-                        <span className='material-symbols-rounded nav-icon'>set_meal</span>
-                        <span className='material-symbols-rounded nav-icon'>sports_esports</span>
-                            // we still have to add normal emojis so until then, this is commented out. */}
+            {builtinSections.map((section) => (
+              <span
+                key={section.sectionId}
+                className={`material-symbols-rounded nav-icon ${activeGuildId === section.sectionId ? 'active' : ''}`}
+                title={section.label}
+                onClick={() => {
+                  scrollToGuild(section.sectionId);
+                }}
+              >
+                {section.icon}
+              </span>
+            ))}
           </div>
         </div>
       </div>

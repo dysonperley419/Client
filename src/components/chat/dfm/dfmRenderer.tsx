@@ -2,10 +2,15 @@
 
 import './dfm.css';
 
-import type { JSX } from 'react';
+import parse from 'html-react-parser';
+import type { JSX, ReactNode } from 'react';
 
 import CodeBlock from '@/components/common/codeBlock';
-import { resolveEmojiShortcode } from '@/utils/emoji';
+import {
+  parseTwemojiWithLegacyOverrides,
+  resolveEmojiFromShortcode,
+  resolveShortcodeFromUnicode,
+} from '@/utils/emoji';
 
 import {
   ChannelMention,
@@ -43,6 +48,12 @@ interface Keyword {
 }
 
 type Terminal = Delimiter | Keyword;
+
+interface HtmlTagNode {
+  type: string;
+  name?: string;
+  attribs?: Record<string, string>;
+}
 
 const BOUNDARY = '\0';
 
@@ -261,7 +272,7 @@ const DELIMITERS: {
     end: [':'],
     render: (_renderInner, innerText) => {
       if (innerText) {
-        const unicode = resolveEmojiShortcode(innerText);
+        const unicode = resolveEmojiFromShortcode(innerText);
         if (!unicode) return <>{`:${innerText}:`}</>;
         return <EmojiMention name={innerText} unicode={unicode} />;
       } else return undefined;
@@ -359,6 +370,24 @@ export default function renderDfm(
   }
 }
 
+function renderPlainTextWithEmojiPopout(plainText: string): ReactNode {
+  const twemojiHtml = parseTwemojiWithLegacyOverrides(plainText, { className: 'emoji' });
+
+  return parse(twemojiHtml, {
+    replace: (domNode) => {
+      const tagNode = domNode as HtmlTagNode;
+      if (tagNode.type !== 'tag' || tagNode.name !== 'img') return;
+
+      const unicode = tagNode.attribs?.alt?.trim();
+      if (!unicode) return;
+
+      return (
+        <EmojiMention name={resolveShortcodeFromUnicode(unicode) ?? unicode} unicode={unicode} />
+      );
+    },
+  });
+}
+
 function renderDfmInner(
   source: string,
   start: number,
@@ -367,7 +396,7 @@ function renderDfmInner(
 ): JSX.Element {
   if (!source) return <></>;
 
-  const result: (JSX.Element | string)[] = [];
+  const result: ReactNode[] = [];
   let index = start;
   while (index < end) {
     const startAcc = find(source, index, end, false, (index2: number) => {
@@ -387,9 +416,11 @@ function renderDfmInner(
       return null;
     });
 
-    //push plain text
-    if (startAcc.index > index)
-      result.push(source.substring(index, startAcc.index).replace(BOUNDARY, ''));
+    //push plain text (with rendering twemoji)
+    if (startAcc.index > index) {
+      const plainText = source.substring(index, startAcc.index).replace(BOUNDARY, '');
+      result.push(renderPlainTextWithEmojiPopout(plainText));
+    }
 
     if (startAcc.value == null) break; //end
 
