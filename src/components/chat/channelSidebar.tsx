@@ -147,6 +147,7 @@ const ChannelSidebar = ({
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const { privateChannels: globalPrivateChannels, voiceStates } = useGateway();
   const { openContextMenu, closeContextMenu } = useMenuOverlay();
+  const [dmUsername, setDmUsername] = useState('');
   const [closedChannelIds, setClosedChannelIds] = useState<string[]>([]);
   const navigate = useNavigate();
   const { cdnUrl } = useConfig();
@@ -186,8 +187,20 @@ const ChannelSidebar = ({
     return (
       <div id='channels-column'>
         <div className='sidebar-header'>
-          <div className='search-bar-fake'>
-            <span className='search-text'>Find or start a conversation</span>
+          <div
+            className='friends-search-bar'
+            style={{
+              marginBottom: '0',
+            }}
+          >
+            <input
+              placeholder='Find or start a conversation'
+              type='text'
+              value={dmUsername}
+              onChange={(e) => {
+                setDmUsername(e.target.value);
+              }}
+            ></input>
           </div>
         </div>
 
@@ -223,22 +236,26 @@ const ChannelSidebar = ({
             </div>
             <div className='dm-list'>
               {visiblePrivateChannels.length > 0 &&
-                visiblePrivateChannels.map((channel) => (
-                  <PrivateChannelItem
-                    key={channel.id}
-                    channel={channel}
-                    navigate={navigate}
-                    selected={selectedChannel?.id === channel.id}
-                    onCloseLocal={() => {
-                      setClosedChannelIds((prev) => [...prev, channel.id]);
+                visiblePrivateChannels
+                  .filter((x) =>
+                    x.recipients?.[0]?.username?.toLowerCase().includes(dmUsername?.toLowerCase()),
+                  )
+                  .map((channel) => (
+                    <PrivateChannelItem
+                      key={channel.id}
+                      channel={channel}
+                      navigate={navigate}
+                      selected={selectedChannel?.id === channel.id}
+                      onCloseLocal={() => {
+                        setClosedChannelIds((prev) => [...prev, channel.id]);
 
-                      if (selectedChannel?.id === channel.id) {
-                        onSelectChannel(null);
-                        void navigate('/channels/@me');
-                      }
-                    }}
-                  />
-                ))}
+                        if (selectedChannel?.id === channel.id) {
+                          onSelectChannel(null);
+                          void navigate('/channels/@me');
+                        }
+                      }}
+                    />
+                  ))}
             </div>
           </div>
         </OverlayScrollbarsComponent>
