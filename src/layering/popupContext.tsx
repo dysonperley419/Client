@@ -31,6 +31,8 @@ export interface PopupDataMap {
   EMOJI_PICKER: {
     x: number;
     y: number;
+    pointerX?: number;
+    pointerY?: number;
     guilds: Guild[];
     onSelectEmoji: (emoji: Emoji | EmojiChooserEmoji) => void;
     direction?: PopupDirection;
@@ -38,6 +40,8 @@ export interface PopupDataMap {
   GIF_PICKER: {
     x: number;
     y: number;
+    pointerX?: number;
+    pointerY?: number;
     gifCategories: GifCategory[];
     gifs: GifResult[];
     onSearch: (term: string) => Promise<void>;

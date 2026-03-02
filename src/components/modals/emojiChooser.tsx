@@ -8,7 +8,7 @@ import { useConfig } from '@/context/configContext';
 import { BUILTIN_EMOJI_CATEGORIES } from '@/generated/emojiCategories';
 import type { Emoji as EmojiChooserEmoji } from '@/types/emojiChooser';
 import type { Emoji, Guild } from '@/types/guilds';
-import { parseTwemojiWithLegacyOverrides } from '@/utils/emoji';
+import { parseTwemojiWithLegacyOverrides, resolveShortcodesFromUnicode } from '@/utils/emoji';
 
 interface EmojiChooserProps {
   guilds: Guild[];
@@ -29,6 +29,23 @@ interface UsedEmoji {
 }
 
 const FREQUENTLY_USED_LIMIT = 32;
+
+const normalizeSearchTerm = (value: string): string =>
+  value.toLowerCase().replace(/:/g, ' ').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+
+const matchesEmojiSearch = (
+  emojiName: string,
+  normalizedQuery: string,
+  emojiUnicode?: string,
+): boolean => {
+  if (!normalizedQuery) return true;
+  if (normalizeSearchTerm(emojiName).includes(normalizedQuery)) return true;
+  if (!emojiUnicode) return false;
+
+  return resolveShortcodesFromUnicode(emojiUnicode).some((alias) =>
+    normalizeSearchTerm(alias).includes(normalizedQuery),
+  );
+};
 
 const getFrequentlyUsedEmojis = (): UsedEmoji[] => {
   const raw = localStorage.getItem('frequentlyUsedEmojis');
@@ -79,6 +96,7 @@ export const EmojiChooser = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGuildId, setActiveGuildId] = useState<string | null>(null);
   const { cdnUrl } = useConfig();
+  const normalizedQuery = useMemo(() => normalizeSearchTerm(searchQuery), [searchQuery]);
 
   const [scrollerElement, setScrollerElement] = useState<HTMLElement | null>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -91,10 +109,11 @@ export const EmojiChooser = ({
   }, []);
 
   const filteredFrequentlyUsed = useMemo(() => {
-    if (!searchQuery) return frequentlyUsedEmojis;
-    const lowerQuery = searchQuery.toLowerCase();
-    return frequentlyUsedEmojis.filter((e) => e.name.toLowerCase().includes(lowerQuery));
-  }, [frequentlyUsedEmojis, searchQuery]);
+    if (!normalizedQuery) return frequentlyUsedEmojis;
+    return frequentlyUsedEmojis.filter((e) =>
+      matchesEmojiSearch(e.name, normalizedQuery, e.unicode),
+    );
+  }, [frequentlyUsedEmojis, normalizedQuery]);
 
   const sortedGuilds = useMemo(() => {
     const list = [...guilds];
@@ -115,8 +134,8 @@ export const EmojiChooser = ({
       .map((g) => {
         let emojis = g.emojis || [];
 
-        if (searchQuery) {
-          emojis = emojis.filter((e) => e.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        if (normalizedQuery) {
+          emojis = emojis.filter((e) => matchesEmojiSearch(e.name, normalizedQuery));
         }
 
         const sortedEmojis = [...emojis].sort((a, b) => {
@@ -136,18 +155,17 @@ export const EmojiChooser = ({
         };
       })
       .filter((g) => g.emojis && g.emojis.length > 0);
-  }, [sortedGuilds, searchQuery, frequentlyUsedEmojis]);
+  }, [sortedGuilds, normalizedQuery, frequentlyUsedEmojis]);
 
   const builtinSections = useMemo(() => {
-    const lowerQuery = searchQuery.toLowerCase();
     return BUILTIN_EMOJI_CATEGORIES.map((category) => ({
       ...category,
       sectionId: `__builtin_${category.id}__`,
       emojis: category.emojis
-        .filter((emoji) => !searchQuery || emoji.name.toLowerCase().includes(lowerQuery))
+        .filter((emoji) => matchesEmojiSearch(emoji.name, normalizedQuery, emoji.unicode))
         .map((emoji) => ({ ...emoji, isBuiltin: true as const })),
     })).filter((section) => section.emojis.length > 0);
-  }, [searchQuery]);
+  }, [normalizedQuery]);
 
   const scrollToGuild = (guildId: string) => {
     setActiveGuildId(guildId);

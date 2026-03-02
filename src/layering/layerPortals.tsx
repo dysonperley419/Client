@@ -23,7 +23,7 @@ import { useGuildChannelMemoryStore } from '@/stores/gncMemoryStore';
 import type { Emoji } from '@/types/guilds';
 
 import { type ModalDataMap, useModal } from './modalContext';
-import { type PopupDataMap, usePopup } from './popupContext';
+import { type PopupDataMap, type PopupDirection, usePopup } from './popupContext';
 
 export const LayerPortals = (): JSX.Element | null => {
   const { modalType, modalData, closeModal } = useModal();
@@ -96,10 +96,24 @@ export const LayerPortals = (): JSX.Element | null => {
     };
   };
 
-  const getDirection = (y: number, height: number) => {
-    if (y + height > viewport.height - 50) return 'top';
-    if (y < 50) return 'bottom';
-    return 'top';
+  const getDirectionFromAnchor = (
+    anchorX: number,
+    anchorY: number,
+    popupX: number,
+    popupY: number,
+    popupWidth: number,
+    popupHeight: number,
+  ): PopupDirection => {
+    const popupCenterX = popupX + popupWidth / 2;
+    const popupCenterY = popupY + popupHeight / 2;
+    const deltaX = popupCenterX - anchorX;
+    const deltaY = popupCenterY - anchorY;
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      return deltaX < 0 ? 'left' : 'right';
+    }
+
+    return deltaY < 0 ? 'top' : 'bottom';
   };
 
   const renderPopup = () => {
@@ -122,7 +136,16 @@ export const LayerPortals = (): JSX.Element | null => {
         fixedY = pos.y;
         currentWidth = '300px';
         direction = data.direction;
-        if (!direction) direction = getDirection(fixedY, popoutHeight);
+        if (!direction) {
+          direction = getDirectionFromAnchor(
+            data.x,
+            data.y,
+            fixedX,
+            fixedY,
+            popoutWidth,
+            popoutHeight,
+          );
+        }
         content = (
           <PopoutProfile member={data.member} roles={data.roles} contextGuildId={currentGuildId} />
         );
@@ -137,7 +160,16 @@ export const LayerPortals = (): JSX.Element | null => {
         fixedY = pos.y;
         currentWidth = '340px';
         direction = data.direction;
-        if (!direction) direction = getDirection(fixedY, popoutHeight);
+        if (!direction) {
+          direction = getDirectionFromAnchor(
+            data.x,
+            data.y,
+            fixedX,
+            fixedY,
+            popoutWidth,
+            popoutHeight,
+          );
+        }
         content = <UserProfileModal />;
         break;
       }
@@ -153,7 +185,16 @@ export const LayerPortals = (): JSX.Element | null => {
         fixedY = pos.y;
         currentWidth = '280px';
         direction = data.direction;
-        if (!direction) direction = getDirection(fixedY, popoutHeight);
+        if (!direction) {
+          direction = getDirectionFromAnchor(
+            data.x,
+            data.y,
+            fixedX,
+            fixedY,
+            popoutWidth,
+            popoutHeight,
+          );
+        }
         content = (
           <PopoutEmoji
             emoji={data.emoji as Emoji}
@@ -181,7 +222,16 @@ export const LayerPortals = (): JSX.Element | null => {
         fixedX = pos.x;
         fixedY = pos.y;
         currentWidth = '350px';
-        direction = data.direction || 'top';
+        direction =
+          data.direction ||
+          getDirectionFromAnchor(
+            data.pointerX ?? data.x,
+            data.pointerY ?? data.y,
+            fixedX,
+            fixedY,
+            popoutWidth,
+            popoutHeight,
+          );
         content = (
           <EmojiChooser
             guilds={data.guilds}
@@ -205,7 +255,16 @@ export const LayerPortals = (): JSX.Element | null => {
         fixedX = pos.x;
         fixedY = pos.y;
         currentWidth = '350px';
-        direction = data.direction || 'top';
+        direction =
+          data.direction ||
+          getDirectionFromAnchor(
+            data.pointerX ?? data.x,
+            data.pointerY ?? data.y,
+            fixedX,
+            fixedY,
+            popoutWidth,
+            popoutHeight,
+          );
         content = (
           <GifSearcher
             gifCategories={data.gifCategories}

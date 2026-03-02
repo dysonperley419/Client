@@ -25,10 +25,17 @@ function normalizeUnicodeEmoji(value: string): string {
 }
 
 const UNICODE_TO_SHORTCODE = new Map<string, string>();
+const UNICODE_TO_SHORTCODES = new Map<string, string[]>();
 Object.entries(EMOJI_SHORTCODE_MAP).forEach(([shortcode, unicode]) => {
   const normalizedUnicode = normalizeUnicodeEmoji(unicode);
   if (!UNICODE_TO_SHORTCODE.has(normalizedUnicode)) {
     UNICODE_TO_SHORTCODE.set(normalizedUnicode, shortcode);
+  }
+  const existing = UNICODE_TO_SHORTCODES.get(normalizedUnicode);
+  if (existing) {
+    existing.push(shortcode);
+  } else {
+    UNICODE_TO_SHORTCODES.set(normalizedUnicode, [shortcode]);
   }
 });
 
@@ -40,6 +47,11 @@ export function resolveEmojiFromShortcode(shortcode: string): string | undefined
 export function resolveShortcodeFromUnicode(unicode: string): string | undefined {
   if (!unicode) return undefined;
   return UNICODE_TO_SHORTCODE.get(normalizeUnicodeEmoji(unicode));
+}
+
+export function resolveShortcodesFromUnicode(unicode: string): string[] {
+  if (!unicode) return [];
+  return UNICODE_TO_SHORTCODES.get(normalizeUnicodeEmoji(unicode)) ?? [];
 }
 
 const LEGACY_TWEMOJI_ASSET_MAP: Record<string, string> = {

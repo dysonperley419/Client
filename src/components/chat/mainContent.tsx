@@ -1731,6 +1731,8 @@ const MainContent = ({
                             openPopup<'GIF_PICKER'>('GIF_PICKER', {
                               x: rect.left,
                               y: rect.top,
+                              pointerX: e.clientX,
+                              pointerY: e.clientY,
                               gifCategories,
                               gifs,
                               onSearch: handleSearchAndSetGif,
@@ -1770,6 +1772,8 @@ const MainContent = ({
                             openPopup<'EMOJI_PICKER'>('EMOJI_PICKER', {
                               x: rect.left,
                               y: rect.top,
+                              pointerX: e.clientX,
+                              pointerY: e.clientY,
                               guilds,
                               onSelectEmoji: (emoji: Emoji) => {
                                 const builtInUnicode = emoji.unicode;
