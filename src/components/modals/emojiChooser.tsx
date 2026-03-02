@@ -8,7 +8,7 @@ import { useConfig } from '@/context/configContext';
 import { BUILTIN_EMOJI_CATEGORIES } from '@/generated/emojiCategories';
 import type { Emoji as EmojiChooserEmoji } from '@/types/emojiChooser';
 import type { Emoji, Guild } from '@/types/guilds';
-import { parseTwemojiWithLegacyOverrides, resolveShortcodesFromUnicode } from '@/utils/emoji';
+import { parseTwemojiWithOverrides, resolveShortcodesFromUnicode } from '@/utils/emoji';
 
 interface EmojiChooserProps {
   guilds: Guild[];
@@ -284,7 +284,7 @@ export const EmojiChooser = ({
                   {emoji.isBuiltin && emoji.unicode ? (
                     <span className='emoji-builtin-preview'>
                       {parse(
-                        parseTwemojiWithLegacyOverrides(emoji.unicode, {
+                        parseTwemojiWithOverrides(emoji.unicode, {
                           className: 'emoji-builtin-img',
                         }),
                       )}
@@ -368,7 +368,7 @@ export const EmojiChooser = ({
                 >
                   <span className='emoji-builtin-preview'>
                     {parse(
-                      parseTwemojiWithLegacyOverrides(emoji.unicode, {
+                      parseTwemojiWithOverrides(emoji.unicode, {
                         className: 'emoji-builtin-img',
                       }),
                     )}

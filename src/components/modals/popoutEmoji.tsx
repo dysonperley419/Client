@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import imgFlickerLogo from '@/assets/flickerLogo.png';
 import { usePopup } from '@/layering/popupContext';
 import type { Emoji } from '@/types/guilds';
-import { parseTwemojiWithLegacyOverrides } from '@/utils/emoji';
+import { parseTwemojiWithOverrides } from '@/utils/emoji';
 
 interface PopoutEmojiProps {
   emoji: Emoji;
@@ -53,7 +53,7 @@ export const PopoutEmoji = ({
                 }}
               >
                 {parse(
-                  parseTwemojiWithLegacyOverrides(unicode, {
+                  parseTwemojiWithOverrides(unicode, {
                     className: 'avatar-img-large',
                   }),
                 )}

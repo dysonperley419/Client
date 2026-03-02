@@ -7,7 +7,7 @@ import type { JSX, ReactNode } from 'react';
 
 import CodeBlock from '@/components/common/codeBlock';
 import {
-  parseTwemojiWithLegacyOverrides,
+  parseTwemojiWithOverrides,
   resolveEmojiFromShortcode,
   resolveShortcodeFromUnicode,
 } from '@/utils/emoji';
@@ -371,7 +371,7 @@ export default function renderDfm(
 }
 
 function renderPlainTextWithEmojiPopout(plainText: string): ReactNode {
-  const twemojiHtml = parseTwemojiWithLegacyOverrides(plainText, { className: 'emoji' });
+  const twemojiHtml = parseTwemojiWithOverrides(plainText, { className: 'emoji' });
 
   return parse(twemojiHtml, {
     replace: (domNode) => {

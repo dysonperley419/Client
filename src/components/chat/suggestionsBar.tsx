@@ -2,7 +2,7 @@ import parse from 'html-react-parser';
 
 import { useConfig } from '@/context/configContext';
 import { type Suggestion, type SuggestionsTrigger, SuggestionsType } from '@/types/suggestions';
-import { parseTwemojiWithLegacyOverrides } from '@/utils/emoji';
+import { parseTwemojiWithOverrides } from '@/utils/emoji';
 
 interface SuggestionsBarProps {
   suggestionsTrigger: SuggestionsTrigger;
@@ -34,7 +34,7 @@ export const SuggestionsBar = ({
         ) : (
           <>
             {parse(
-              parseTwemojiWithLegacyOverrides(item.emoji ?? '', {
+              parseTwemojiWithOverrides(item.emoji ?? '', {
                 className: 'suggested-item-avi',
               }),
             )}

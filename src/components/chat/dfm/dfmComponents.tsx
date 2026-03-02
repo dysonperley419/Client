@@ -10,7 +10,7 @@ import type { Channel } from '@/types/channel';
 import type { Guild, Member, Role } from '@/types/guilds';
 import type { User } from '@/types/users';
 import { get, post } from '@/utils/api';
-import { parseTwemojiWithLegacyOverrides, resolveShortcodeFromUnicode } from '@/utils/emoji';
+import { parseTwemojiWithOverrides, resolveShortcodeFromUnicode } from '@/utils/emoji';
 import { logger } from '@/utils/logger';
 import { useUiUtilityActions } from '@/utils/uiUtils';
 
@@ -208,7 +208,7 @@ export const EmojiMention = ({
   }
 
   // Get built-in Unicode Emojis
-  const twemojiHtml = parseTwemojiWithLegacyOverrides(unicode ?? '', { className: 'emoji' });
+  const twemojiHtml = parseTwemojiWithOverrides(unicode ?? '', { className: 'emoji' });
   const srcMatch = /<img[^>]*\ssrc="([^"]+)"[^>]*>/i.exec(twemojiHtml);
   const src = srcMatch?.[1];
 

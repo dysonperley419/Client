@@ -2,6 +2,7 @@ import twemoji, { type TwemojiOptions } from '@twemoji/api';
 
 import oldGunTwemoji from '@/assets/oldGunTwemoji.svg';
 import oldPleadingFaceTwemoji from '@/assets/oldPleadingFaceTwemoji.svg';
+import progressivePrideTwemoji from '@/assets/progressivePrideTwemoji.svg';
 import { EMOJI_SHORTCODE_MAP } from '@/generated/emojiMap';
 
 function normalizeShortcode(value: string): string {
@@ -54,16 +55,17 @@ export function resolveShortcodesFromUnicode(unicode: string): string[] {
   return UNICODE_TO_SHORTCODES.get(normalizeUnicodeEmoji(unicode)) ?? [];
 }
 
-const LEGACY_TWEMOJI_ASSET_MAP: Record<string, string> = {
+const CUSTOM_TWEMOJI_ASSET_MAP: Record<string, string> = {
   '1f52b': oldGunTwemoji,
   '1f97a': oldPleadingFaceTwemoji,
+  '1f3f3-200d-1f308': progressivePrideTwemoji,
 };
 
 function normalizeIconCode(icon: string): string {
   return icon.toLowerCase().replace(/-fe0f/g, '');
 }
 
-export function parseTwemojiWithLegacyOverrides(
+export function parseTwemojiWithOverrides(
   value: string | null | undefined,
   options?: Omit<TwemojiOptions, 'callback'>,
 ): string {
@@ -71,10 +73,10 @@ export function parseTwemojiWithLegacyOverrides(
     ...options,
     callback: (icon, parseOptions) => {
       const normalizedIconCode = normalizeIconCode(icon);
-      const legacyAssetUrl = LEGACY_TWEMOJI_ASSET_MAP[normalizedIconCode];
+      const customAssetUrl = CUSTOM_TWEMOJI_ASSET_MAP[normalizedIconCode];
 
-      if (legacyAssetUrl) {
-        return legacyAssetUrl;
+      if (customAssetUrl) {
+        return customAssetUrl;
       }
 
       const defaultOptions = parseOptions as {
