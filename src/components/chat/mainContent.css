@@ -218,6 +218,13 @@
 
 .active-input-btn {
   filter: brightness(1.5);
+  transition: 0.3s;
+}
+
+[data-theme='light'] {
+  .active-input-btn {
+    filter: brightness(0.5);
+  }
 }
 
 .hidden-img {

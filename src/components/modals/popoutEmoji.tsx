@@ -47,7 +47,6 @@ export const PopoutEmoji = ({
               <span
                 className='avatar-img-large built-in-emoji-preview'
                 style={{
-                  padding: '8px',
                   background: 'var(--bg-panel)',
                   pointerEvents: 'none',
                 }}
