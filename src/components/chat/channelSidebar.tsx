@@ -238,7 +238,9 @@ const ChannelSidebar = ({
               {visiblePrivateChannels.length > 0 &&
                 visiblePrivateChannels
                   .filter((x) =>
-                    x.recipients?.[0]?.username?.toLowerCase().includes(dmUsername?.toLowerCase()),
+                    x.recipients?.some((recipient) =>
+                      recipient.username?.toLowerCase().includes(dmUsername?.toLowerCase()),
+                    ),
                   )
                   .map((channel) => (
                     <PrivateChannelItem
