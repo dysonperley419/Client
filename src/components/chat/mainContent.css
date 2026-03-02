@@ -708,7 +708,7 @@
 }
 
 .jump-to-present-bar:hover {
-  background-color: var(--bg-dark-alt);
+  background-color: var(--bg-secondary);
   opacity: 1;
 }
 
@@ -751,7 +751,7 @@
 }
 
 .reply-bar:hover {
-  background-color: var(--bg-dark-alt);
+  background-color: var(--bg-secondary);
 }
 
 .status-text {

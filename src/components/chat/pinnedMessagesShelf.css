@@ -3,7 +3,7 @@
   right: 16px;
   height: 450px;
   width: 420px;
-  background: var(--bg-dark-alt);
+  background: var(--bg-secondary);
   z-index: 100;
   border: 1px solid rgb(187 154 247 / 20%);
   border-radius: 8px;
@@ -56,7 +56,7 @@
 .pin-item:hover {
   border-color: var(--bg-sidebar-secondary);
   transform: translateY(-2px);
-  background: var(--bg-dark-alt);
+  background: var(--bg-secondary);
 }
 
 .pin-item strong {

@@ -1,12 +1,13 @@
 .emoji-chooser-container {
   height: 440px;
-  background-color: #1e1f22;
+  background-color: var(--bg-panel);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 10px var(--bg-dark-alt);
+  box-shadow: var(--shadow-main);
   overflow: hidden;
   user-select: none;
+  outline: 1px solid var(--accent-primary);
 }
 
 .emoji-chooser-header {
@@ -15,8 +16,8 @@
 
 .emoji-chooser-header .search-bar {
   flex: 1;
-  background-color: var(--bg-dark-alt);
-  outline: 1px solid rgb(187 154 247 / 20%);
+  background-color: var(--bg-input);
+  outline: 1px solid var(--outline-color-gray);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -41,7 +42,7 @@
 .emoji-section .section-header {
   font-size: 12px;
   font-weight: 700;
-  color: #4f5660;
+  color: var(--text-alt);
   margin: 16px 0 8px;
   text-transform: uppercase;
   display: flex;
@@ -61,7 +62,7 @@
 }
 
 .section-guild-icon-fallback {
-  background-color: var(--bg-dark-alt);
+  background-color: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,7 +127,7 @@
 
 .emoji-chooser-footer {
   height: 44px;
-  background: var(--bg-header-alt);
+  background: var(--bg-tertiary);
   border-top: 1px solid var(--bg-sidebar-secondary);
   display: flex;
   align-items: center;
@@ -155,7 +156,7 @@
 
 .nav-icon:hover,
 .nav-icon.active {
-  color: var(--bg-bright);
+  color: var(--text-bright);
 }
 
 .nav-guild-icon {
@@ -182,7 +183,7 @@
 }
 
 .nav-guild-icon .icon-fallback {
-  background: var(--bg-dark-alt);
+  background: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -28,7 +28,7 @@
 }
 
 .join-server-modal ul {
-  background: var(--bg-dark-alt);
+  background: var(--bg-secondary);
   padding: 10px;
   border-radius: 3px;
   color: var(--text-muted);

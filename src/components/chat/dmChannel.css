@@ -16,7 +16,7 @@
 }
 
 .dm-card:hover {
-  background: var(--bg-dark-alt, rgb(255 255 255 / 5%));
+  background: var(--bg-secondary, rgb(255 255 255 / 5%));
 
   /* border-color: var(--accent-primary); */
 

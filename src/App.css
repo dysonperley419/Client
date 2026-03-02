@@ -13,10 +13,10 @@
   --text-bright: #c0caf5;
   --bg-bright: #e5e4d9;
   --outline-color-gray: rgb(187 154 247 / 20%);
-  --bg-dark-alt: #1a1b26;
+  --bg-secondary: #1a1b26;
   --bg-alt: #323449;
   --bg-input: #1a1b26;
-  --bg-header-alt: #2b2d31;
+  --bg-tertiary: #2b2d31;
   --bg-online: #23a559;
   --bg-idle: #f0b232;
   --bg-dnd: #f23f43;
@@ -57,7 +57,7 @@ body {
   min-height: 100vh;
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: var(--bg-dark-alt);
+  background-color: var(--bg-secondary);
   background-image: radial-gradient(var(--bg-panel) 2px, transparent 3px);
   background-size: 30px 30px;
   display: flex;
@@ -99,6 +99,8 @@ body {
   --bg-idle: #f0b232;
   --bg-dnd: #f23f43;
   --bg-offline: #80848e;
+  --bg-secondary: #ebedef;
+  --bg-tertiary: #f2f3f5;
   --shadow-main: 0 4px 20px rgb(0 0 0 / 8%);
   --shadow-dark: rgb(0 0 0 / 10%);
 
@@ -641,7 +643,7 @@ button {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  outline: 1px solid var(--bg-header-alt);
+  outline: 1px solid var(--bg-tertiary);
 }
 
 /* maybe we souldnt put absolute positions in here */
@@ -651,7 +653,7 @@ button {
   height: 10px;
   border-radius: 50%;
   position: relative;
-  outline: 1px solid var(--bg-header-alt);
+  outline: 1px solid var(--bg-tertiary);
   left: 30px;
   bottom: 10px;
 }
@@ -721,14 +723,14 @@ button {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  outline: 1px solid var(--bg-header-alt);
+  outline: 1px solid var(--bg-tertiary);
 }
 
 .user-profile-modal .status-dot-large {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  outline: 1px solid var(--bg-header-alt);
+  outline: 1px solid var(--bg-tertiary);
 }
 
 .action-status-icon .status-indicator-wrapper,

@@ -1,8 +1,8 @@
 import './gifSearcher.css';
 
-import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { useState } from 'react';
 
+import Scroller from '@/components/common/scroller';
 import type { GifCategory, GifResult } from '@/types/gifsSearcher';
 
 interface GifSearcherProps {
@@ -42,11 +42,7 @@ export const GifSearcher = ({
           <span className='material-symbols-rounded search-icon'>search</span>
         </div>
       </div>
-      <OverlayScrollbarsComponent
-        element='div'
-        options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
-        className='gif-searcher-content scroller'
-      >
+      <Scroller element='div' className='gif-searcher-content scroller'>
         {!gifSearchQuery && gifCategories.length > 0 && (
           <div className='gif-category-grid'>
             {gifCategories.map((cat) => (
@@ -79,7 +75,7 @@ export const GifSearcher = ({
             </div>
           ))}
         </div>
-      </OverlayScrollbarsComponent>
+      </Scroller>
     </div>
   );
 };

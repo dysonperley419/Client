@@ -96,147 +96,139 @@ export const LayerPortals = (): JSX.Element | null => {
     };
   };
 
+  const getDirection = (y: number, height: number) => {
+    if (y + height > viewport.height - 50) return 'top';
+    if (y < 50) return 'bottom';
+    return 'top';
+  };
+
   const renderPopup = () => {
+    if (!popupType || !popupData) return null;
+
+    let content: JSX.Element | null = null;
+    let fixedX = 0;
+    let fixedY = 0;
+    let direction: string | undefined = undefined;
+    let currentWidth = 'auto';
+
     switch (popupType) {
       case 'USER_PROFILE_POPOUT': {
         const data = popupData as PopupDataMap['USER_PROFILE_POPOUT'];
-
         const popoutHeight = 450;
         const popoutWidth = 300;
         const preferredX = data.x + popoutWidth > viewport.width ? data.x - popoutWidth : data.x;
-        const { x: fixedX, y: fixedY } = clampPosition(
-          preferredX,
-          data.y,
-          popoutWidth,
-          popoutHeight,
+        const pos = clampPosition(preferredX, data.y, popoutWidth, popoutHeight);
+        fixedX = pos.x;
+        fixedY = pos.y;
+        currentWidth = '300px';
+        direction = data.direction;
+        if (!direction) direction = getDirection(fixedY, popoutHeight);
+        content = (
+          <PopoutProfile member={data.member} roles={data.roles} contextGuildId={currentGuildId} />
         );
-
-        return (
-          <div
-            className='popup-wrapper'
-            style={{ top: fixedY, left: fixedX, position: 'fixed' }}
-            role='dialog'
-            tabIndex={-1}
-          >
-            <PopoutProfile
-              member={data.member}
-              roles={data.roles}
-              contextGuildId={currentGuildId}
-            />
-          </div>
-        );
+        break;
       }
       case 'CURRENT_USER_PROFILE': {
         const data = popupData as PopupDataMap['CURRENT_USER_PROFILE'];
         const popoutHeight = 470;
         const popoutWidth = 340;
-        const { x: fixedX, y: fixedY } = clampPosition(data.x, data.y, popoutWidth, popoutHeight);
-
-        return (
-          <div
-            className='popup-wrapper'
-            style={{ top: fixedY, left: fixedX, position: 'fixed' }}
-            role='dialog'
-            tabIndex={-1}
-          >
-            <UserProfileModal />
-          </div>
-        );
+        const pos = clampPosition(data.x, data.y, popoutWidth, popoutHeight);
+        fixedX = pos.x;
+        fixedY = pos.y;
+        currentWidth = '340px';
+        direction = data.direction;
+        if (!direction) direction = getDirection(fixedY, popoutHeight);
+        content = <UserProfileModal />;
+        break;
       }
       case 'EMOJI_DETAILS_POPOUT': {
         const data = popupData as PopupDataMap['EMOJI_DETAILS_POPOUT'];
-
         const popoutHeight = 320;
         const popoutWidth = 280;
         const preferredX =
           data.x + 50 + popoutWidth > viewport.width ? data.x - popoutWidth - 10 : data.x + 50;
         const preferredY = data.y + 100;
-        const { x: fixedX, y: fixedY } = clampPosition(
-          preferredX,
-          preferredY,
-          popoutWidth,
-          popoutHeight,
-          20,
+        const pos = clampPosition(preferredX, preferredY, popoutWidth, popoutHeight, 20);
+        fixedX = pos.x;
+        fixedY = pos.y;
+        currentWidth = '280px';
+        direction = data.direction;
+        if (!direction) direction = getDirection(fixedY, popoutHeight);
+        content = (
+          <PopoutEmoji
+            emoji={data.emoji as Emoji}
+            guildIcon={data.guildIcon}
+            guildId={data.guildId}
+            guildName={data.guildName}
+            isPrivate={data.isPrivate}
+            isBuiltin={data.isBuiltin}
+            unicode={data.unicode}
+            sourceSubtext={data.sourceSubtext}
+          />
         );
-
-        return (
-          <div
-            className='popup-wrapper'
-            style={{ top: fixedY, left: fixedX, position: 'fixed' }}
-            role='dialog'
-            tabIndex={-1}
-          >
-            <PopoutEmoji
-              emoji={data.emoji as Emoji}
-              guildIcon={data.guildIcon}
-              guildId={data.guildId}
-              guildName={data.guildName}
-              isPrivate={data.isPrivate}
-              isBuiltin={data.isBuiltin}
-              unicode={data.unicode}
-              sourceSubtext={data.sourceSubtext}
-            />
-          </div>
-        );
+        break;
       }
       case 'EMOJI_PICKER': {
         const data = popupData as PopupDataMap['EMOJI_PICKER'];
         const popoutHeight = 440;
         const popoutWidth = 350;
-        const { x: fixedX, y: fixedY } = clampPosition(
+        const pos = clampPosition(
           data.x - popoutWidth,
           data.y - popoutHeight,
           popoutWidth,
           popoutHeight,
         );
-
-        return (
-          <div
-            className='popup-wrapper'
-            style={{ top: fixedY, left: fixedX, position: 'fixed', width: popoutWidth }}
-            role='dialog'
-            tabIndex={-1}
-          >
-            <EmojiChooser
-              guilds={data.guilds}
-              onSelectEmoji={data.onSelectEmoji}
-              onClose={closePopup}
-              currentGuildId={currentGuildId ?? undefined}
-            />
-          </div>
+        fixedX = pos.x;
+        fixedY = pos.y;
+        currentWidth = '350px';
+        direction = data.direction || 'top';
+        content = (
+          <EmojiChooser
+            guilds={data.guilds}
+            onSelectEmoji={data.onSelectEmoji}
+            onClose={closePopup}
+            currentGuildId={currentGuildId ?? undefined}
+          />
         );
+        break;
       }
       case 'GIF_PICKER': {
         const data = popupData as PopupDataMap['GIF_PICKER'];
         const popoutHeight = 440;
         const popoutWidth = 350;
-        const { x: fixedX, y: fixedY } = clampPosition(
+        const pos = clampPosition(
           data.x - popoutWidth,
           data.y - popoutHeight,
           popoutWidth,
           popoutHeight,
         );
-
-        return (
-          <div
-            className='popup-wrapper'
-            style={{ top: fixedY, left: fixedX, position: 'fixed', width: popoutWidth }}
-            role='dialog'
-            tabIndex={-1}
-          >
-            <GifSearcher
-              gifCategories={data.gifCategories}
-              gifs={data.gifs}
-              onSearch={data.onSearch}
-              onSelectGif={data.onSelectGif}
-              onClose={closePopup}
-            />
-          </div>
+        fixedX = pos.x;
+        fixedY = pos.y;
+        currentWidth = '350px';
+        direction = data.direction || 'top';
+        content = (
+          <GifSearcher
+            gifCategories={data.gifCategories}
+            gifs={data.gifs}
+            onSearch={data.onSearch}
+            onSelectGif={data.onSelectGif}
+            onClose={closePopup}
+          />
         );
+        break;
       }
-      default:
-        return null;
     }
+
+    return (
+      <div
+        className={`popup-wrapper dir-${direction || 'top'}`}
+        style={{ top: fixedY, left: fixedX, position: 'fixed', width: currentWidth }}
+        role='dialog'
+        tabIndex={-1}
+      >
+        {content}
+      </div>
+    );
   };
 
   const isProfile = modalType === 'SERVER_PROFILE';

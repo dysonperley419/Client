@@ -225,7 +225,7 @@ export const PopoutProfile = ({
               className='note-input'
               placeholder={`Message @${member.user.username}`}
               style={{
-                backgroundColor: 'var(--bg-dark-alt)',
+                backgroundColor: 'var(--bg-secondary)',
               }}
               value={inLineMessage}
               onChange={(e) => {

@@ -168,7 +168,7 @@
 }
 
 .icon-action-btn:hover {
-  background-color: var(--bg-dark-alt);
+  background-color: var(--bg-secondary);
 }
 
 .icon-action-btn img {

@@ -1,6 +1,6 @@
 .profile-popout-container {
   width: 300px;
-  background: var(--bg-alt);
+  background: var(--bg-panel);
   border-radius: 8px;
   box-shadow: var(--shadow-main);
   outline: 1px solid var(--accent-primary);
@@ -50,13 +50,13 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  outline: 4px solid var(--bg-alt);
+  outline: 4px solid var(--bg-panel);
 }
 
 .user-details-centered .username {
   display: block;
   font-weight: bold;
-  color: white;
+  color: var(--text-bright);
   font-size: 1.2rem;
 }
 
@@ -97,7 +97,7 @@
   font-size: 12px;
   outline: 1px solid var(--outline-color-gray);
   color: var(--text-main);
-  background: var(--bg-panel);
+  background: var(--bg-input);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -136,7 +136,7 @@
 
 .add-role-btn {
   cursor: pointer;
-  background: var(--bg-panel);
+  background: var(--bg-input);
   width: 24px;
   display: flex;
   align-items: center;

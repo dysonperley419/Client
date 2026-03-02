@@ -1,9 +1,9 @@
 import './emojiChooser.css';
 
 import parse from 'html-react-parser';
-import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import Scroller from '@/components/common/scroller';
 import { useConfig } from '@/context/configContext';
 import { BUILTIN_EMOJI_CATEGORIES } from '@/generated/emojiCategories';
 import type { Emoji as EmojiChooserEmoji } from '@/types/emojiChooser';
@@ -228,9 +228,8 @@ export const EmojiChooser = ({
         </div>
       </div>
 
-      <OverlayScrollbarsComponent
+      <Scroller
         element='div'
-        options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
         className='emoji-chooser-content scroller'
         ref={(os) => {
           if (os) {
@@ -361,13 +360,9 @@ export const EmojiChooser = ({
             </div>
           </div>
         ))}
-      </OverlayScrollbarsComponent>
+      </Scroller>
       <div className='emoji-chooser-footer'>
-        <OverlayScrollbarsComponent
-          element='div'
-          options={{ scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' } }}
-          className='footer-nav-scroll'
-        >
+        <Scroller element='div' className='footer-nav-scroll'>
           <div className='footer-nav-container'>
             {filteredFrequentlyUsed.length > 0 && (
               <span
@@ -413,7 +408,7 @@ export const EmojiChooser = ({
               </span>
             ))}
           </div>
-        </OverlayScrollbarsComponent>
+        </Scroller>
       </div>
     </div>
   );

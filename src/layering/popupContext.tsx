@@ -4,9 +4,17 @@ import type { Emoji as EmojiChooserEmoji } from '@/types/emojiChooser';
 import type { GifCategory, GifResult } from '@/types/gifsSearcher';
 import type { Emoji, Guild, Member, Role } from '@/types/guilds';
 
+export type PopupDirection = 'top' | 'bottom' | 'left' | 'right';
+
 export interface PopupDataMap {
-  USER_PROFILE_POPOUT: { x: number; y: number; member: Member; roles: Role[] | null };
-  CURRENT_USER_PROFILE: { x: number; y: number };
+  USER_PROFILE_POPOUT: {
+    x: number;
+    y: number;
+    member: Member;
+    roles: Role[] | null;
+    direction?: PopupDirection;
+  };
+  CURRENT_USER_PROFILE: { x: number; y: number; direction?: PopupDirection };
   EMOJI_DETAILS_POPOUT: {
     x: number;
     y: number;
@@ -18,12 +26,14 @@ export interface PopupDataMap {
     isBuiltin?: boolean;
     unicode?: string;
     sourceSubtext?: string;
+    direction?: PopupDirection;
   };
   EMOJI_PICKER: {
     x: number;
     y: number;
     guilds: Guild[];
     onSelectEmoji: (emoji: Emoji | EmojiChooserEmoji) => void;
+    direction?: PopupDirection;
   };
   GIF_PICKER: {
     x: number;
@@ -32,6 +42,7 @@ export interface PopupDataMap {
     gifs: GifResult[];
     onSearch: (term: string) => Promise<void>;
     onSelectGif: (url: string) => void;
+    direction?: PopupDirection;
   };
 }
 
