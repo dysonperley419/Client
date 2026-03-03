@@ -25,7 +25,7 @@ export class ApiError extends Error {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const request = async <T = unknown>(
+export const request = <T = unknown>(
   endpoint: string,
   method: RequestMethod = 'GET',
   options: RequestOptions = {},
@@ -164,11 +164,11 @@ export const request = async <T = unknown>(
   return sendRequest();
 };
 
-export const get = async <T = unknown>(endpoint: string): Promise<T> => {
+export const get = <T = unknown>(endpoint: string): Promise<T> => {
   return request<T>(endpoint);
 };
 
-export const post = async <T = unknown>(
+export const post = <T = unknown>(
   endpoint: string,
   body: unknown,
   content_type = 'application/json',
@@ -181,7 +181,7 @@ export const post = async <T = unknown>(
   });
 };
 
-export const patch = async <T = unknown>(
+export const patch = <T = unknown>(
   endpoint: string,
   body: unknown,
   content_type = 'application/json',
@@ -194,7 +194,7 @@ export const patch = async <T = unknown>(
   });
 };
 
-export const put = async <T = unknown>(
+export const put = <T = unknown>(
   endpoint: string,
   body: unknown,
   content_type = 'application/json',
@@ -207,6 +207,6 @@ export const put = async <T = unknown>(
   });
 };
 
-export const del = async <T = unknown>(endpoint: string): Promise<T> => {
+export const del = <T = unknown>(endpoint: string): Promise<T> => {
   return request<T>(endpoint, 'DELETE');
 };

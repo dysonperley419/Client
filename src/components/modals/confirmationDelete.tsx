@@ -43,7 +43,7 @@ export const ConfirmationDeleteModal = ({
     }
   };
 
-  const deletePlace = async (id: string, type: string) => {
+  const deletePlace = (id: string, type: string) => {
     if (type === 'server') {
       return deleteGuild(id);
     } //handle group dms, cuz like how else would you leave something

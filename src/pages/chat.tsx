@@ -360,7 +360,6 @@ const ChatApp = (): JSX.Element => {
     navigate,
     privateChannels,
     selectedChannel?.id,
-    selectedGuild,
     updateReadState,
     user,
   ]);

@@ -19,8 +19,8 @@ import type { GatewayContextSchema } from '@/types/gatewayContext';
 import { type Guild, type Member, type VoiceState, VoiceStateSchema } from '@/types/guilds';
 import { type Presence, type Session, SessionListSchema } from '@/types/presences';
 import type { Relationship } from '@/types/relationship';
-import type { User } from '@/types/users';
 import type { UserSettings } from '@/types/userSettings';
+import type { User } from '@/types/users';
 import { logger } from '@/utils/logger';
 
 import { GatewayContext } from './gatewayContext';
@@ -72,7 +72,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
   const sessionId = useRef<string | null>(null);
   const lastSequence = useRef<number | null>(null);
   const resumeGatewayUrl = useRef<string | null>(null);
-  const [reconnectCounter, setReconnectTrigger] = useState(0);
+  const [_reconnectCounter, setReconnectTrigger] = useState(0);
 
   const sendOp = useCallback((op: number, d: unknown) => {
     if (socket.current?.readyState === WebSocket.OPEN) {
@@ -279,7 +279,6 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
           setTypingUsers((prev) => {
             const channelTyping = { ...prev[parsed.channel_id] };
 
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Yeah I know and this is completely needed, just shut up about it.
             const { [parsed.author.id ?? '']: _, ...remainingTyping } = channelTyping;
             return { ...prev, [parsed.channel_id]: remainingTyping };
           });
@@ -676,7 +675,7 @@ export const GatewayProvider = ({ children }: GatewayProviderProps) => {
     return () => {
       cleanup();
     };
-  }, [connect, reconnectCounter]);
+  }, [connect]);
 
   const gatewayProps: GatewayContextSchema = {
     isReady,

@@ -304,11 +304,11 @@ const MainContent = ({
 
   useEffect(() => {
     if (autoScroll.current) scrollToBottom();
-  }, [messages]);
+  }, [scrollToBottom]);
 
   useEffect(() => {
     setSelectedIndex(0);
-  }, [filteredSuggestions]);
+  }, []);
 
   useEffect(() => {
     if (popupType === 'GIF_PICKER') {
@@ -346,7 +346,7 @@ const MainContent = ({
     return () => {
       window.removeEventListener('paste', handlePaste);
     };
-  }, []);
+  }, [addFiles]);
 
   const fetchMessages = useCallback(
     async (limit: number, before?: string) => {
@@ -728,7 +728,7 @@ const MainContent = ({
       window.removeEventListener('gateway_message_update', handleUpdateMessage);
       window.removeEventListener('gateway_message_delete', handleDeleteMessage);
     };
-  }, [selectedChannel.id]);
+  }, [selectedChannel.id, scrollToBottom]);
 
   const scrollToMessage = async (messageId: string) => {
     //Check if we already have it in the silly dom
