@@ -1650,6 +1650,11 @@ const MainContent = ({
               scrollbars: { theme: 'os-theme-dark', autoHide: 'scroll' },
             }}
             className='messages-scroller scroller'
+            events={{
+              scroll: () => {
+                void handleScroll();
+              },
+            }}
             ref={(os) => {
               if (os) {
                 const instance = os.osInstance();
@@ -1658,9 +1663,6 @@ const MainContent = ({
                   (scrollerRef as { current: HTMLElement | null }).current = scrollOffsetElement;
                 }
               }
-            }}
-            onScroll={() => {
-              void handleScroll();
             }}
           >
             {renderMessages()}
