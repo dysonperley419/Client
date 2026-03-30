@@ -13,8 +13,8 @@ export const VoiceStateSchema = z.looseObject({
   mute: z.boolean(),
   self_deaf: z.boolean(),
   self_mute: z.boolean(),
-  self_stream: z.boolean().optional(),
-  self_video: z.boolean().optional(),
+  self_stream: z.boolean().optional().nullish(),
+  self_video: z.boolean().optional().nullish(),
   suppress: z.boolean(),
 });
 

@@ -4,6 +4,27 @@ export const WellKnownResponseSchema = z.object({
   api: z.url(),
 });
 
+export const WellKnownNewResponseSchema = z.object({
+  api: z.object({
+    baseUrl: z.url(),
+    apiVersions: z.object({
+      default: z.string(),
+      active: z.array(z.string()),
+    }),
+  }),
+  cdn: z.object({
+    baseUrl: z.url(),
+  }),
+  gateway: z.object({
+    baseUrl: z.url(),
+    encoding: z.array(z.string()),
+    compression: z.array(z.any()), //sometimes the compression type can be 'null' ??
+  }),
+  admin: z.object({
+    baseUrl: z.url(),
+  }),
+});
+
 export const DomainsResponseSchema = z.object({
   cdn: z.url(),
   assets: z.array(z.url()).nullish(),
