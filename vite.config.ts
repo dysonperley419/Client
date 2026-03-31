@@ -8,7 +8,7 @@ export default defineConfig({
     format: 'es',
   },
   server: {
-    port: 3000,
+    port: 80,
     open: true,
   },
   build: {
