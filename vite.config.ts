@@ -11,12 +11,18 @@ export default defineConfig({
 
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
-    host: true, // REQUIRED so Render can access it
+    host: true, // allow external access
+    allowedHosts: [
+      'client-h26l.onrender.com', // add your Render hostname here
+    ],
   },
 
   preview: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
     host: true,
+    allowedHosts: [
+      'client-h26l.onrender.com',
+    ],
   },
 
   build: {
