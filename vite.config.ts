@@ -8,8 +8,8 @@ export default defineConfig({
     format: 'es',
   },
   server: {
-    port: 80,
-    open: true,
+    port: process.env.PORT || 80,
+    host: true, // IMPORTANT for Render
   },
   build: {
     outDir: 'build',
